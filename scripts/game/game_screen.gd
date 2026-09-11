@@ -95,6 +95,7 @@ func _restart() -> void:
 	controller.start()
 	selected_square = Types.NO_SQUARE
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$BoardPresenter.set_selected_square(Types.NO_SQUARE)
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.disabled = spectator_enabled
 	$UI/GameOverPanel.visible = false
@@ -115,6 +116,7 @@ func _undo() -> void:
 		return
 	selected_square = Types.NO_SQUARE
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$BoardPresenter.set_selected_square(Types.NO_SQUARE)
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Move.clear()
 	$UI/Submit.disabled = false
@@ -364,6 +366,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if Types.piece_side(controller.game.state.get_piece(square)) == controller.game.state.side_to_move:
 			selected_square = square
+			$BoardPresenter.set_selected_square(square)
 			var destinations: Array = []
 			for move in controller.game.legal_moves():
 				if move.from_square == square: destinations.append(move.to_square)
@@ -376,6 +379,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		$UI/Move.text = uci
 		selected_square = Types.NO_SQUARE
 		$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+		$BoardPresenter.set_selected_square(Types.NO_SQUARE)
 		_submit()
 
 

@@ -61,6 +61,7 @@ var _animation_player_2: AnimationPlayer
 var _last_played_state: StringName = &"idle.neutral"
 var _animation_paused := false
 var _animation_speed_multiplier := 1.0
+var _selection_tween: Tween
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
@@ -242,6 +243,29 @@ func restore_board_facing() -> void:
 	# orientation so captures never leave the survivor turned around.
 	rotation = Vector3.ZERO
 	rotation.y = PI if side == Types.BLACK else 0.0
+
+
+func set_selected(selected: bool) -> void:
+	# Selection lives on the existing compact base ring, never above a character's
+	# head. It stays readable at board scale without spoiling close inspections or
+	# capture shots.
+	var ring := _visual_accents.get_node_or_null("TeamRing") as MeshInstance3D
+	if ring == null:
+		return
+	if _selection_tween != null and _selection_tween.is_valid():
+		_selection_tween.kill()
+	var material := ring.material_override as StandardMaterial3D
+	if material != null:
+		material.emission_enabled = selected
+		material.emission = side_color.lerp(Color.WHITE, 0.32)
+		material.emission_energy_multiplier = 1.8 if selected else 0.0
+	if not selected:
+		ring.scale = Vector3.ONE
+		return
+	ring.scale = Vector3.ONE
+	_selection_tween = create_tween().set_loops()
+	_selection_tween.tween_property(ring, "scale", Vector3.ONE * 1.45, 0.38).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_selection_tween.tween_property(ring, "scale", Vector3.ONE * 1.08, 0.38).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 
 func set_home_transform(value: Transform3D) -> void:

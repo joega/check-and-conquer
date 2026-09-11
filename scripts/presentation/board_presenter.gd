@@ -50,6 +50,13 @@ func actor_count() -> int:
 	return actors.size()
 
 
+func set_selected_square(square: int) -> void:
+	for actor_square in actors:
+		var actor = actors[actor_square]
+		if actor != null and is_instance_valid(actor):
+			actor.set_selected(actor_square == square)
+
+
 func matches_state(state) -> bool:
 	var expected_count := 0
 	for square in Types.BOARD_SIZE:

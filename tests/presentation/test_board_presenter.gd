@@ -53,6 +53,12 @@ func _run() -> void:
 	var black_material := (presenter.actors[48].get_node("ModelRoot/Armature/Skeleton3D").get_child(0) as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
 	assert(white_material != null and black_material != null and not white_material.albedo_color.is_equal_approx(black_material.albedo_color), "Sides must receive distinct textured material tints.")
 	assert(presenter.matches_state(BoardState.starting_position()))
+	presenter.set_selected_square(8)
+	var selected_ring := presenter.actors[8].get_node("VisualAccents/TeamRing") as MeshInstance3D
+	var unselected_ring := presenter.actors[9].get_node("VisualAccents/TeamRing") as MeshInstance3D
+	assert((selected_ring.material_override as StandardMaterial3D).emission_enabled and not (unselected_ring.material_override as StandardMaterial3D).emission_enabled, "Selecting a square must emphasize only that actor's compact base ring.")
+	presenter.set_selected_square(-1)
+	assert(not (selected_ring.material_override as StandardMaterial3D).emission_enabled, "Clearing selection must return the actor base ring to its non-emissive board state.")
 	presenter.actors[0].global_position.x += 0.1
 	assert(not presenter.matches_state(BoardState.starting_position()))
 	presenter.rebuild_from_state(BoardState.starting_position())
