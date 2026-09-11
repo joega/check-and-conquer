@@ -40,6 +40,7 @@ func _ready() -> void:
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
 	$UI/GameOverPanel/Content/RestartGame.pressed.connect(_restart)
 	$UI/GameOverPanel/Content/Menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/app/Main.tscn"))
+	$UI/GameOverPanel/Content/CopyPGN.pressed.connect(_copy_pgn)
 	$UI/GameOverPanel/Content/Review.pressed.connect(_begin_review)
 	$UI/GameOverPanel/Content/Previous.pressed.connect(func(): _show_review_position(replay_index - 1))
 	$UI/GameOverPanel/Content/Next.pressed.connect(func(): _show_review_position(replay_index + 1))
@@ -424,3 +425,15 @@ func _return_to_final_position() -> void:
 
 func _begin_move_follow(actor: Node3D, destination: Vector3, _duration_s: float) -> void:
 	$Camera3D.begin_move_follow(actor, destination)
+
+
+func _copy_pgn() -> String:
+	if controller == null or controller.game.move_history.is_empty():
+		return ""
+	var pgn: String = controller.game.to_pgn()
+	if DisplayServer.has_feature(DisplayServer.FEATURE_CLIPBOARD):
+		DisplayServer.clipboard_set(pgn)
+		$UI/Status.text = "PGN copied to clipboard."
+	else:
+		$UI/Status.text = "PGN prepared for copy."
+	return pgn

@@ -13,7 +13,7 @@
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
 - A high turn-aware three-quarter board view with readable board-edge coordinates, plus a behind-the-piece follow shot during ordinary movement. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
-- Post-game move review built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
+- Post-game move review and one-click PGN copy built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
 Warchessed is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
 

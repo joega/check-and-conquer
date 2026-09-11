@@ -57,6 +57,7 @@ func _run() -> void:
 	assert(screen.replay_index == 1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state_history[1]), "Review must rebuild each committed ply.")
 	screen._return_to_final_position()
 	assert(screen.replay_index == -1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Leaving review must restore the final authoritative position.")
+	assert("1. e4 e5" in screen._copy_pgn(), "Completed local moves must prepare portable PGN.")
 	screen._set_player_side(0)
 	screen._restart()
 	for uci in ["f2f3", "e7e5", "g2g4", "d8h4"]:
