@@ -158,14 +158,18 @@ func _run() -> void:
 	root.add_child(surrender_screen)
 	await process_frame
 	await process_frame
-	var survivor_count: int = surrender_screen.get_node("BoardPresenter").actor_count()
 	surrender_screen._surrender_and_return()
 	await process_frame
-	var falling_count := 0
+	var surrendering_count := 0
+	var victorious_count := 0
 	for actor in surrender_screen.get_node("BoardPresenter").actors.values():
-		if actor.current_semantic_state() == &"death.backward_01":
-			falling_count += 1
-	assert(surrender_screen.surrendering and falling_count == survivor_count, "Surrendering must animate every surviving piece falling before leaving the arena.")
+		if actor.side == surrender_screen.player_side:
+			assert(actor.current_semantic_state() == &"death.backward_01", "Only the human player's army should fall after surrendering.")
+			surrendering_count += 1
+		else:
+			assert(actor.current_semantic_state() != &"death.backward_01", "The victorious army must stay standing after a surrender.")
+			victorious_count += 1
+	assert(surrender_screen.surrendering and surrendering_count > 0 and victorious_count > 0, "Surrendering must animate the human army falling while the opposing army celebrates.")
 	surrender_screen.queue_free()
 	print("PASS: playable screen completes a player move and Stockfish response.")
 	quit(0)

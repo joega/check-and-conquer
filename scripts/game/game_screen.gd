@@ -150,15 +150,20 @@ func _surrender_and_return() -> void:
 		controller.phase = TurnController.Phase.GAME_OVER
 	if engine != null:
 		engine.stop_thinking()
-	$UI/Status.text = "Surrendering the arena…"
+	$UI/Status.text = "Your army surrenders the arena…"
 	var survivors: Array = $BoardPresenter.actors.values()
 	survivors.sort_custom(func(a, b): return a.global_position.z < b.global_position.z)
 	var longest_fall := 0.0
+	var victory_style := 0
 	for actor in survivors:
 		if actor == null or not is_instance_valid(actor):
 			continue
-		actor.play_state(&"death.backward_01")
-		longest_fall = maxf(longest_fall, actor.state_duration(&"death.backward_01"))
+		if actor.side == player_side:
+			actor.play_state(&"death.backward_01")
+			longest_fall = maxf(longest_fall, actor.state_duration(&"death.backward_01"))
+		else:
+			actor.celebrate_victory(victory_style)
+			victory_style += 1
 	await get_tree().create_timer(longest_fall + 0.18).timeout
 	_return_to_campaign()
 
