@@ -18,6 +18,7 @@ tests=(
   tests/engine/test_uci_protocol.gd
   tests/engine/test_stockfish_adapter.gd
   tests/presentation/test_board_mapper.gd
+  tests/presentation/test_position_loader.gd
   tests/presentation/test_board_camera_controller.gd
   tests/presentation/test_camera_director.gd
   tests/presentation/test_procedural_impact_audio.gd
