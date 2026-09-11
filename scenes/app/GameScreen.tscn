@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -8,12 +8,11 @@
 [ext_resource type="Script" path="res://scripts/presentation/board_camera_controller.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/presentation/procedural_impact_audio.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/presentation/battlefield_environment.gd" id="8"]
+[ext_resource type="Texture2D" path="res://assets/environment/generated/storm_mountain_panorama_v1.png" id="9"]
 
-[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial"]
-sky_top_color = Color(0.025, 0.04, 0.09, 1)
-sky_horizon_color = Color(0.18, 0.24, 0.38, 1)
-ground_bottom_color = Color(0.025, 0.035, 0.06, 1)
-ground_horizon_color = Color(0.12, 0.16, 0.24, 1)
+[sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
+panorama = ExtResource("9")
+energy_multiplier = 0.72
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = SubResource("SkyMaterial")
