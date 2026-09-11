@@ -82,3 +82,57 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.67, 0.74, 1)
 theme_override_font_sizes/font_size = 16
 text = "Godot 4.7.2 • Quaternius CC0 characters • Stockfish 19"
+
+[node name="LoadingOverlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Shade" type="ColorRect" parent="LoadingOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.025, 0.055, 0.92)
+mouse_filter = 2
+
+[node name="Panel" type="VBoxContainer" parent="LoadingOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -68.0
+offset_right = 210.0
+offset_bottom = 68.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="LoadingOverlay/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 1)
+theme_override_font_sizes/font_size = 30
+text = "Warchessed"
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="LoadingOverlay/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.88, 0.98, 1)
+theme_override_font_sizes/font_size = 19
+text = "Preparing the battlefield…"
+horizontal_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="LoadingOverlay/Panel"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+value = 4.0
+show_percentage = false
