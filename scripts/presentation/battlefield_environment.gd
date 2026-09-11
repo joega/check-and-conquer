@@ -56,6 +56,7 @@ func apply_arena(requested_arena_id: String) -> void:
 	_beacon_lights.clear()
 	_create_grand_terrace(arena)
 	_create_arena_markers(arena)
+	_create_signature_set_dressing(arena)
 	# Keep atmosphere flashes neutral as well: the arena's colors belong in the
 	# panorama and emissive props, not as a tint over playable characters.
 	_flash.light_color = Color.WHITE
@@ -165,3 +166,109 @@ func _create_arena_markers(arena: Dictionary) -> void:
 		light.shadow_enabled = false
 		marker.add_child(light)
 		_beacon_lights.append(light)
+
+
+func _create_signature_set_dressing(arena: Dictionary) -> void:
+	# Landmarks stay beyond the terrace rail: the board remains clear and the
+	# panorama retains its horizon, while each campaign stop gains its own shape.
+	var dressing := Node3D.new()
+	dressing.name = "ArenaSetDressing"
+	_architecture.add_child(dressing)
+	match arena_id:
+		"mountain_fortress": _create_watchtowers(dressing, arena)
+		"arcane_sky_citadel": _create_arcane_obelisks(dressing, arena)
+		"frozen_keep": _create_ice_spires(dressing, arena)
+		"lava_forge": _create_forge_braziers(dressing, arena)
+		"forest_ruins": _create_ruined_arches(dressing, arena)
+
+
+func _dressing_material(color: Color, emission_strength := 0.0) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.78
+	if emission_strength > 0.0:
+		material.emission_enabled = true
+		material.emission = color
+		material.emission_energy_multiplier = emission_strength
+	return material
+
+
+func _add_dressing_mesh(parent: Node3D, node_name: String, mesh: PrimitiveMesh, position: Vector3, material: StandardMaterial3D) -> MeshInstance3D:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	instance.mesh = mesh
+	instance.position = position
+	instance.material_override = material
+	parent.add_child(instance)
+	return instance
+
+
+func _create_watchtowers(parent: Node3D, arena: Dictionary) -> void:
+	var stone := _dressing_material(arena.stone * 0.72)
+	var roof := _dressing_material(Color(0.18, 0.10, 0.07))
+	for index in 2:
+		var x := -26.0 if index == 0 else 26.0
+		var tower := CylinderMesh.new()
+		tower.top_radius = 1.45
+		tower.bottom_radius = 1.8
+		tower.height = 5.0
+		_add_dressing_mesh(parent, "FortressWatchtower%02d" % index, tower, Vector3(x, 1.7, -22.5), stone)
+		var roof_mesh := CylinderMesh.new()
+		roof_mesh.top_radius = 0.0
+		roof_mesh.bottom_radius = 2.1
+		roof_mesh.height = 2.4
+		_add_dressing_mesh(parent, "FortressTowerRoof%02d" % index, roof_mesh, Vector3(x, 5.4, -22.5), roof)
+
+
+func _create_arcane_obelisks(parent: Node3D, arena: Dictionary) -> void:
+	var stone := _dressing_material(arena.stone * 0.95)
+	var glow := _dressing_material(arena.accent, 3.6)
+	for index in 3:
+		var x := -18.0 + float(index) * 18.0
+		var base := BoxMesh.new()
+		base.size = Vector3(2.2, 0.85, 2.2)
+		_add_dressing_mesh(parent, "CitadelRuneBase%02d" % index, base, Vector3(x, -0.15, -24.0), stone)
+		var obelisk := PrismMesh.new()
+		obelisk.size = Vector3(1.25, 5.2, 1.25)
+		_add_dressing_mesh(parent, "CitadelObelisk%02d" % index, obelisk, Vector3(x, 2.8, -24.0), glow)
+
+
+func _create_ice_spires(parent: Node3D, arena: Dictionary) -> void:
+	var ice := _dressing_material(arena.accent.lerp(Color.WHITE, 0.35), 1.5)
+	for index in 5:
+		var spike := CylinderMesh.new()
+		spike.top_radius = 0.0
+		spike.bottom_radius = 0.45 + float(index % 2) * 0.22
+		spike.height = 2.2 + float(index % 3) * 0.7
+		var x := -20.0 + float(index) * 10.0
+		_add_dressing_mesh(parent, "FrozenIceSpire%02d" % index, spike, Vector3(x, 0.75 + spike.height * 0.5, -23.0), ice)
+
+
+func _create_forge_braziers(parent: Node3D, arena: Dictionary) -> void:
+	var iron := _dressing_material(Color(0.10, 0.075, 0.065))
+	var fire := _dressing_material(arena.accent, 5.0)
+	for index in 3:
+		var x := -18.0 + float(index) * 18.0
+		var bowl := TorusMesh.new()
+		bowl.inner_radius = 0.72
+		bowl.outer_radius = 1.05
+		bowl.rings = 8
+		bowl.ring_segments = 16
+		_add_dressing_mesh(parent, "ForgeBrazier%02d" % index, bowl, Vector3(x, 1.0, -23.0), iron)
+		var flame := SphereMesh.new()
+		flame.radius = 0.46
+		flame.height = 1.35
+		_add_dressing_mesh(parent, "ForgeFlame%02d" % index, flame, Vector3(x, 1.55, -23.0), fire)
+
+
+func _create_ruined_arches(parent: Node3D, arena: Dictionary) -> void:
+	var stone := _dressing_material(arena.stone * 1.08)
+	for index in 2:
+		var x := -16.0 if index == 0 else 16.0
+		for side in [-1.0, 1.0]:
+			var pillar := BoxMesh.new()
+			pillar.size = Vector3(0.85, 4.4, 0.85)
+			_add_dressing_mesh(parent, "GroveArchPillar%02d_%d" % [index, int(side)], pillar, Vector3(x + side * 2.0, 1.4, -23.0), stone)
+		var lintel := BoxMesh.new()
+		lintel.size = Vector3(4.85, 0.72, 0.85)
+		_add_dressing_mesh(parent, "GroveArchLintel%02d" % index, lintel, Vector3(x, 3.75, -23.0), stone)

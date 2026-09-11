@@ -42,6 +42,8 @@ func _run() -> void:
 		battlefield.apply_arena(arena_id)
 		assert(battlefield.arena_id == arena_id, "Arena application must select %s." % arena_id)
 		assert(battlefield.get_node("ArenaArchitecture").get_child_count() >= 40, "Every arena must rebuild a complete local terrace frame.")
+		var dressing := battlefield.get_node("ArenaArchitecture/ArenaSetDressing") as Node3D
+		assert(dressing != null and dressing.get_child_count() >= 3, "Every arena needs distinct local landmarks beyond the common terrace.")
 		lit_battlefield.apply_arena(arena_id)
 		assert(world_environment.environment.ambient_light_color == BattlefieldEnvironment.BOARD_AMBIENT_COLOR, "Arena lighting must keep board ambient color neutral in %s." % arena_id)
 		assert(is_equal_approx(world_environment.environment.ambient_light_energy, BattlefieldEnvironment.BOARD_AMBIENT_ENERGY), "Arena lighting must preserve bright neutral ambient energy in %s." % arena_id)
