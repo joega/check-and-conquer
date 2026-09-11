@@ -80,10 +80,17 @@ func settle_capture(result) -> void:
 
 func _walk_actor_to(actor, target: Vector3) -> void:
 	actor.face_world_position(target)
-	actor.play_state(&"locomotion.walk.forward")
 	var distance: float = actor.global_position.distance_to(target)
 	var duration: float = clampf(distance / WALK_SPEED_MPS, 0.32, 1.25)
+	# Root movement stays authoritative and code-controlled, while the imported
+	# in-place gait is retimed to complete one visible stride over the same
+	# interval. Without this, a four-metre pawn step ends halfway through a slow
+	# source clip and reads as a slide.
+	var walk_duration := maxf(actor.state_duration(&"locomotion.walk.forward"), 0.01)
+	actor.set_animation_speed(walk_duration / duration)
+	actor.play_state(&"locomotion.walk.forward")
 	await actor.move_to_world_position(target, duration).finished
+	actor.set_animation_speed(1.0)
 	actor.restore_board_facing()
 	actor.play_state(&"idle.neutral")
 
