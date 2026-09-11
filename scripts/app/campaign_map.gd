@@ -77,7 +77,6 @@ func refresh_state() -> void:
 			node.text = "🔒  %s\nLOCKED" % ARENA_TITLES[index]
 			node.modulate = Color(0.88, 0.72, 0.30)
 			node.add_theme_color_override("font_disabled_color", Color(0.88, 0.72, 0.30))
-	$SelectedArena.text = "DESTINATION  ·  %s" % ARENA_TITLES[CampaignProgress.ARENA_IDS.find(arena_selected)]
 	$EnterArena.disabled = not campaign.is_unlocked(arena_selected) or arena_selected in campaign.completed_ids
 	var practice_index := CampaignProgress.ARENA_IDS.find(practice_arena_id)
 	$PracticeArenaPicker.select(maxi(practice_index, 0))
