@@ -13,6 +13,7 @@ extends Camera3D
 @export var pan_limit_m := 20.0
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
+@export var close_focus_pitch := 0.30
 @export var default_board_distance := 42.0
 @export var default_board_pitch := 0.70
 @export var default_snap_duration_s := 0.32
@@ -151,8 +152,14 @@ func _apply_orbit() -> void:
 
 func _orbit_transform() -> Transform3D:
 	var focus_target := current_focus_target()
-	var horizontal := cos(_pitch) * _distance
-	var position := focus_target + Vector3(sin(_yaw) * horizontal, sin(_pitch) * _distance, cos(_yaw) * horizontal)
+	# A board angle is ideal at full-board distance, but it looks down on the
+	# floor once a player zooms into a character. Ease into a shallow camera
+	# pitch alongside the lifted face target so close inspection feels eye-level.
+	var range := maxf(close_focus_distance - min_distance, 0.001)
+	var close_weight := clampf((close_focus_distance - _distance) / range, 0.0, 1.0)
+	var effective_pitch := lerpf(_pitch, close_focus_pitch, close_weight)
+	var horizontal := cos(effective_pitch) * _distance
+	var position := focus_target + Vector3(sin(_yaw) * horizontal, sin(effective_pitch) * _distance, cos(_yaw) * horizontal)
 	return Transform3D(Basis.looking_at(focus_target - position, Vector3.UP), position)
 
 

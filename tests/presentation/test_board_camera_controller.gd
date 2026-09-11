@@ -24,6 +24,7 @@ func _run() -> void:
 	camera.zoom_by(-100.0)
 	assert(camera.current_focus_target().y > 2.9, "Close zoom must lift its target to the enlarged character face level.")
 	assert(camera.global_position.y > camera.current_focus_target().y, "Close zoom must keep the viewing camera above the face target.")
+	assert(camera.global_position.y - camera.current_focus_target().y < 1.2, "Close zoom must ease into an eye-level pitch instead of retaining the high board-view angle.")
 	camera.reset_view()
 	assert(camera.focused_side() == 1 and camera.target.is_equal_approx(Vector3.ZERO) and camera.global_position.distance_to(Vector3.ZERO) > 40.0, "Reset view must restore the centered default player-side board framing after close inspection.")
 	camera.snap_to_side(-1, 0.0)
