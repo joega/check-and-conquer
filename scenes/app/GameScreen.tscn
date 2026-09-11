@@ -53,6 +53,7 @@ script = ExtResource("4")
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(24, 28, 28)
 current = true
+fov = 62.0
 script = ExtResource("6")
 [node name="CameraDirector" type="Node" parent="."]
 script = ExtResource("5")

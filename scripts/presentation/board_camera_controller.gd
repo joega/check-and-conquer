@@ -11,7 +11,7 @@ extends Camera3D
 @export var orbit_sensitivity := 0.012
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
-@export var default_board_distance := 46.0
+@export var default_board_distance := 42.0
 @export var default_board_pitch := 0.70
 @export var default_snap_duration_s := 0.32
 
