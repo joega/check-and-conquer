@@ -45,22 +45,7 @@ func _run() -> void:
 	assert(absf(camera.global_position.x) < 0.1, "Black's turn framing must sit directly behind Black's rank-eight team.")
 	for corner in [Vector3(-16, 0, -16), Vector3(-16, 0, 16), Vector3(16, 0, -16), Vector3(16, 0, 16)]:
 		assert(camera.is_position_in_frustum(corner), "Mirrored player-side framing must keep every board corner visible.")
-	var walker := Node3D.new()
-	root.add_child(walker)
-	walker.global_position = Vector3.ZERO
-	camera.begin_move_follow(walker, Vector3(0.0, 0.0, -4.0))
-	walker.global_position = Vector3(0.0, 0.0, -2.0)
-	await process_frame
-	assert(not camera.controls_enabled(), "Move follow must lock manual orbit while the actor is walking.")
-	assert(camera.global_position.z > walker.global_position.z, "Move follow must stay behind the actor relative to its destination.")
-	assert(absf(camera.global_position.x - walker.global_position.x) > 0.5, "Move follow must use a shoulder offset so adjacent pieces do not hide the walker.")
-	assert(camera.global_position.y > walker.global_position.y + 3.0, "Move follow must frame the actor from above the board surface.")
-	var walker_screen_position := camera.unproject_position(walker.global_position + Vector3.UP * 1.55)
-	var viewport_center := get_root().get_visible_rect().get_center()
-	assert(walker_screen_position.distance_to(viewport_center) < get_root().get_visible_rect().size.x * 0.18, "Move follow must hold the walking character near screen center.")
-	camera.end_move_follow()
-	assert(camera.controls_enabled(), "Move follow must restore manual inspection after the walk.")
-	walker.queue_free()
+	assert("TILT" in camera.debug_readout() and "SPIN" in camera.debug_readout() and "ZOOM" in camera.debug_readout(), "The tuning overlay must expose the live editable orbit values.")
 	camera.snap_to_side(1, 0.5)
 	await process_frame
 	var interrupted_transform: Transform3D = camera.global_transform

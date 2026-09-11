@@ -156,6 +156,19 @@ offset_right = 600.0
 offset_bottom = 56.0
 theme_override_font_sizes/font_size = 22
 text = "White to move"
+[node name="CameraDebug" type="Label" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -324.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 76.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.93, 0.77, 0.35, 0.95)
+theme_override_font_sizes/font_size = 16
+text = "TILT +37.8°   SPIN -180.0°\nZOOM 34.0m   PAN X 0.0  Z 0.0"
+horizontal_alignment = 2
 [node name="CameraHelp" type="Label" parent="UI"]
 offset_left = 44.0
 offset_top = 602.0

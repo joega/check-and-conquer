@@ -31,6 +31,12 @@ func _ready() -> void:
 	call_deferred("_initialize_game")
 
 
+func _process(_delta: float) -> void:
+	# Keep the tuning readout available while the board remains otherwise clean.
+	# It reports the controller's actual editable orbit state on every frame.
+	$UI/CameraDebug.text = $Camera3D.debug_readout()
+
+
 func _initialize_game() -> void:
 	# Give the scene one rendered frame with the loading card before the 32
 	# character rigs, animation libraries, and Stockfish adapter initialize.
@@ -56,7 +62,6 @@ func _initialize_game() -> void:
 	$UI/Undo.pressed.connect(_undo)
 	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
-	$BoardPresenter.quiet_move_started.connect(_begin_move_follow)
 	for label in ["Novice", "Master"]:
 		$UI/Difficulty.add_item(label)
 	for label in ["Play White", "Play Black"]:
@@ -203,7 +208,6 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	else:
 		$BoardPresenter.clear_check_indicator()
 	if result.game_result == "ongoing":
-		$Camera3D.end_move_follow()
 		$Camera3D.snap_to_side(controller.game.state.side_to_move)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
@@ -421,8 +425,6 @@ func _return_to_final_position() -> void:
 	$Camera3D.snap_to_side(controller.game.state.side_to_move)
 
 
-func _begin_move_follow(actor: Node3D, destination: Vector3, _duration_s: float) -> void:
-	$Camera3D.begin_move_follow(actor, destination)
 
 
 func _copy_pgn() -> String:

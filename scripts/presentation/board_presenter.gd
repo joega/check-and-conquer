@@ -8,8 +8,6 @@ const ACTOR_SCENE = preload("res://scenes/actors/PieceActor.tscn")
 var actors: Dictionary = {}
 const WALK_SPEED_MPS := 7.0
 
-signal quiet_move_started(actor: Node3D, destination: Vector3, duration_s: float)
-
 func rebuild_from_state(state) -> void:
 	for actor in actors.values(): actor.queue_free()
 	actors.clear()
@@ -137,7 +135,6 @@ func _walk_actor_to(actor, target: Vector3) -> void:
 	var walk_duration := maxf(actor.state_duration(&"locomotion.walk.forward"), 0.01)
 	actor.set_animation_speed(walk_duration / duration)
 	actor.play_state(&"locomotion.walk.forward")
-	quiet_move_started.emit(actor, target, duration)
 	await actor.move_to_world_position(target, duration).finished
 	actor.set_animation_speed(1.0)
 	actor.restore_board_facing()
