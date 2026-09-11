@@ -56,6 +56,8 @@ func _initialize_game() -> void:
 	$UI/Settings.pressed.connect(_toggle_settings_menu)
 	$UI/Fullscreen.pressed.connect(_toggle_fullscreen)
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
+	$UI/QuickResetView.pressed.connect($Camera3D.reset_view)
+	$Camera3D.view_modified.connect(_set_quick_reset_visible)
 	$UI/GameOverPanel/Content/RestartGame.pressed.connect(_restart)
 	$UI/GameOverPanel/Content/Menu.pressed.connect(_return_to_campaign)
 	$UI/GameOverPanel/Content/CopyPGN.pressed.connect(_copy_pgn)
@@ -64,7 +66,6 @@ func _initialize_game() -> void:
 	$UI/GameOverPanel/Content/Next.pressed.connect(func(): _show_review_position(replay_index + 1))
 	$UI/GameOverPanel/Content/ReturnFinal.pressed.connect(_return_to_final_position)
 	$UI/Undo.pressed.connect(_undo)
-	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
 	$BattleDirector.weapon_impact.connect($ArenaAudioDirector.play_weapon_impact)
 	$BoardPresenter.piece_landed.connect($ArenaAudioDirector.play_piece_land)
@@ -162,13 +163,11 @@ func _present_result(result) -> void:
 		if attacker != null and victim != null:
 			capture_impact_position = victim.global_position + Vector3.UP * 1.0
 			_set_capture_ui_visible(false)
-			$UI/Skip.visible = true
 			# Keep the capture in the player's chosen board view. The battle remains
 			# readable through actor choreography and impact effects without taking
 			# over the camera or zooming the board out from under the player.
 			await $BattleDirector.play_capture(attacker, victim, Mapper.square_to_world(result.to_square))
 			$BoardPresenter.settle_capture(result)
-			$UI/Skip.visible = false
 			_set_capture_ui_visible(true)
 		else:
 			await $BoardPresenter.present_quiet_move(result)
@@ -195,6 +194,10 @@ func _set_camera_shake(enabled: bool) -> void:
 	$CameraDirector.shake_enabled = enabled
 	settings.camera_shake = enabled
 	_save_settings()
+
+
+func _set_quick_reset_visible(is_modified: bool) -> void:
+	$UI/QuickResetView.visible = is_modified
 
 
 func _record_campaign_victory_if_earned(result) -> bool:
@@ -237,10 +240,9 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$BoardPresenter.show_check_on_side(controller.game.state.side_to_move)
 	else:
 		$BoardPresenter.clear_check_indicator()
-	# Quiet moves return to the default board read. Captures already play from the
-	# player's current view, so preserve that view through the outcome instead of
-	# immediately replacing it with another camera snap.
-	if result.game_result == "ongoing" and not result.is_capture:
+	# Keep a player's deliberate framing throughout both quiet moves and captures.
+	# The default read remains available through the compact Reset view control.
+	if result.game_result == "ongoing" and not result.is_capture and $Camera3D.is_default_view():
 		$Camera3D.snap_to_side(player_side)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()

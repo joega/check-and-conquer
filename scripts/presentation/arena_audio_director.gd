@@ -1,18 +1,31 @@
 class_name ArenaAudioDirector
 extends Node
 
-## Original procedural score and effects for the five campaign arenas. Runtime
-## synthesis keeps the prototype self-contained while separating audio intent
-## from chess rules and combat choreography.
+## Original procedural score plus CC0-recorded combat effects. Audio intent
+## stays separate from chess rules and combat choreography.
 
 const SAMPLE_RATE := 22050
 const MUSIC_DURATION_S := 12.0
+const SFX_STREAMS := {
+	&"piece_land": [preload("res://assets/audio/cc0_fantasy/wood-twigs-break-01.wav")],
+	&"sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav"), preload("res://assets/audio/cc0_fantasy/sword-clash-03.wav")],
+	&"dual_sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-03.wav"), preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav")],
+	&"royal_blade_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav")],
+	&"spear_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
+	&"arrow_release": [preload("res://assets/audio/cc0_fantasy/arrow-feathers-01.wav"), preload("res://assets/audio/cc0_fantasy/arrow-grab-from-quiver-01.wav")],
+	&"arrow_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
+	&"arcane_cast": [preload("res://assets/audio/cc0_fantasy/paralyzer-discharge-02.wav")],
+	&"arcane_impact": [preload("res://assets/audio/cc0_fantasy/paralyzer-discharge-02.wav")],
+	&"wall_slam": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
+	&"hammer_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
+}
 
 var active_arena_id := "mountain_fortress"
 var last_sfx_kind: StringName = &""
 var played_sfx_kinds: Array[StringName] = []
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
+var _sfx_cycles: Dictionary = {}
 
 
 func _ready() -> void:
@@ -66,8 +79,19 @@ func _play_sfx(kind: StringName) -> void:
 		if not candidate.playing:
 			player = candidate
 			break
-	player.stream = _build_sfx_stream(kind)
+	player.stream = _sfx_stream_for(kind)
 	player.play()
+
+
+func _sfx_stream_for(kind: StringName) -> AudioStream:
+	var streams: Array = SFX_STREAMS.get(kind, [])
+	if not streams.is_empty():
+		var index: int = int(_sfx_cycles.get(kind, 0)) % streams.size()
+		_sfx_cycles[kind] = index + 1
+		return streams[index]
+	# The fallback protects debug callers that introduce a new cue before a
+	# recorded asset is assigned; normal gameplay uses the CC0 samples above.
+	return _build_sfx_stream(kind)
 
 
 func _build_music_stream(arena_id: String) -> AudioStreamWAV:

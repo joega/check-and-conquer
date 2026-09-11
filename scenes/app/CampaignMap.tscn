@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/app/campaign_map.gd" id="1_campaign_map"]
 [ext_resource type="Texture2D" path="res://assets/environment/generated/warpath_campaign_map_v1.png" id="2_map"]
+[ext_resource type="AudioStream" path="res://assets/audio/war-horn.mp3" id="3_horn"]
 
 [node name="CampaignMap" type="Control"]
 layout_mode = 3
@@ -33,6 +34,10 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.015, 0.025, 0.06, 0.22)
 mouse_filter = 2
+
+[node name="OpeningHorn" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_horn")
+volume_db = -7.0
 
 [node name="Title" type="Label" parent="."]
 layout_mode = 0

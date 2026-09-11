@@ -1,6 +1,8 @@
 class_name BoardCameraController
 extends Camera3D
 
+signal view_modified(is_modified: bool)
+
 ## Player-controlled board framing. Capture staging temporarily overrides this
 ## camera, then CameraDirector restores the current board transform.
 
@@ -74,6 +76,7 @@ func zoom_by(amount: float) -> void:
 	_cancel_snap()
 	_distance = clampf(_distance + amount, min_distance, max_distance)
 	_apply_orbit()
+	_emit_view_state()
 
 
 func orbit_by(yaw_delta: float, pitch_delta: float) -> void:
@@ -81,6 +84,7 @@ func orbit_by(yaw_delta: float, pitch_delta: float) -> void:
 	_yaw += yaw_delta
 	_pitch = clampf(_pitch + pitch_delta, 0.24, 1.22)
 	_apply_orbit()
+	_emit_view_state()
 
 
 func pan_by(drag_delta: Vector2) -> void:
@@ -100,6 +104,7 @@ func pan_by(drag_delta: Vector2) -> void:
 	target.y = 0.0
 	target.z = clampf(target.z, -pan_limit_m, pan_limit_m)
 	_apply_orbit()
+	_emit_view_state()
 
 
 func set_controls_enabled(enabled: bool) -> void:
@@ -120,6 +125,14 @@ func reset_view() -> void:
 
 func focused_side() -> int:
 	return _focused_side
+
+
+func is_default_view() -> bool:
+	var default_yaw := PI if _focused_side > 0 else 0.0
+	return target.is_equal_approx(_home_target) \
+		and is_equal_approx(_distance, default_board_distance) \
+		and is_equal_approx(_pitch, default_board_pitch) \
+		and is_equal_approx(_yaw, default_yaw)
 
 
 func debug_readout() -> String:
@@ -146,10 +159,14 @@ func snap_to_side(side: int, duration_s := -1.0) -> void:
 	_cancel_snap()
 	if actual_duration <= 0.0:
 		global_transform = destination
+		_emit_view_state()
 		return
 	_snap_tween = create_tween()
 	_snap_tween.tween_property(self, "global_transform", destination, actual_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_snap_tween.finished.connect(func(): _snap_tween = null)
+	_snap_tween.finished.connect(func():
+		_snap_tween = null
+		_emit_view_state()
+	)
 
 
 func current_focus_target() -> Vector3:
@@ -182,3 +199,7 @@ func _cancel_snap() -> void:
 	if _snap_tween != null and _snap_tween.is_valid():
 		_snap_tween.kill()
 	_snap_tween = null
+
+
+func _emit_view_state() -> void:
+	view_modified.emit(not is_default_view())

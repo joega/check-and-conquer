@@ -12,8 +12,11 @@ func _run() -> void:
 	camera.position = Vector3(24, 28, 28)
 	root.add_child(camera)
 	await process_frame
+	var manual_view_states: Array[bool] = []
+	camera.view_modified.connect(func(is_modified: bool): manual_view_states.append(is_modified))
 	var initial_position: Vector3 = camera.global_position
 	camera.zoom_by(-2.0)
+	assert(manual_view_states.back(), "A manual zoom must mark the board camera as modified.")
 	assert(camera.global_position.distance_to(Vector3.ZERO) < initial_position.distance_to(Vector3.ZERO))
 	camera.orbit_by(0.8, -0.1)
 	assert(not camera.global_position.is_equal_approx(initial_position))
@@ -26,6 +29,7 @@ func _run() -> void:
 	assert(camera.global_position.y > camera.current_focus_target().y, "Close zoom must keep the viewing camera above the face target.")
 	assert(camera.global_position.y - camera.current_focus_target().y < 1.2, "Close zoom must ease into an eye-level pitch instead of retaining the high board-view angle.")
 	camera.reset_view()
+	assert(not manual_view_states.back() and camera.is_default_view(), "Reset view must clear the modified framing state.")
 	assert(camera.focused_side() == 1 and camera.target.is_equal_approx(Vector3.ZERO) and camera.global_position.distance_to(Vector3.ZERO) > 25.0, "Reset view must restore the closer centered player-side framing after close inspection.")
 	assert("TILT +33.0°" in camera.debug_readout() and "SPIN +180.0°" in camera.debug_readout() and "ZOOM 34.0m" in camera.debug_readout(), "Reset view must use the player-tuned White default values.")
 	assert(camera.global_position.z < 0.0 and absf(camera.global_position.x) < 0.1, "White's turn framing must sit directly behind White's rank-one team.")

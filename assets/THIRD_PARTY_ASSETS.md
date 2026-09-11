@@ -89,3 +89,29 @@ model, VFX pack, or other third-party visual asset.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; the source archive is retained locally in ignored `assets/source-archives/`.
 - Verification notes: Godot 4.7.2 imported each selected FBX. Board reconstruction, capture death completion, and Combat Lab's 20-cycle reset passed with weapon-bearing actors.
+
+### Fantasy Sound Effects (Tinysized SFX)
+
+- Creator: Tinysized
+- Source URL: https://lpc.opengameart.org/content/fantasy-sound-effects-tinysized-sfx
+- License: CC0 1.0 Universal
+- Date acquired: 2026-09-11
+- Original archive/file: `tinysized.zip` (SHA-256 `7f00e2b1dae15e68db0e1d6096767f03755e9e7c247128afc3e935e63774d7db`; archive remains outside the repository)
+- Files used in project: `assets/audio/cc0_fantasy/arrow-feathers-01.wav`, `arrow-grab-from-quiver-01.wav`, `metal-hammer-hit-01.wav`, `paralyzer-discharge-02.wav`, `sword-clash-01.wav`, `sword-clash-03.wav`, and `wood-twigs-break-01.wav`.
+- Modifications: Extracted the selected WAV effects without editing. `ArenaAudioDirector` assigns them to landings, blade clashes, arrows, arcane discharges, and heavy impacts.
+- Attribution required: no
+- Redistribution notes: CC0 public-domain dedication; only the selected runtime effects are committed.
+- Verification notes: Imported by Godot 4.7.2 and selected through `ArenaAudioDirector`; these replace the ordinary runtime-synthesized combat beeps.
+
+### War Horn opening cue
+
+- Creator: user-provided; original creator not yet supplied
+- Source URL: not supplied
+- License: pending source/license confirmation
+- Date acquired: 2026-09-11
+- Original archive/file: `war-horn.mp3` (SHA-256 `2925944228f76084c121905bf709357913185a77017733088af63a7ca6c3f108`)
+- Files used in project: `assets/audio/war-horn.mp3`
+- Modifications: Relocated into the project audio directory; no audio edit.
+- Attribution required: unknown pending source/license confirmation
+- Redistribution notes: Do not distribute independently until provenance is confirmed.
+- Verification notes: Assigned to the campaign map `OpeningHorn` player and played once per app session when the opening map appears.

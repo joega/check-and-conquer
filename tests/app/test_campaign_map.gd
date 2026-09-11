@@ -14,6 +14,7 @@ func _run() -> void:
 	root.add_child(map)
 	await process_frame
 	assert(map.get_node("MapArt").texture is Texture2D, "The campaign route must be framed by its original illustrated map backdrop.")
+	assert(map.get_node("OpeningHorn") is AudioStreamPlayer and map.get_node("OpeningHorn").stream is AudioStreamMP3, "The opening campaign map must carry the imported war-horn cue.")
 	assert(map.get_node("Route").get_child_count() == 5, "The campaign route must expose five arena nodes.")
 	assert(map.get_node("Route/MountainFortress").disabled == false, "The first arena must begin available.")
 	assert(map.get_node("Route/ArcaneSkyCitadel").disabled, "Future arenas must begin locked.")

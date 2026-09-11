@@ -24,9 +24,13 @@ const ARENA_TITLES := [
 var arena_selected := "mountain_fortress"
 var campaign := CampaignProgress.new()
 var _session_values: Dictionary = {}
+static var _opening_horn_played := false
 
 
 func _ready() -> void:
+	if not _opening_horn_played:
+		$OpeningHorn.play()
+		_opening_horn_played = true
 	$EnterArena.pressed.connect(_enter_selected_arena)
 	$PracticeArena.pressed.connect(_enter_practice_arena)
 	for button_name: String in DEBUG_SCENES:

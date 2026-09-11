@@ -68,7 +68,7 @@ func _run() -> void:
 	var board_camera = screen.get_node("Camera3D")
 	var capture_ui_is_clean := [false]
 	screen.get_node("BattleDirector").impact_landed.connect(func():
-		capture_ui_is_clean[0] = not screen.get_node("UI/Move").visible and screen.get_node("UI/Skip").visible
+		capture_ui_is_clean[0] = not screen.get_node("UI/Move").visible and not screen.has_node("UI/Skip")
 	)
 	screen._set_camera_shake(false)
 	screen.computer_enabled = false
@@ -79,6 +79,7 @@ func _run() -> void:
 		screen._after_presentation(result, false)
 	board_camera.zoom_by(1.7)
 	board_camera.orbit_by(0.7, -0.12)
+	assert(screen.get_node("UI/QuickResetView").visible, "Manual camera changes must reveal the compact Reset view control.")
 	var board_camera_transform: Transform3D = board_camera.global_transform
 	var capture_result = screen.controller.submit_uci("e4d5")
 	assert(capture_result != null, "The capture fixture must submit the final legal capture.")
@@ -87,10 +88,12 @@ func _run() -> void:
 	screen.computer_enabled = true
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
 	assert(&"dual_sword_impact" in screen.get_node("ArenaAudioDirector").played_sfx_kinds, "Pawn captures must emit a weapon-specific dual-sword impact sound.")
-	assert(capture_ui_is_clean[0] and not screen.get_node("UI/Move").visible and screen.get_node("UI/Settings").visible, "Only the skip control may remain over the capture cinematic, then the board-first Menu view must return afterward.")
+	assert(capture_ui_is_clean[0] and not screen.get_node("UI/Move").visible, "Capture cinematics must leave the board-first HUD clean without a battle-skip control.")
 	assert(board_camera.global_transform.is_equal_approx(board_camera_transform), "Capture presentation must preserve a manually chosen board view without zooming or snapping.")
 	assert(board_camera.focused_side() == screen.player_side, "The preserved board view must remain associated with the human player's side.")
-	assert(not screen.get_node("UI/Skip").visible)
+	assert(not screen.has_node("UI/Skip"), "Players should watch the complete battle; Skip battle must not be present in the game HUD.")
+	board_camera.reset_view()
+	assert(not screen.get_node("UI/QuickResetView").visible, "Reset view must hide after restoring the default board framing.")
 	assert(is_zero_approx(screen.get_node("ImpactFlash").light_energy), "Impact flash must clean up after a capture.")
 	var campaign_win = MoveResult.new()
 	campaign_win.is_checkmate = true
