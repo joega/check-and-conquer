@@ -14,13 +14,13 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	await process_frame
-	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Computer").visible, "Configuration controls must begin condensed in the settings menu.")
+	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Spectator").visible, "Configuration controls must begin condensed in the settings menu.")
 	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
 	screen._show_capture_impact()
 	var impact_sparks: GPUParticles3D = screen.get_node("ImpactSparks")
 	assert(impact_sparks.emitting and impact_sparks.global_position.is_equal_approx(screen.capture_impact_position), "Capture impacts must restart a visible spark burst at the committed contact point.")
 	screen._toggle_settings_menu()
-	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Computer").visible and screen.get_node("UI/Spectator").visible, "Settings must reveal grouped configuration controls, including spectator mode, on demand.")
+	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Spectator").visible, "Settings must reveal grouped configuration controls, including spectator mode, on demand.")
 	screen._toggle_settings_menu()
 	assert(screen.computer_enabled, "The playable screen should enable Stockfish by default.")
 	screen.get_node("UI/Move").text = "e2e4"
@@ -45,28 +45,21 @@ func _run() -> void:
 		await create_timer(0.02).timeout
 	assert(screen.controller.game.move_history.size() == 1, "Stockfish must make the opening move when the player chooses Black.")
 	assert(screen.controller.game.state.side_to_move == -1, "Black must receive input after Stockfish's White opener.")
-	screen._set_computer_enabled(false)
+	screen._set_player_side(0)
 	screen._restart()
 	screen.get_node("UI/Move").text = "e2e4"
 	await screen._submit()
-	screen.get_node("UI/Move").text = "e7e5"
-	await screen._submit()
-	assert(screen.controller.game.move_history == ["e2e4", "e7e5"], "Local mode must accept both human sides without an engine turn.")
+	deadline = Time.get_ticks_msec() + 12000
+	while screen.controller.game.move_history.size() < 2 and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	assert(screen.controller.game.move_history.size() >= 2, "Player-versus-Stockfish must receive an engine response.")
 	screen._show_review_position(0)
 	assert(screen.replay_index == 0 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state_history[0]), "Review must rebuild the initial authoritative position.")
 	screen._show_review_position(1)
 	assert(screen.replay_index == 1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state_history[1]), "Review must rebuild each committed ply.")
 	screen._return_to_final_position()
 	assert(screen.replay_index == -1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Leaving review must restore the final authoritative position.")
-	assert("1. e4 e5" in screen._copy_pgn(), "Completed local moves must prepare portable PGN.")
-	screen._set_player_side(0)
-	screen._restart()
-	for uci in ["f2f3", "e7e5", "g2g4", "d8h4"]:
-		screen.get_node("UI/Move").text = uci
-		await screen._submit()
-	assert(screen.controller.phase == screen.controller.Phase.GAME_OVER)
-	assert(screen.get_node("UI/Submit").disabled and "checkmate" in screen.get_node("UI/Status").text)
-	assert(screen.get_node("UI/GameOverPanel").visible and "Checkmate" in screen.get_node("UI/GameOverPanel/Content/Result").text)
+	assert("1. e4" in screen._copy_pgn(), "Completed player-versus-Stockfish moves must prepare portable PGN.")
 	screen._restart()
 	var board_camera = screen.get_node("Camera3D")
 	var capture_camera_height := 0.0
@@ -78,9 +71,13 @@ func _run() -> void:
 	board_camera.zoom_by(1.7)
 	board_camera.orbit_by(0.7, -0.12)
 	var board_camera_transform: Transform3D = board_camera.global_transform
+	screen.computer_enabled = false
 	for uci in ["e2e4", "d7d5", "e4d5"]:
-		screen.get_node("UI/Move").text = uci
-		await screen._submit()
+		var result = screen.controller.submit_uci(uci)
+		assert(result != null, "The capture fixture must submit each legal move directly to the authoritative controller.")
+		await screen._present_result(result)
+		screen._after_presentation(result, false)
+	screen.computer_enabled = true
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
 	assert(capture_camera_height < 12.0, "The camera must be in the close overhead action shot at the capture impact beat.")
 	assert(capture_ui_is_clean[0] and screen.get_node("UI/Move").visible, "Only the skip control may remain over the capture cinematic, and the move controls must return afterward.")
@@ -97,7 +94,7 @@ func _run() -> void:
 	root.add_child(restored_screen)
 	await process_frame
 	await process_frame
-	assert(not restored_screen.computer_enabled, "Local-play preference must survive a relaunch.")
+	assert(restored_screen.computer_enabled, "Stockfish-only V1 must ignore an older saved local-play preference.")
 	assert(restored_screen.get_node("UI/AnimationSpeed").selected == 1, "Capture-speed preference must survive a relaunch.")
 	assert(not restored_screen.get_node("CameraDirector").shake_enabled, "Camera-shake preference must survive a relaunch.")
 	assert(is_equal_approx(AudioServer.get_bus_volume_db(0), -8.0), "Master-volume preference must survive a relaunch.")

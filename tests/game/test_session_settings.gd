@@ -21,7 +21,10 @@ func _init() -> void:
 	assert(SessionSettings.save_values(expected) == OK)
 	var restored := SessionSettings.load_values()
 	for key in expected:
-		assert(restored[key] == expected[key], "Saved setting %s must round-trip." % key)
+		if key == "computer_enabled":
+			assert(restored[key] == true, "Saved local-play preference must be ignored in Stockfish-only V1.")
+		else:
+			assert(restored[key] == expected[key], "Saved setting %s must round-trip." % key)
 	assert(DirAccess.remove_absolute(ProjectSettings.globalize_path(SessionSettings.PATH)) == OK)
 	var legacy := ConfigFile.new()
 	legacy.set_value(SessionSettings.SECTION, "difficulty_index", 1)

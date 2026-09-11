@@ -27,6 +27,9 @@ static func load_values() -> Dictionary:
 	for key in DEFAULTS:
 		if config.has_section_key(SECTION, key):
 			values[key] = config.get_value(SECTION, key, DEFAULTS[key])
+	# V1 is exclusively player-versus-Stockfish. Ignore any older saved local
+	# play toggle so opening the game never hands both sides to one player.
+	values.computer_enabled = true
 	return values
 
 

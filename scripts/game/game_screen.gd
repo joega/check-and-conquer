@@ -9,7 +9,7 @@ const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
 const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
-	"Move", "Submit", "Computer", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
+	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Move", "Submit", "Restart", "Undo", "Back", "Settings", "CameraHelp"]
@@ -68,7 +68,6 @@ func _initialize_game() -> void:
 	$UI/Promotion.select(0)
 	_load_settings()
 	_set_settings_menu_visible(false)
-	$UI/Computer.toggled.connect(_set_computer_enabled)
 	$UI/Spectator.toggled.connect(_set_spectator_enabled)
 	$UI/Difficulty.item_selected.connect(_set_difficulty)
 	$UI/PlayerSide.item_selected.connect(_set_player_side)
@@ -83,7 +82,6 @@ func _initialize_game() -> void:
 	engine.engine_line.connect(_on_engine_line)
 	if computer_enabled and not engine.start():
 		computer_enabled = false
-		$UI/Computer.button_pressed = false
 	$UI/LoadingOverlay.visible = false
 
 func _exit_tree() -> void:
@@ -127,7 +125,7 @@ func _submit() -> void:
 	if spectator_enabled:
 		$UI/Status.text = "Spectating Stockfish versus Stockfish."
 		return
-	if computer_enabled and controller.game.state.side_to_move != player_side:
+	if controller.game.state.side_to_move != player_side:
 		$UI/Status.text = "Stockfish is thinking."
 		return
 	var result = controller.submit_uci($UI/Move.text.strip_edges().to_lower())
@@ -244,10 +242,9 @@ func _on_engine_error(message: String) -> void:
 	engine_request_pending = false
 	controller.engine_failed()
 	computer_enabled = false
-	$UI/Computer.button_pressed = false
 	spectator_enabled = false
 	$UI/Spectator.button_pressed = false
-	$UI/Status.text = "Computer unavailable: %s. Local play remains available." % message
+	$UI/Status.text = "Stockfish unavailable: %s" % message
 
 func _on_engine_line(line: String) -> void:
 	var log: RichTextLabel = $UI/EngineLog
@@ -255,35 +252,15 @@ func _on_engine_line(line: String) -> void:
 	while log.get_line_count() > 6:
 		log.remove_paragraph(0)
 
-func _set_computer_enabled(enabled: bool) -> void:
-	if not enabled and spectator_enabled:
-		spectator_enabled = false
-		$UI/Spectator.button_pressed = false
-	computer_enabled = enabled
-	if enabled and engine != null and not engine.is_running():
-		if not engine.start():
-			computer_enabled = false
-			$UI/Computer.button_pressed = false
-	if not enabled and controller.phase == TurnController.Phase.ENGINE_THINKING:
-		engine_request_pending = false
-		engine.stop_thinking()
-		controller.engine_failed()
-	$UI/Status.text = "White to move" if controller.game.state.side_to_move == Types.WHITE else "Black to move"
-	settings.computer_enabled = computer_enabled
-	_save_settings()
-
-
 func _set_spectator_enabled(enabled: bool) -> void:
 	spectator_enabled = enabled
 	if spectator_enabled:
 		computer_enabled = true
-		$UI/Computer.button_pressed = true
 		if engine != null and not engine.is_running() and not engine.start():
 			spectator_enabled = false
 			$UI/Spectator.button_pressed = false
 			$UI/Status.text = "Spectator mode requires Stockfish."
 	settings.spectator_enabled = spectator_enabled
-	settings.computer_enabled = computer_enabled
 	_save_settings()
 	_restart()
 
@@ -328,7 +305,8 @@ func _load_settings() -> void:
 	var difficulty_index := clampi(int(settings.get("difficulty_index", 0)), 0, 1)
 	var player_index := clampi(int(settings.get("player_side_index", 0)), 0, 1)
 	var speed_index := clampi(int(settings.get("capture_speed_index", 0)), 0, 1)
-	computer_enabled = bool(settings.get("computer_enabled", true))
+	computer_enabled = true
+	settings.computer_enabled = true
 	spectator_enabled = bool(settings.get("spectator_enabled", false))
 	if spectator_enabled:
 		computer_enabled = true
@@ -338,7 +316,6 @@ func _load_settings() -> void:
 	$CameraDirector.shake_enabled = bool(settings.get("camera_shake", true))
 	var volume_db := clampf(float(settings.get("master_volume_db", 0.0)), -40.0, 0.0)
 	AudioServer.set_bus_volume_db(0, volume_db)
-	$UI/Computer.button_pressed = computer_enabled
 	$UI/Spectator.button_pressed = spectator_enabled
 	$UI/Difficulty.select(difficulty_index)
 	$UI/PlayerSide.select(player_index)
@@ -379,7 +356,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var square: int = Mapper.world_to_square(point)
 	if square == Types.NO_SQUARE: return
 	if selected_square == Types.NO_SQUARE:
-		if computer_enabled and controller.game.state.side_to_move != player_side:
+		if controller.game.state.side_to_move != player_side:
 			return
 		if Types.piece_side(controller.game.state.get_piece(square)) == controller.game.state.side_to_move:
 			selected_square = square

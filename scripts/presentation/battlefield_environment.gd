@@ -9,13 +9,11 @@ extends Node3D
 
 var _storm_time := 0.0
 var _flash: OmniLight3D
-var _clouds: Array[MeshInstance3D] = []
 var _beacon_lights: Array[OmniLight3D] = []
 
 func _ready() -> void:
 	_create_plateau()
 	_create_mountains()
-	_create_clouds()
 	_create_storm_beacons()
 	_flash = OmniLight3D.new()
 	_flash.name = "StormFlash"
@@ -28,10 +26,6 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_storm_time += delta
-	for index in _clouds.size():
-		var cloud := _clouds[index]
-		var home_position: Vector3 = cloud.get_meta("home_position")
-		cloud.position = home_position + Vector3(sin(_storm_time * 0.10 + index) * 4.0, sin(_storm_time * 0.16 + index) * 0.35, cos(_storm_time * 0.08 + index) * 3.0)
 	for index in _beacon_lights.size():
 		_beacon_lights[index].light_energy = 2.0 + sin(_storm_time * 2.8 + index * 1.7) * 0.45
 	var cycle := fmod(_storm_time, storm_cycle_s)
@@ -75,28 +69,6 @@ func _create_mountains() -> void:
 		material.roughness = 0.98
 		mountain.material_override = material
 		add_child(mountain)
-
-func _create_clouds() -> void:
-	for index in 9:
-		var cloud := MeshInstance3D.new()
-		cloud.name = "StormCloud%02d" % index
-		var mesh := SphereMesh.new()
-		mesh.radius = 1.0
-		mesh.height = 0.65
-		mesh.radial_segments = 12
-		mesh.rings = 6
-		cloud.mesh = mesh
-		cloud.position = Vector3(-28.0 + index * 7.0, 18.0 + (index % 3) * 1.4, -28.0 - (index % 2) * 8.0)
-		cloud.set_meta("home_position", cloud.position)
-		cloud.scale = Vector3(8.0, 2.2, 3.5)
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.13, 0.17, 0.25, 0.82)
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.roughness = 1.0
-		cloud.material_override = material
-		add_child(cloud)
-		_clouds.append(cloud)
-
 
 func _create_rain() -> void:
 	var rain := GPUParticles3D.new()
