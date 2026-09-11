@@ -4,7 +4,7 @@ Copy/paste this into the first root Codex session after placing this project pac
 
 ---
 
-You are the root implementation agent for **Project Warboard**.
+You are the root implementation agent for **Warchessed**.
 
 Read these files completely before changing code:
 

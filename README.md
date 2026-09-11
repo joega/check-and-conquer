@@ -1,6 +1,6 @@
-# Warboard
+# Warchessed
 
-**Warboard** is an original 3D chess game where every legal move plays out on a living battlefield. Chess rules remain authoritative; animated duels give captures their drama.
+**Warchessed** is an original 3D chess game where every legal move plays out on a living battlefield. Chess rules remain authoritative; animated duels give captures their drama.
 
 ![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
@@ -15,7 +15,7 @@
 - A turn-aware three-quarter camera with readable board-edge coordinates that settles behind the player to move. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
 - Debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
-Warboard is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
+Warchessed is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
 
 ## Run it
 
@@ -64,7 +64,7 @@ The exporter creates `build/linux-x86_64/` and places Stockfish beside the game 
 - The pure chess domain owns the game state; 3D actors can be rebuilt from it at any time.
 - Stockfish is an isolated UCI subprocess whose moves are independently validated before use.
 - Every capture pairing has a generic fallback before bespoke choreography is added.
-- Warboard uses original presentation and does not reproduce art, animations, audio, UI, or branding from any existing chess-combat game.
+- Warchessed uses original presentation and does not reproduce art, animations, audio, UI, or branding from any existing chess-combat game.
 
 ## Credits and licenses
 

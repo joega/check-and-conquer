@@ -101,3 +101,11 @@ Record after M1 evidence:
 - testing framework/plugin,
 - project source license,
 - binary packaging strategy for Stockfish per platform.
+
+## ADR-014 — Provisional public name: Warchessed
+
+**Status:** Accepted
+**Date:** 2026-09-10
+**Decision:** Present the game as “Warchessed” in the runtime title, main menu, Linux package name, and public README. Retain `warboard` only in the repository URL, historic records, and legacy settings migration.
+**Reason:** The name immediately communicates animated combat chess and is more distinctive than a generic fantasy title. An exact-term preliminary web search on 2026-09-10 returned no public game or trademark results.
+**Consequences:** Existing `user://warboard_settings.cfg` values load when no `user://warchessed_settings.cfg` exists, and subsequent saves use the new path. This preliminary screen is not trademark clearance; jurisdiction-appropriate review is still required before commercial release.

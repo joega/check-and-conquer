@@ -1,6 +1,6 @@
 # Asset and Animation Pipeline
 
-This document exists because the 3D asset pipeline is the highest-risk area of Project Warboard.
+This document exists because the 3D asset pipeline is the highest-risk area of Warchessed.
 
 ## Objective
 

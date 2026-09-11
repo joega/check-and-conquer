@@ -1,6 +1,6 @@
-# Project Warboard — Master Project Plan
+# Warchessed — Master Project Plan
 
-> **Working title:** Project Warboard  
+> **Working title:** Warchessed
 > **Product concept:** A modern, original 3D chess game inspired by the *idea* of animated combat chess: normal chess rules, but captures trigger character combat sequences.  
 > **Primary engine:** Godot 4.x (latest stable at project start)  
 > **Chess AI:** Stockfish 19 or latest stable, launched as a separate UCI process  
@@ -924,7 +924,7 @@ These tools reduce agent iteration cost enormously.
 Recommended:
 
 ```text
-warboard/
+warchessed/
 ├── AGENTS.md
 ├── README.md
 ├── LICENSE                  # project license decision; do not confuse with third-party licenses
