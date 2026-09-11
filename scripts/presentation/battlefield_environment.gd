@@ -3,6 +3,16 @@ extends Node3D
 
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
 
+## Arena art establishes the setting, but the board is the gameplay stage.
+## Keep the stage neutral so character materials and square colors remain
+## readable in every panorama, including the cold and fire-lit arenas.
+const BOARD_AMBIENT_COLOR := Color(0.82, 0.82, 0.82)
+const BOARD_AMBIENT_ENERGY := 1.05
+const BOARD_KEY_COLOR := Color(1.0, 1.0, 1.0)
+const BOARD_KEY_ENERGY := 1.15
+const BOARD_FILL_COLOR := Color(0.90, 0.90, 0.90)
+const BOARD_FILL_ENERGY := 0.92
+
 ## Lightweight procedural setting around the authoritative chessboard. It has no
 ## gameplay collision or chess-state responsibilities and can be rebuilt freely.
 
@@ -46,7 +56,9 @@ func apply_arena(requested_arena_id: String) -> void:
 	_beacon_lights.clear()
 	_create_grand_terrace(arena)
 	_create_arena_markers(arena)
-	_flash.light_color = arena.accent
+	# Keep atmosphere flashes neutral as well: the arena's colors belong in the
+	# panorama and emissive props, not as a tint over playable characters.
+	_flash.light_color = Color.WHITE
 
 
 func _apply_sky_and_lighting(arena: Dictionary) -> void:
@@ -58,14 +70,16 @@ func _apply_sky_and_lighting(arena: Dictionary) -> void:
 		var sky := Sky.new()
 		sky.sky_material = sky_material
 		world_environment.environment.sky = sky
-		world_environment.environment.ambient_light_color = arena.ambient
-		world_environment.environment.ambient_light_energy = 0.82
+		world_environment.environment.ambient_light_color = BOARD_AMBIENT_COLOR
+		world_environment.environment.ambient_light_energy = BOARD_AMBIENT_ENERGY
 	var key_light := get_parent().get_node_or_null("Light") as DirectionalLight3D
 	if key_light != null:
-		key_light.light_color = arena.ambient.lerp(Color.WHITE, 0.35)
+		key_light.light_color = BOARD_KEY_COLOR
+		key_light.light_energy = BOARD_KEY_ENERGY
 	var fill_light := get_parent().get_node_or_null("FillLight") as DirectionalLight3D
 	if fill_light != null:
-		fill_light.light_color = arena.accent.lerp(Color.WHITE, 0.40)
+		fill_light.light_color = BOARD_FILL_COLOR
+		fill_light.light_energy = BOARD_FILL_ENERGY
 
 
 func _create_grand_terrace(arena: Dictionary) -> void:
@@ -143,7 +157,9 @@ func _create_arena_markers(arena: Dictionary) -> void:
 		var light := OmniLight3D.new()
 		light.name = "ArenaMarkerLight"
 		light.position.y = 2.5
-		light.light_color = arena.accent
+		# The glowing marker remains arena-colored through its emissive material;
+		# its local illumination must not tint nearby board pieces.
+		light.light_color = Color.WHITE
 		light.light_energy = 1.4
 		light.omni_range = 8.0
 		light.shadow_enabled = false
