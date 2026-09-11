@@ -41,6 +41,7 @@ func _run() -> void:
 	for square in [8, 1, 2, 3, 4, 0]:
 		assert(presenter.actors[square].get_node_or_null("VisualAccents/RookBattlement") == null, "Large overhead primitive type markers must not obstruct character or capture views.")
 	assert(presenter.actors[4].get_node_or_null("VisualAccents/PieceGlyph") != null, "Each character must retain a compact class glyph on its base.")
+	assert(presenter.actors[4].get_node_or_null("VisualAccents/TeamRing") != null and presenter.actors[4].get_node_or_null("VisualAccents/TeamBase") == null, "Side identity must use a compact ring rather than a full colored disk.")
 	assert(presenter.actors[4].hair_ids.size() == 2, "The king must retain both a hairstyle and beard for a distinct full-character silhouette.")
 	assert(is_zero_approx(presenter.actors[8].rotation.y), "White actors must use the board-forward orientation.")
 	assert(is_equal_approx(abs(presenter.actors[48].rotation.y), PI), "Black actors must face the opposite board direction.")

@@ -277,8 +277,9 @@ func _apply_team_material_variant(node: Node) -> void:
 
 
 func _create_team_accent() -> void:
-	# Keep team identity visible without covering the imported outfit detail.
-	_add_marker("TeamBase", _cylinder(0.44, 0.44, 0.035), Vector3(0, 0.018, 0), side_color)
+	# A thin ring preserves side recognition while leaving the square and the
+	# character's silhouette visible at the board camera distance.
+	_add_marker("TeamRing", _team_ring(), Vector3(0, 0.018, 0), side_color)
 
 
 func _create_piece_glyph() -> void:
@@ -469,6 +470,15 @@ func _add_marker(marker_name: String, mesh: Mesh, marker_position: Vector3, colo
 	material.roughness = 0.42
 	marker.material_override = material
 	_visual_accents.add_child(marker)
+
+
+func _team_ring() -> TorusMesh:
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = 0.24
+	mesh.outer_radius = 0.32
+	mesh.rings = 6
+	mesh.ring_segments = 20
+	return mesh
 
 
 func _sphere(radius: float, height: float) -> SphereMesh:
