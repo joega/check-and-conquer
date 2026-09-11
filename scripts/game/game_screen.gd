@@ -10,7 +10,7 @@ const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
 const SETTINGS_MENU_NODES := [
 	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
-	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Back", "CameraHelp",
+	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
 	"MenuHeading", "DifficultyCaption", "PlayerCaption", "PromotionCaption", "SpeedCaption", "ViewCaption", "VolumeCaption", "DifficultyReadout",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Settings"]
@@ -29,8 +29,11 @@ var settings: Dictionary = SessionSettings.DEFAULTS.duplicate()
 var campaign: RefCounted
 var arena_id := "mountain_fortress"
 var campaign_enabled := true
+var match_paused := false
+var surrendering := false
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	$UI/LoadingOverlay.visible = true
 	call_deferred("_initialize_game")
 
@@ -52,7 +55,10 @@ func _initialize_game() -> void:
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.pressed.connect(_submit)
 	$UI/Restart.pressed.connect(_restart)
-	$UI/Back.pressed.connect(_return_to_campaign)
+	$UI/Back.pressed.connect(_surrender_and_return)
+	$UI/Pause.pressed.connect(_pause_match)
+	$UI/PauseOverlay/Content/Resume.pressed.connect(_resume_match)
+	$UI/PauseOverlay/Content/Quit.pressed.connect(_quit_from_pause)
 	$UI/Settings.pressed.connect(_toggle_settings_menu)
 	$UI/Fullscreen.pressed.connect(_toggle_fullscreen)
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
@@ -101,8 +107,60 @@ func _initialize_game() -> void:
 	$UI/LoadingOverlay.visible = false
 
 func _exit_tree() -> void:
+	get_tree().paused = false
 	if engine != null:
 		engine.shutdown()
+
+
+func _pause_match() -> void:
+	if surrendering or controller == null or controller.phase != TurnController.Phase.PLAYER_INPUT:
+		$UI/Status.text = "Pause is available between moves."
+		return
+	match_paused = true
+	_set_settings_menu_visible(false)
+	$UI/PauseOverlay.visible = true
+	$Camera3D.set_controls_enabled(false)
+	get_tree().paused = true
+
+
+func _resume_match() -> void:
+	if not match_paused:
+		return
+	get_tree().paused = false
+	match_paused = false
+	$UI/PauseOverlay.visible = false
+	$Camera3D.set_controls_enabled(true)
+
+
+func _quit_from_pause() -> void:
+	_resume_match()
+	_surrender_and_return()
+
+
+func _surrender_and_return() -> void:
+	if surrendering:
+		return
+	if match_paused:
+		_resume_match()
+	surrendering = true
+	$UI/PauseOverlay.visible = false
+	_set_settings_menu_visible(false)
+	$Camera3D.set_controls_enabled(false)
+	if controller != null:
+		controller.phase = TurnController.Phase.GAME_OVER
+	if engine != null:
+		engine.stop_thinking()
+	$UI/Status.text = "Surrendering the arena…"
+	var survivors: Array = $BoardPresenter.actors.values()
+	survivors.sort_custom(func(a, b): return a.global_position.z < b.global_position.z)
+	var longest_fall := 0.0
+	for actor in survivors:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		actor.play_state(&"death.backward_01")
+		longest_fall = maxf(longest_fall, actor.state_duration(&"death.backward_01"))
+	await get_tree().create_timer(longest_fall + 0.18).timeout
+	_return_to_campaign()
 
 func _restart() -> void:
 	controller.queue_free()
@@ -140,6 +198,8 @@ func _undo() -> void:
 	$Camera3D.snap_to_side(player_side)
 
 func _submit() -> void:
+	if match_paused or surrendering:
+		return
 	if spectator_enabled:
 		$UI/Status.text = "Spectating Stockfish versus Stockfish."
 		return
@@ -412,6 +472,8 @@ func _update_difficulty_readout() -> void:
 	$UI/DifficultyReadout.text = "%s: %s  ·  %d Elo  ·  Arena %d of %d" % [mode_label, profile.name, profile.elo, arena_number, CampaignProgress.ARENA_IDS.size()]
 
 func _unhandled_input(event: InputEvent) -> void:
+	if match_paused or surrendering:
+		return
 	if spectator_enabled:
 		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT): return

@@ -24,7 +24,16 @@ func _run() -> void:
 	assert(impact_sparks.emitting and impact_sparks.global_position.is_equal_approx(screen.capture_impact_position), "Capture impacts must restart a visible spark burst at the committed contact point.")
 	screen._toggle_settings_menu()
 	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Spectator").visible, "Settings must reveal grouped configuration controls, including spectator mode, on demand.")
+	var settings_panel := screen.get_node("UI/SettingsPanel") as Control
+	for node_name in ["Restart", "Undo", "Pause", "Back", "Difficulty", "PlayerSide", "Promotion", "Spectator", "AnimationSpeed", "CameraShake", "Fullscreen", "ResetView", "MasterVolume", "EngineLog"]:
+		assert(settings_panel.get_global_rect().encloses((screen.get_node("UI/%s" % node_name) as Control).get_global_rect()), "Every settings control must fit inside the compact settings panel.")
+	for left_right in [["Restart", "Undo"], ["Undo", "Pause"], ["Pause", "Back"], ["Difficulty", "PlayerSide"], ["PlayerSide", "Promotion"], ["Promotion", "Spectator"]]:
+		assert(not (screen.get_node("UI/%s" % left_right[0]) as Control).get_global_rect().intersects((screen.get_node("UI/%s" % left_right[1]) as Control).get_global_rect()), "Settings row controls must not overlap.")
 	screen._toggle_settings_menu()
+	screen._pause_match()
+	assert(screen.match_paused and paused and screen.get_node("UI/PauseOverlay").visible, "The in-game menu must offer a working pause state.")
+	screen._resume_match()
+	assert(not screen.match_paused and not paused and not screen.get_node("UI/PauseOverlay").visible, "Resuming must restore board input and normal simulation.")
 	assert(screen.computer_enabled, "The playable screen should enable Stockfish by default.")
 	screen.get_node("UI/Move").text = "e2e4"
 	await screen._submit()
@@ -145,5 +154,18 @@ func _run() -> void:
 	practice_screen.queue_free()
 	await process_frame
 	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
+	var surrender_screen = GAME_SCREEN.instantiate()
+	root.add_child(surrender_screen)
+	await process_frame
+	await process_frame
+	var survivor_count: int = surrender_screen.get_node("BoardPresenter").actor_count()
+	surrender_screen._surrender_and_return()
+	await process_frame
+	var falling_count := 0
+	for actor in surrender_screen.get_node("BoardPresenter").actors.values():
+		if actor.current_semantic_state() == &"death.backward_01":
+			falling_count += 1
+	assert(surrender_screen.surrendering and falling_count == survivor_count, "Surrendering must animate every surviving piece falling before leaving the arena.")
+	surrender_screen.queue_free()
 	print("PASS: playable screen completes a player move and Stockfish response.")
 	quit(0)
