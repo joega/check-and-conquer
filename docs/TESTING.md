@@ -11,6 +11,8 @@ XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
 
 The XDG overrides keep Godot's transient logs, caches, and user data outside the repository and make the command work in restricted or CI environments. This headless check loads and instantiates the main scene plus the three required debug scenes. Future milestones should add focused test scripts beside their domain or integration work and document their commands here.
 
+The full `tools/run_headless_tests.sh` suite imports project resources first. This is required on a clean checkout because Godot deliberately excludes its generated `.godot` import cache from Git.
+
 Run the deterministic M1 cycle gate with:
 
 ```sh

@@ -41,6 +41,10 @@ tests=(
   tests/integration/test_game_screen_stockfish.gd
 )
 
+# A clean checkout has source assets and their .import settings, but never the
+# generated .godot import cache. Build it before scenes preload those assets.
+"$godot_bin" --headless --path "$project_root" --import
+
 for test_path in "${tests[@]}"; do
   test_id="${test_path//\//_}"
   XDG_DATA_HOME="$data_root/$test_id" \
