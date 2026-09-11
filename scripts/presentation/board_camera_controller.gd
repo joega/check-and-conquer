@@ -25,6 +25,7 @@ var _home_pitch := 0.62
 var _rotating := false
 var _controls_enabled := true
 var _focused_side := 1
+var _snap_tween: Tween
 
 
 func _ready() -> void:
@@ -72,6 +73,7 @@ func set_controls_enabled(enabled: bool) -> void:
 	_controls_enabled = enabled
 	if not enabled:
 		_rotating = false
+		_cancel_snap()
 
 
 func controls_enabled() -> bool:
@@ -97,11 +99,13 @@ func snap_to_side(side: int, duration_s := -1.0) -> void:
 	_yaw = 2.35 if _focused_side > 0 else -0.79
 	var destination := _orbit_transform()
 	var actual_duration := default_snap_duration_s if duration_s < 0.0 else duration_s
+	_cancel_snap()
 	if actual_duration <= 0.0:
 		global_transform = destination
 		return
-	var tween := create_tween()
-	tween.tween_property(self, "global_transform", destination, actual_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_snap_tween = create_tween()
+	_snap_tween.tween_property(self, "global_transform", destination, actual_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_snap_tween.finished.connect(func(): _snap_tween = null)
 
 
 func current_focus_target() -> Vector3:
@@ -122,3 +126,9 @@ func _orbit_transform() -> Transform3D:
 	var horizontal := cos(_pitch) * _distance
 	var position := focus_target + Vector3(sin(_yaw) * horizontal, sin(_pitch) * _distance, cos(_yaw) * horizontal)
 	return Transform3D(Basis.looking_at(focus_target - position, Vector3.UP), position)
+
+
+func _cancel_snap() -> void:
+	if _snap_tween != null and _snap_tween.is_valid():
+		_snap_tween.kill()
+	_snap_tween = null

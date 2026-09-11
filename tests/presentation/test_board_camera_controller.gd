@@ -25,6 +25,12 @@ func _run() -> void:
 	assert(camera.focused_side() == 1 and camera.global_position.distance_to(Vector3.ZERO) > 40.0, "Reset view must restore the default player-side board framing after close inspection.")
 	camera.snap_to_side(-1, 0.0)
 	assert(camera.focused_side() == -1 and camera.global_position.z > 0.0, "Black's default view must mirror White's from the opposing board end.")
+	camera.snap_to_side(1, 0.5)
+	await process_frame
+	var interrupted_transform: Transform3D = camera.global_transform
+	camera.set_controls_enabled(false)
+	await create_timer(0.6).timeout
+	assert(camera.global_transform.is_equal_approx(interrupted_transform), "Disabling board controls must cancel a pending board snap so a capture shot owns the camera.")
 	camera.queue_free()
 	print("PASS: board camera zoom and orbit controls preserve board focus.")
 	quit(0)
