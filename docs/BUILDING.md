@@ -51,7 +51,8 @@ directory so the external UCI process remains discoverable.
 
 Every push to `main` runs the **Package desktop builds** workflow. It builds
 the Linux Stockfish executable from the tracked Stockfish 19 source, downloads
-the matching official Windows universal executable, and uploads ready-to-run
-Linux and Windows zip files. The latest pair replaces the assets in the
+the matching official Windows universal executable, runs the complete headless
+game suite, and only then uploads ready-to-run Linux and Windows zip files. The
+latest pair replaces the assets in the
 repository's **Latest development build** prerelease; the same pair is retained
 for 30 days with the individual Actions run.

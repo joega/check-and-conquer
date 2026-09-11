@@ -66,6 +66,16 @@ jobs:
           cp "$stockfish_dir/src/stockfish" "$stockfish_dir/stockfish-linux-x86-64-universal"
           chmod +x "$stockfish_dir/stockfish-linux-x86-64-universal"
 
+      - name: Run headless game suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$(dirname "$GODOT_BIN"):$PATH"
+          export WARB_TEST_DATA_HOME="${RUNNER_TEMP}/check-and-conquer-data"
+          export WARB_TEST_CACHE_HOME="${RUNNER_TEMP}/check-and-conquer-cache"
+          export WARB_TEST_CONFIG_HOME="${RUNNER_TEMP}/check-and-conquer-config"
+          bash tools/run_headless_tests.sh
+
       - name: Download official Windows Stockfish 19
         shell: bash
         run: |

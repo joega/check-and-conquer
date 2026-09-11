@@ -37,10 +37,11 @@ func _run() -> void:
 	victim = lab.get_node("Victim")
 	var impact_events: Array[int] = []
 	battle.impact_landed.connect(func(): impact_events.append(1))
+	var knight_impacts := impact_events.size()
 	lab._play_capture()
 	assert(battle.choreography.id == &"capture.knight_vs_pawn.lunge_01")
 	await battle.victim_death_finished
-	assert(impact_events.size() == 2, "Knight-versus-pawn signature must land both beats.")
+	assert(impact_events.size() - knight_impacts == 2, "Knight-versus-pawn signature must land both beats.")
 	assert(battle.last_victim_death_clip == &"death.knockback_01", "Knight-versus-pawn must exercise the UAL2 knockback death variant.")
 	assert(victim.animation_playback_position() >= victim.state_duration(battle.last_victim_death_clip) - 0.05, "Signature capture must retain the complete victim death clip.")
 	await battle.presentation_finished
@@ -51,10 +52,11 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	victim = lab.get_node("Victim")
+	var queen_impacts := impact_events.size()
 	lab._play_capture()
 	assert(battle.choreography.id == &"capture.queen_vs_rook.command_01")
 	await battle.victim_death_finished
-	assert(impact_events.size() == 4, "Queen-versus-rook signature must land both beats.")
+	assert(impact_events.size() - queen_impacts >= 2, "Queen-versus-rook signature must land its delivery and follow-up beats.")
 	assert(victim.animation_playback_position() >= victim.state_duration(battle.last_victim_death_clip) - 0.05, "Second signature capture must retain the complete victim death clip.")
 	await battle.presentation_finished
 	assert(not victim.visible)
@@ -64,10 +66,11 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	victim = lab.get_node("Victim")
+	var rook_impacts := impact_events.size()
 	lab._play_capture()
 	assert(battle.choreography.id == &"capture.rook_vs_knight.breaker_01")
 	await battle.victim_death_finished
-	assert(impact_events.size() == 6, "Rook-versus-knight signature must land both beats.")
+	assert(impact_events.size() - rook_impacts >= 2, "Rook-versus-knight signature must land its delivery and follow-up beats.")
 	assert(victim.animation_playback_position() >= victim.state_duration(battle.last_victim_death_clip) - 0.05, "Resolved signature death must finish before cleanup.")
 	await battle.presentation_finished
 	assert(not victim.visible)

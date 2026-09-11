@@ -2,6 +2,7 @@ extends SceneTree
 
 const Adapter = preload("res://scripts/engine/stockfish_adapter.gd")
 const ChessGame = preload("res://scripts/chess/chess_game.gd")
+const CI_MOVE_DEADLINE_MS := 35000
 
 var adapter
 var did_ready := false
@@ -29,16 +30,33 @@ func _run() -> void:
 	assert(did_ready, "Stockfish did not complete its UCI handshake.")
 	# Keep the sequential legality gate tolerant of a heavily loaded CI host;
 	# the explicit timeout case below verifies supervision separately.
-	adapter.response_timeout_padding_ms = 10000
+	# Shared CI runners can briefly starve the subprocess while Godot starts its
+	# next headless scene. Keep the 100-turn real-process gate, but give each
+	# one-millisecond search a bounded, CI-tolerant response window.
+	adapter.response_timeout_padding_ms = 30000
 	var game = ChessGame.new()
+	var completed_games := 0
 	for turn in 100:
+		# A real 100-ply smoke run can legitimately finish a game before its
+		# final iteration. Start a fresh UCI game instead of asking Stockfish for
+		# a move from checkmate or a declared draw, where `bestmove (none)` is
+		# correct and not an engine failure.
+		if game.game_result() != "ongoing":
+			completed_games += 1
+			game = ChessGame.new()
+			adapter.new_game()
+			deadline = Time.get_ticks_msec() + 8000
+			while not adapter.is_ready_for_requests() and failure.is_empty() and Time.get_ticks_msec() < deadline:
+				await create_timer(0.02).timeout
+			assert(failure.is_empty(), "Stockfish reset before turn %d failed: %s" % [turn + 1, failure])
+			assert(adapter.is_ready_for_requests(), "Stockfish did not become ready after game %d." % completed_games)
 		received_move = ""
 		assert(adapter.request_move(game.state.to_fen(), 1))
-		deadline = Time.get_ticks_msec() + 15000
+		deadline = Time.get_ticks_msec() + CI_MOVE_DEADLINE_MS
 		while received_move.is_empty() and failure.is_empty() and Time.get_ticks_msec() < deadline:
 			await create_timer(0.005).timeout
-		assert(failure.is_empty(), failure)
-		assert(received_move.length() in [4, 5], "Stockfish did not return a UCI move on turn %d." % (turn + 1))
+		assert(failure.is_empty(), "Stockfish turn %d failed: %s" % [turn + 1, failure])
+		assert(received_move.length() in [4, 5], "Stockfish did not return a UCI move on turn %d within %d ms." % [turn + 1, CI_MOVE_DEADLINE_MS])
 		assert(game.try_uci(received_move) != null, "Stockfish returned an illegal move on turn %d: %s" % [turn + 1, received_move])
 	failure = ""
 	# A UCI engine may validly return a move much sooner than its requested
@@ -49,5 +67,5 @@ func _run() -> void:
 	adapter._process(0.0)
 	assert(failure == "Stockfish move request timed out.", "Engine timeout must produce a recoverable error.")
 	adapter.shutdown()
-	print("PASS: Stockfish UCI subprocess completed 100 legal sequential moves and recovers from timeout.")
+	print("PASS: Stockfish UCI subprocess completed 100 legal sequential moves across %d completed games and recovers from timeout." % completed_games)
 	quit(0)

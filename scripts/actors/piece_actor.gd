@@ -209,7 +209,10 @@ func capture_attack_state(fallback: StringName) -> StringName:
 
 
 func combat_idle_state() -> StringName:
-	return &"combat.idle.spell_01" if archetype in [Types.BISHOP, Types.QUEEN] else &"combat.idle.sword_01"
+	# The UAL1 Rail idle is not available on every imported outfit skeleton.
+	# Neutral idle is present for every role and avoids a preview/control state
+	# that can silently fail for melee pieces.
+	return &"combat.idle.spell_01" if archetype in [Types.BISHOP, Types.QUEEN] else &"idle.neutral"
 
 
 func start_battle_stance() -> void:
