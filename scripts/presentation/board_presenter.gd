@@ -10,7 +10,7 @@ signal piece_landed
 var actors: Dictionary = {}
 const WALK_SPEED_MPS := 7.0
 var _ambient_rng := RandomNumberGenerator.new()
-var _ambient_motion_timer_s := 4.5
+var _ambient_motion_timer_s := 1.5
 var _ambient_motion_index := 0
 var _last_ambient_actor: Node
 
@@ -26,7 +26,7 @@ func _process(delta: float) -> void:
 	_play_next_ambient_motion()
 	# One isolated movement every few seconds makes the formation feel alert
 	# without ever resembling a synchronized animation loop.
-	_ambient_motion_timer_s = _ambient_rng.randf_range(4.2, 8.0)
+	_ambient_motion_timer_s = _ambient_rng.randf_range(3.0, 5.5)
 
 
 func _play_next_ambient_motion() -> void:

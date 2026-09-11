@@ -282,16 +282,18 @@ func play_ambient_motion(style_index: int) -> void:
 	_ambient_motion_active = true
 	var baseline_position := _model_root.position
 	var baseline_rotation := _model_root.rotation
-	var lean := -0.045 if posmod(_stance_seed + style_index, 2) == 0 else 0.045
-	var turn := -0.035 if posmod(_stance_seed + style_index, 3) == 0 else 0.035
+	# This needs to read from the normal board camera, not only in a close-up.
+	# It is still a weight shift rather than a jump or a repeated exercise loop.
+	var lean := -0.085 if posmod(_stance_seed + style_index, 2) == 0 else 0.085
+	var turn := -0.075 if posmod(_stance_seed + style_index, 3) == 0 else 0.075
 	_ambient_motion_tween = create_tween()
 	_ambient_motion_tween.set_parallel(true)
-	_ambient_motion_tween.tween_property(_model_root, "rotation:z", baseline_rotation.z + lean, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_ambient_motion_tween.tween_property(_model_root, "rotation:y", baseline_rotation.y + turn, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_ambient_motion_tween.tween_property(_model_root, "position:y", baseline_position.y + 0.018, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "rotation:z", baseline_rotation.z + lean, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "rotation:y", baseline_rotation.y + turn, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "position:y", baseline_position.y + 0.045, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_ambient_motion_tween.chain().set_parallel(true)
-	_ambient_motion_tween.tween_property(_model_root, "rotation", baseline_rotation, 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_ambient_motion_tween.tween_property(_model_root, "position", baseline_position, 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "rotation", baseline_rotation, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "position", baseline_position, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_ambient_motion_tween.finished.connect(func(): _ambient_motion_active = false)
 
 
