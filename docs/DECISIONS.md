@@ -74,11 +74,20 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 
 ## ADR-012 — Provisional public name: Warboard
 
-**Status:** Accepted
+**Status:** Superseded by ADR-013
 **Date:** 2026-09-10
 **Decision:** Present the game as “Warboard” in its runtime title, main menu, and public README. Keep the longer “Project Warboard” phrase only in historical/internal planning material.
 **Reason:** The public repository and player-facing materials need one consistent name, while the original working-title policy remains preserved in the decision record.
 **Consequences:** The Godot application name and main menu read “Warboard.” This is a provisional product identity and does not replace a jurisdiction-specific trademark review before commercial release.
+
+## ADR-013 — Retire the Warboard shipping title
+
+**Status:** Accepted  
+**Date:** 2026-09-10  
+**Decision:** Do not use “Warboard” as the shipping title. Keep it only as the temporary repository/development codename until a replacement is selected, then rename player-facing identity and release metadata together.  
+**Reason:** A separately developed chess/strategy game is already publicly listed on Steam under the identical title, with a public demo and planned 2027 release. The overlap is close enough to create avoidable player confusion and product-identity risk.  
+**Evidence:** [Warboard on Steam](https://store.steampowered.com/app/4445900/Warboard/) (IBELF Studios; accessed 2026-09-10).  
+**Consequences:** The remaining shipping-title acceptance item is blocked on selecting and clearing a replacement. A preliminary web search is not trademark clearance; a chosen name still requires jurisdiction-appropriate review before commercial release.
 
 ## Pending decisions
 

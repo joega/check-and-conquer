@@ -101,4 +101,4 @@ For each archetype:
 - [x] all third-party audio/VFX logged.
 - [x] Stockfish version/license/source pointer logged.
 - [x] no ripped/copied Battle Chess assets.
-- [ ] shipping title/art reviewed for originality.
+- [ ] replacement shipping title and art reviewed for originality. `Warboard` is retired as a shipping title; see ADR-013.
