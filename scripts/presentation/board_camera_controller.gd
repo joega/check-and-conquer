@@ -14,8 +14,10 @@ extends Camera3D
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
 @export var close_focus_pitch := 0.30
-@export var default_board_distance := 34.0
-@export var default_board_pitch := 0.66
+# Player-tuned default: direct White-side view at tilt +19.5°, spin +180°,
+# zoom 30.8 m. Black uses the exact mirrored spin (0°).
+@export var default_board_distance := 30.8
+@export var default_board_pitch := 0.3403392
 @export var default_snap_duration_s := 0.32
 
 var _distance := 40.0
@@ -122,6 +124,8 @@ func debug_readout() -> String:
 	# the transform. They remain meaningful even when close-focus adjusts the
 	# final aim point, so a player can report a preferred board view precisely.
 	var spin_degrees := fmod(rad_to_deg(_yaw) + 180.0, 360.0) - 180.0
+	if is_equal_approx(spin_degrees, -180.0):
+		spin_degrees = 180.0
 	return "TILT %+.1f°   SPIN %+.1f°\nZOOM %.1fm   PAN X %.1f  Z %.1f" % [rad_to_deg(_pitch), spin_degrees, _distance, target.x, target.z]
 
 

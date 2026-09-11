@@ -27,6 +27,7 @@ func _run() -> void:
 	assert(camera.global_position.y - camera.current_focus_target().y < 1.2, "Close zoom must ease into an eye-level pitch instead of retaining the high board-view angle.")
 	camera.reset_view()
 	assert(camera.focused_side() == 1 and camera.target.is_equal_approx(Vector3.ZERO) and camera.global_position.distance_to(Vector3.ZERO) > 25.0, "Reset view must restore the closer centered player-side framing after close inspection.")
+	assert("TILT +19.5°" in camera.debug_readout() and "SPIN +180.0°" in camera.debug_readout() and "ZOOM 30.8m" in camera.debug_readout(), "Reset view must use the player-tuned White default values.")
 	assert(camera.global_position.z < 0.0 and absf(camera.global_position.x) < 0.1, "White's turn framing must sit directly behind White's rank-one team.")
 	for corner in [Vector3(-16, 0, -16), Vector3(-16, 0, 16), Vector3(16, 0, -16), Vector3(16, 0, 16)]:
 		assert(camera.is_position_in_frustum(corner), "Default player-side framing must keep every board corner visible.")
