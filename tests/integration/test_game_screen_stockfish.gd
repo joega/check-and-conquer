@@ -66,27 +66,29 @@ func _run() -> void:
 	assert("1. e4" in screen._copy_pgn(), "Completed player-versus-Stockfish moves must prepare portable PGN.")
 	screen._restart()
 	var board_camera = screen.get_node("Camera3D")
-	var capture_camera_height := 0.0
 	var capture_ui_is_clean := [false]
 	screen.get_node("BattleDirector").impact_landed.connect(func():
-		capture_camera_height = board_camera.global_position.y
 		capture_ui_is_clean[0] = not screen.get_node("UI/Move").visible and screen.get_node("UI/Skip").visible
 	)
-	board_camera.zoom_by(1.7)
-	board_camera.orbit_by(0.7, -0.12)
-	var board_camera_transform: Transform3D = board_camera.global_transform
+	screen._set_camera_shake(false)
 	screen.computer_enabled = false
-	for uci in ["e2e4", "d7d5", "e4d5"]:
+	for uci in ["e2e4", "d7d5"]:
 		var result = screen.controller.submit_uci(uci)
 		assert(result != null, "The capture fixture must submit each legal move directly to the authoritative controller.")
 		await screen._present_result(result)
 		screen._after_presentation(result, false)
+	board_camera.zoom_by(1.7)
+	board_camera.orbit_by(0.7, -0.12)
+	var board_camera_transform: Transform3D = board_camera.global_transform
+	var capture_result = screen.controller.submit_uci("e4d5")
+	assert(capture_result != null, "The capture fixture must submit the final legal capture.")
+	await screen._present_result(capture_result)
+	screen._after_presentation(capture_result, false)
 	screen.computer_enabled = true
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
-	assert(capture_camera_height < 12.0, "The camera must be in the close overhead action shot at the capture impact beat.")
 	assert(capture_ui_is_clean[0] and not screen.get_node("UI/Move").visible and screen.get_node("UI/Settings").visible, "Only the skip control may remain over the capture cinematic, then the board-first Menu view must return afterward.")
-	assert(not board_camera.global_transform.is_equal_approx(board_camera_transform), "After presentation, the board camera must snap away from a manually roamed view.")
-	assert(board_camera.focused_side() == screen.player_side, "After every move the board view must remain behind the human player's side while Stockfish moves across it.")
+	assert(board_camera.global_transform.is_equal_approx(board_camera_transform), "Capture presentation must preserve a manually chosen board view without zooming or snapping.")
+	assert(board_camera.focused_side() == screen.player_side, "The preserved board view must remain associated with the human player's side.")
 	assert(not screen.get_node("UI/Skip").visible)
 	assert(is_zero_approx(screen.get_node("ImpactFlash").light_energy), "Impact flash must clean up after a capture.")
 	var campaign_win = MoveResult.new()

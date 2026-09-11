@@ -199,104 +199,83 @@ offset_right = 290.0
 offset_bottom = 108.0
 text = "Make move"
 visible = false
-[node name="Restart" type="Button" parent="UI"]
-offset_left = 44.0
-offset_top = 132.0
-offset_right = 180.0
-offset_bottom = 170.0
-text = "Restart"
-visible = false
-[node name="Undo" type="Button" parent="UI"]
-offset_left = 194.0
-offset_top = 132.0
-offset_right = 330.0
-offset_bottom = 170.0
-text = "Undo"
-visible = false
-[node name="Back" type="Button" parent="UI"]
-offset_left = 44.0
-offset_top = 180.0
-offset_right = 330.0
-offset_bottom = 218.0
-text = "Back to campaign"
-visible = false
-[node name="Fullscreen" type="Button" parent="UI"]
-offset_left = 44.0
-offset_top = 274.0
-offset_right = 180.0
-offset_bottom = 312.0
-text = "Fullscreen"
-[node name="ResetView" type="Button" parent="UI"]
-offset_left = 194.0
-offset_top = 274.0
-offset_right = 330.0
-offset_bottom = 312.0
-text = "Reset view"
 [node name="Settings" type="Button" parent="UI"]
 offset_left = 24.0
-offset_top = 114.0
-offset_right = 160.0
-offset_bottom = 152.0
+offset_top = 92.0
+offset_right = 204.0
+offset_bottom = 136.0
 text = "Menu"
 [node name="SettingsPanel" type="Panel" parent="UI"]
-z_index = -1
 offset_left = 24.0
-offset_top = 112.0
-offset_right = 350.0
-offset_bottom = 670.0
+offset_top = 152.0
+anchor_right = 1.0
+offset_right = -24.0
+offset_bottom = 560.0
+grow_horizontal = 2
+visible = false
+[node name="MenuHeading" type="Label" parent="UI"]
+offset_left = 48.0
+offset_top = 170.0
+offset_right = 900.0
+offset_bottom = 198.0
+theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 1)
+theme_override_font_sizes/font_size = 19
+text = "MATCH SETTINGS"
 visible = false
 [node name="Spectator" type="CheckButton" parent="UI"]
 offset_left = 44.0
-offset_top = 274.0
-offset_right = 330.0
-offset_bottom = 312.0
+offset_top = 266.0
+offset_right = 310.0
+offset_bottom = 306.0
 text = "Watch Stockfish vs Stockfish"
 [node name="Difficulty" type="OptionButton" parent="UI"]
-offset_left = 44.0
-offset_top = 322.0
-offset_right = 180.0
-offset_bottom = 360.0
+offset_left = 348.0
+offset_top = 266.0
+offset_right = 548.0
+offset_bottom = 306.0
 tooltip_text = "Stockfish difficulty"
 [node name="Promotion" type="OptionButton" parent="UI"]
-offset_left = 194.0
-offset_top = 322.0
-offset_right = 330.0
-offset_bottom = 360.0
+offset_left = 940.0
+offset_top = 266.0
+offset_right = 1110.0
+offset_bottom = 306.0
 tooltip_text = "Promotion piece"
 [node name="PlayerSide" type="OptionButton" parent="UI"]
-offset_left = 44.0
-offset_top = 370.0
-offset_right = 180.0
-offset_bottom = 408.0
+offset_left = 670.0
+offset_top = 266.0
+offset_right = 840.0
+offset_bottom = 306.0
 tooltip_text = "Your side against Stockfish"
 [node name="AnimationSpeed" type="OptionButton" parent="UI"]
-offset_left = 194.0
-offset_top = 370.0
-offset_right = 330.0
-offset_bottom = 408.0
+offset_left = 48.0
+offset_top = 360.0
+offset_right = 310.0
+offset_bottom = 400.0
 tooltip_text = "Capture animation speed"
 [node name="CameraShake" type="CheckButton" parent="UI"]
-offset_left = 44.0
-offset_top = 418.0
-offset_right = 180.0
-offset_bottom = 454.0
+offset_left = 348.0
+offset_top = 360.0
+offset_right = 548.0
+offset_bottom = 400.0
 button_pressed = true
 text = "Camera shake"
 [node name="MasterVolume" type="HSlider" parent="UI"]
-offset_left = 194.0
-offset_top = 423.0
-offset_right = 330.0
-offset_bottom = 449.0
+offset_left = 48.0
+offset_top = 453.0
+offset_right = 440.0
+offset_bottom = 481.0
 min_value = -30.0
 max_value = 0.0
 step = 1.0
 value = 0.0
 tooltip_text = "Master volume"
 [node name="EngineLog" type="RichTextLabel" parent="UI"]
-offset_left = 44.0
-offset_top = 470.0
-offset_right = 330.0
-offset_bottom = 640.0
+offset_left = 480.0
+offset_top = 432.0
+anchor_right = 1.0
+offset_right = -48.0
+offset_bottom = 532.0
+grow_horizontal = 2
 bbcode_enabled = false
 fit_content = true
 scroll_active = false
@@ -307,6 +286,91 @@ offset_top = 70.0
 offset_right = 720.0
 offset_bottom = 108.0
 text = "Skip battle"
+visible = false
+[node name="Restart" type="Button" parent="UI"]
+offset_left = 48.0
+offset_top = 210.0
+offset_right = 220.0
+offset_bottom = 250.0
+text = "Restart arena"
+visible = false
+[node name="Undo" type="Button" parent="UI"]
+offset_left = 236.0
+offset_top = 210.0
+offset_right = 408.0
+offset_bottom = 250.0
+text = "Undo move"
+visible = false
+[node name="Back" type="Button" parent="UI"]
+offset_left = 424.0
+offset_top = 210.0
+offset_right = 650.0
+offset_bottom = 250.0
+text = "Back to campaign"
+visible = false
+[node name="Fullscreen" type="Button" parent="UI"]
+offset_left = 670.0
+offset_top = 360.0
+offset_right = 840.0
+offset_bottom = 400.0
+text = "Fullscreen"
+visible = false
+[node name="ResetView" type="Button" parent="UI"]
+offset_left = 940.0
+offset_top = 360.0
+offset_right = 1110.0
+offset_bottom = 400.0
+text = "Reset view"
+visible = false
+[node name="DifficultyCaption" type="Label" parent="UI"]
+offset_left = 348.0
+offset_top = 238.0
+offset_right = 548.0
+offset_bottom = 264.0
+text = "Campaign difficulty"
+visible = false
+[node name="PlayerCaption" type="Label" parent="UI"]
+offset_left = 670.0
+offset_top = 238.0
+offset_right = 840.0
+offset_bottom = 264.0
+text = "Your side"
+visible = false
+[node name="PromotionCaption" type="Label" parent="UI"]
+offset_left = 940.0
+offset_top = 238.0
+offset_right = 1110.0
+offset_bottom = 264.0
+text = "Promotion"
+visible = false
+[node name="SpeedCaption" type="Label" parent="UI"]
+offset_left = 48.0
+offset_top = 332.0
+offset_right = 310.0
+offset_bottom = 358.0
+text = "Capture pace"
+visible = false
+[node name="ViewCaption" type="Label" parent="UI"]
+offset_left = 670.0
+offset_top = 332.0
+offset_right = 1110.0
+offset_bottom = 358.0
+text = "View"
+visible = false
+[node name="VolumeCaption" type="Label" parent="UI"]
+offset_left = 48.0
+offset_top = 422.0
+offset_right = 440.0
+offset_bottom = 448.0
+text = "Master volume"
+visible = false
+[node name="DifficultyReadout" type="Label" parent="UI"]
+offset_left = 48.0
+offset_top = 310.0
+offset_right = 1110.0
+offset_bottom = 336.0
+theme_override_colors/font_color = Color(0.72, 0.82, 0.96, 1)
+text = "Campaign opponent: Beginner"
 visible = false
 [node name="GameOverPanel" type="PanelContainer" parent="UI"]
 offset_left = 460.0

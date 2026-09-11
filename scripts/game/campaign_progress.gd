@@ -13,6 +13,16 @@ const ARENA_IDS: Array[String] = [
 	"forest_ruins",
 ]
 
+## Beginner-friendly starting levels rise gradually as the player advances.
+## Stockfish's supported limited-strength floor is 1320 Elo, so Beginner starts
+## there with its lowest skill setting and gains only 70 Elo per arena.
+const DIFFICULTY_PROFILES := [
+	{"name": "Beginner", "elo": 1320, "elo_step": 70, "skill": 0},
+	{"name": "Adventurer", "elo": 1450, "elo_step": 90, "skill": 3},
+	{"name": "Champion", "elo": 1700, "elo_step": 110, "skill": 7},
+	{"name": "Master", "elo": 3190, "elo_step": 0, "skill": 16},
+]
+
 var current_arena_id: String
 var unlocked_ids: Array[String] = []
 var completed_ids: Array[String] = []
@@ -36,6 +46,14 @@ func current_arena() -> String:
 
 func is_unlocked(arena_id: String) -> bool:
 	return arena_id in unlocked_ids
+
+
+static func difficulty_profile(base_difficulty_index: int, arena_id: String) -> Dictionary:
+	var profile: Dictionary = DIFFICULTY_PROFILES[clampi(base_difficulty_index, 0, DIFFICULTY_PROFILES.size() - 1)].duplicate()
+	var arena_index: int = maxi(ARENA_IDS.find(arena_id), 0)
+	profile.elo = min(3190, int(profile.elo) + int(profile.elo_step) * arena_index)
+	profile.skill = min(20, int(profile.skill) + arena_index)
+	return profile
 
 
 ## Records one campaign win. Only the current, unlocked arena may advance.

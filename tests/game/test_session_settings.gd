@@ -13,7 +13,7 @@ func _init() -> void:
 	var expected := defaults.duplicate()
 	expected.computer_enabled = false
 	expected.spectator_enabled = true
-	expected.difficulty_index = 1
+	expected.difficulty_index = 3
 	expected.player_side_index = 1
 	expected.capture_speed_index = 1
 	expected.camera_shake = false

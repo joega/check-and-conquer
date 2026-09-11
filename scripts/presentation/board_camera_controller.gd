@@ -14,10 +14,10 @@ extends Camera3D
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
 @export var close_focus_pitch := 0.30
-# Player-tuned default: direct White-side view at tilt +19.5°, spin +180°,
-# zoom 30.8 m. Black uses the exact mirrored spin (0°).
-@export var default_board_distance := 30.8
-@export var default_board_pitch := 0.3403392
+# Player-tuned default: direct White-side view at tilt +33°, spin +180°,
+# zoom 34 m. Black uses the exact mirrored spin (0°).
+@export var default_board_distance := 34.0
+@export var default_board_pitch := 0.57595865
 @export var default_snap_duration_s := 0.32
 
 var _distance := 40.0
@@ -71,17 +71,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func zoom_by(amount: float) -> void:
+	_cancel_snap()
 	_distance = clampf(_distance + amount, min_distance, max_distance)
 	_apply_orbit()
 
 
 func orbit_by(yaw_delta: float, pitch_delta: float) -> void:
+	_cancel_snap()
 	_yaw += yaw_delta
 	_pitch = clampf(_pitch + pitch_delta, 0.24, 1.22)
 	_apply_orbit()
 
 
 func pan_by(drag_delta: Vector2) -> void:
+	_cancel_snap()
 	# Pan along the board plane using the current camera axes. This lets players
 	# bring any piece under the close face-level focus without changing the
 	# default turn-aware framing used after moves.

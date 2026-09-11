@@ -8,11 +8,10 @@ const ChoreographyResolver = preload("res://scripts/presentation/capture_choreog
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
-const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
-const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
 	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Back", "CameraHelp",
+	"MenuHeading", "DifficultyCaption", "PlayerCaption", "PromotionCaption", "SpeedCaption", "ViewCaption", "VolumeCaption", "DifficultyReadout",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Settings"]
 var controller
@@ -22,7 +21,7 @@ var computer_enabled := true
 var spectator_enabled := false
 var engine_request_pending := false
 var engine_configured := false
-var difficulty = NOVICE_DIFFICULTY
+var difficulty_index := 0
 var player_side := Types.WHITE
 var capture_impact_position := Vector3.ZERO
 var replay_index := -1
@@ -66,7 +65,7 @@ func _initialize_game() -> void:
 	$UI/Undo.pressed.connect(_undo)
 	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
-	for label in ["Novice", "Master"]:
+	for label in ["Beginner", "Adventurer", "Champion", "Master"]:
 		$UI/Difficulty.add_item(label)
 	for label in ["Play White", "Play Black"]:
 		$UI/PlayerSide.add_item(label)
@@ -160,13 +159,11 @@ func _present_result(result) -> void:
 			capture_impact_position = victim.global_position + Vector3.UP * 1.0
 			_set_capture_ui_visible(false)
 			$UI/Skip.visible = true
-			$CameraDirector.begin_capture(attacker, victim)
+			# Keep the capture in the player's chosen board view. The battle remains
+			# readable through actor choreography and impact effects without taking
+			# over the camera or zooming the board out from under the player.
 			await $BattleDirector.play_capture(attacker, victim, Mapper.square_to_world(result.to_square))
 			$BoardPresenter.settle_capture(result)
-			# The next-turn board framing is the only useful post-capture view. Cut
-			# straight to it instead of orbiting back through the prior camera pose.
-			$CameraDirector.end_capture()
-			$Camera3D.snap_to_side(player_side, 0.0)
 			$UI/Skip.visible = false
 			_set_capture_ui_visible(true)
 		else:
@@ -237,7 +234,10 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$BoardPresenter.show_check_on_side(controller.game.state.side_to_move)
 	else:
 		$BoardPresenter.clear_check_indicator()
-	if result.game_result == "ongoing":
+	# Quiet moves return to the default board read. Captures already play from the
+	# player's current view, so preserve that view through the outcome instead of
+	# immediately replacing it with another camera snap.
+	if result.game_result == "ongoing" and not result.is_capture:
 		$Camera3D.snap_to_side(player_side)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
@@ -305,10 +305,11 @@ func _set_spectator_enabled(enabled: bool) -> void:
 	_restart()
 
 func _set_difficulty(index: int) -> void:
-	difficulty = NOVICE_DIFFICULTY if index == 0 else MASTER_DIFFICULTY
+	difficulty_index = clampi(index, 0, CampaignProgress.DIFFICULTY_PROFILES.size() - 1)
 	if engine != null and engine.is_ready_for_requests():
 		_apply_difficulty()
-	settings.difficulty_index = index
+	settings.difficulty_index = difficulty_index
+	_update_difficulty_readout()
 	_save_settings()
 
 func _set_player_side(index: int) -> void:
@@ -346,7 +347,7 @@ func _set_capture_ui_visible(visible: bool) -> void:
 
 func _load_settings() -> void:
 	settings = SessionSettings.load_values()
-	var difficulty_index := clampi(int(settings.get("difficulty_index", 0)), 0, 1)
+	difficulty_index = clampi(int(settings.get("difficulty_index", 0)), 0, CampaignProgress.DIFFICULTY_PROFILES.size() - 1)
 	var player_index := clampi(int(settings.get("player_side_index", 0)), 0, 1)
 	var speed_index := clampi(int(settings.get("capture_speed_index", 0)), 0, 1)
 	computer_enabled = true
@@ -354,7 +355,6 @@ func _load_settings() -> void:
 	spectator_enabled = bool(settings.get("spectator_enabled", false))
 	if spectator_enabled:
 		computer_enabled = true
-	difficulty = NOVICE_DIFFICULTY if difficulty_index == 0 else MASTER_DIFFICULTY
 	player_side = Types.WHITE if player_index == 0 else Types.BLACK
 	$BattleDirector.playback_speed = 1.0 if speed_index == 0 else 2.0
 	$CameraDirector.shake_enabled = bool(settings.get("camera_shake", true))
@@ -372,6 +372,7 @@ func _load_settings() -> void:
 	if not campaign.is_unlocked(arena_id):
 		arena_id = campaign.current_arena()
 		settings.selected_arena_id = arena_id
+	_update_difficulty_readout()
 
 func _save_settings() -> void:
 	SessionSettings.save_values(settings)
@@ -387,12 +388,16 @@ func _apply_fullscreen(fullscreen: bool) -> void:
 	$UI/Fullscreen.text = "Windowed" if fullscreen else "Fullscreen"
 
 func _apply_difficulty() -> void:
-	var skill: int = 20
-	var elo: int = 3190
-	if bool(difficulty.get_meta("uci_limit_strength", false)):
-		skill = 0
-		elo = int(difficulty.get_meta("uci_elo", 1350))
-	engine.configure_difficulty(skill, elo)
+	var profile := CampaignProgress.difficulty_profile(difficulty_index, arena_id)
+	engine.configure_difficulty(int(profile.skill), int(profile.elo))
+
+
+func _update_difficulty_readout() -> void:
+	if campaign == null:
+		return
+	var profile := CampaignProgress.difficulty_profile(difficulty_index, arena_id)
+	var arena_number := CampaignProgress.ARENA_IDS.find(arena_id) + 1
+	$UI/DifficultyReadout.text = "Campaign opponent: %s  ·  %d Elo  ·  Arena %d of %d" % [profile.name, profile.elo, arena_number, CampaignProgress.ARENA_IDS.size()]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if spectator_enabled:

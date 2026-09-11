@@ -1,43 +1,18 @@
 class_name CameraDirector
 extends Node
 
-## Temporarily stages a readable capture shot. The game screen owns the
-## turn-aware board reset after a capture, avoiding an unnecessary detour back
-## through the old player orbit.
+## Adds optional impact polish while preserving the player's board camera.
+## Capture choreography is readable from the current player-selected view.
 
 @export_node_path("Camera3D") var camera_path: NodePath
 @export var shake_enabled := true
 @export var shake_strength := 0.12
-@export var capture_height_m := 8.0
 
 var _camera: Camera3D
 
 
 func _ready() -> void:
 	_camera = get_node(camera_path) as Camera3D
-
-
-func begin_capture(_attacker, victim) -> void:
-	if _camera == null:
-		return
-	_set_board_controls_enabled(false)
-	# The fight lands at the victim's committed destination, rather than midway
-	# between the pre-approach pieces. Center that exact impact point so the
-	# attack remains at screen center as the attacker closes the distance.
-	var action_target: Vector3 = victim.global_position + Vector3.UP * 0.95
-	# A fixed overhead shot keeps both fighters visible even when the surrounding
-	# board is crowded. It deliberately does not inherit the player's orbit/zoom.
-	var shot_position := action_target + Vector3(0.18, capture_height_m, 0.24)
-	var capture_transform := _look_transform(shot_position, action_target)
-	var tween := create_tween()
-	tween.tween_property(_camera, "global_transform", capture_transform, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-
-func end_capture() -> void:
-	# Do not interpolate to the previous board transform. Once a capture is
-	# complete, that view is stale: the next turn uses its own player-side board
-	# framing. The GameScreen makes that intentional cut immediately after this.
-	_set_board_controls_enabled(true)
 
 
 func shake_on_impact() -> void:
@@ -48,18 +23,3 @@ func shake_on_impact() -> void:
 	var tween := create_tween()
 	tween.tween_property(_camera, "global_position", original.origin + offset, 0.035)
 	tween.tween_property(_camera, "global_transform", original, 0.11).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-
-func _look_transform(position: Vector3, target: Vector3) -> Transform3D:
-	var rig := Node3D.new()
-	add_child(rig)
-	rig.global_position = position
-	rig.look_at(target, Vector3.UP)
-	var result := rig.global_transform
-	rig.queue_free()
-	return result
-
-
-func _set_board_controls_enabled(enabled: bool) -> void:
-	if _camera != null and _camera.has_method("set_controls_enabled"):
-		_camera.set_controls_enabled(enabled)

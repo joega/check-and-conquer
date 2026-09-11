@@ -68,9 +68,9 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 
 **Status:** Accepted
 **Date:** 2026-09-10
-**Decision:** Keep right-drag orbit, middle-drag pan, and mouse-wheel inspection, but snap to the human player’s board side after each committed move. White's tuned default is tilt +19.5°, spin +180°, zoom 30.8 m, and pan (0, 0); choosing Black mirrors it from rank eight. Close zoom smoothly raises its focal point to the character face level.
+**Decision:** Keep right-drag orbit, middle-drag pan, and mouse-wheel inspection, but snap quiet moves to the human player’s board side. White's tuned default is tilt +33°, spin +180°, zoom 34 m, and pan (0, 0); choosing Black mirrors it from rank eight. Close zoom smoothly raises its focal point to the character face level.
 **Reason:** A free-orbit-only camera can leave the player viewing the board from an unhelpful angle, while a floor-centered close zoom obscures the character models. Keeping Stockfish on the far side lets the human read the board from one stable perspective.
-**Consequences:** `BoardCameraController` owns default side framing; `GameScreen` requests the selected player side after restart, undo, review, and move presentation. A capture keeps its overhead action shot through the death beat, then `GameScreen` cuts directly to that player-side view instead of restoring a stale player orbit first.
+**Consequences:** `BoardCameraController` owns default side framing; `GameScreen` requests the selected player side after restart, undo, review, and quiet move presentation. A capture retains the player's current camera transform through the death beat, preserving the tactical board context and avoiding a camera zoom or reset.
 
 ## ADR-012 — Provisional public name: Warboard
 

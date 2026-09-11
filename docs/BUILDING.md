@@ -8,7 +8,7 @@ Launch the demo from the repository root:
 godot --path .
 ```
 
-Choose **Play vs Stockfish**. The default game is White versus Stockfish. The compact in-game toolbar keeps move, restart, undo, and Settings visible; Settings opens the computer/local, side, difficulty, promotion, capture-speed, audio, camera, fullscreen, and diagnostic controls. These options persist in `user://warchessed_settings.cfg` (with automatic import of legacy Warboard settings). Right-drag rotates the board, middle-drag pans the focus across it, and the mouse wheel zooms. After each move, the camera settles into a three-quarter view from the side deciding next; pan to a character then close-zoom for a face-level view. Captures use a temporary fixed action shot before the normal board view returns.
+Choose **Begin Campaign — The Warpath**. The default game is White versus Stockfish. The full-width in-game **Menu** contains restart, undo, campaign return, side, campaign difficulty, promotion, capture pace, audio, fullscreen, camera, and engine diagnostic controls. Choose **Beginner** for the gentlest Stockfish setting; each conquered arena increases the opponent slightly. These options persist in `user://warchessed_settings.cfg` (with automatic import of legacy Warboard settings). Right-drag rotates the board, middle-drag pans the focus across it, and the mouse wheel zooms. After each move, the camera returns to the player-side board view; captures keep the player's current board view rather than zooming into a separate camera shot.
 
 Run every deterministic headless gate, including the real Stockfish process test, with:
 
