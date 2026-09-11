@@ -98,7 +98,7 @@ offset_top = 170.0
 offset_right = 420.0
 offset_bottom = 198.0
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
-text = "Right-drag: rotate board  •  Mouse wheel: zoom"
+text = "Right-drag: rotate  •  Middle-drag: pan  •  Mouse wheel: zoom"
 [node name="Move" type="LineEdit" parent="UI"]
 offset_left = 24.0
 offset_top = 70.0

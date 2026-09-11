@@ -9,6 +9,8 @@ extends Camera3D
 @export var max_distance := 72.0
 @export var zoom_step := 1.6
 @export var orbit_sensitivity := 0.012
+@export var pan_sensitivity := 0.0035
+@export var pan_limit_m := 20.0
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
 @export var default_board_distance := 42.0
@@ -23,6 +25,7 @@ var _home_distance := 40.0
 var _home_yaw := 0.0
 var _home_pitch := 0.62
 var _rotating := false
+var _panning := false
 var _controls_enabled := true
 var _focused_side := 1
 var _snap_tween: Tween
@@ -47,6 +50,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			_rotating = event.pressed
 			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			_panning = event.pressed
+			get_viewport().set_input_as_handled()
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			zoom_by(-zoom_step)
 			get_viewport().set_input_as_handled()
@@ -55,6 +61,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion and _rotating:
 		orbit_by(-event.relative.x * orbit_sensitivity, -event.relative.y * orbit_sensitivity)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _panning:
+		pan_by(event.relative)
 		get_viewport().set_input_as_handled()
 
 
@@ -69,10 +78,29 @@ func orbit_by(yaw_delta: float, pitch_delta: float) -> void:
 	_apply_orbit()
 
 
+func pan_by(drag_delta: Vector2) -> void:
+	# Pan along the board plane using the current camera axes. This lets players
+	# bring any piece under the close face-level focus without changing the
+	# default turn-aware framing used after moves.
+	var right := global_transform.basis.x
+	right.y = 0.0
+	right = right.normalized()
+	var forward := -global_transform.basis.z
+	forward.y = 0.0
+	forward = forward.normalized()
+	var distance_scale := _distance * pan_sensitivity
+	target += -right * drag_delta.x * distance_scale + forward * drag_delta.y * distance_scale
+	target.x = clampf(target.x, -pan_limit_m, pan_limit_m)
+	target.y = 0.0
+	target.z = clampf(target.z, -pan_limit_m, pan_limit_m)
+	_apply_orbit()
+
+
 func set_controls_enabled(enabled: bool) -> void:
 	_controls_enabled = enabled
 	if not enabled:
 		_rotating = false
+		_panning = false
 		_cancel_snap()
 
 
