@@ -153,14 +153,14 @@ func focused_side() -> int:
 
 func snap_to_side(side: int, duration_s := -1.0) -> void:
 	end_move_follow()
-	# White's player-side view is from the rank-one end looking toward Black;
-	# Black receives the mirrored view from rank eight. The diagonal offset gives
-	# depth without hiding files behind one another.
+	# White's player-side view is directly behind rank one looking toward Black;
+	# Black receives the mirrored rank-eight view. This keeps the active team in
+	# the foreground, instead of presenting either player from a corner angle.
 	_focused_side = 1 if side >= 0 else -1
 	target = _home_target
 	_distance = default_board_distance
 	_pitch = default_board_pitch
-	_yaw = 2.35 if _focused_side > 0 else -0.79
+	_yaw = PI if _focused_side > 0 else 0.0
 	var destination := _orbit_transform()
 	var actual_duration := default_snap_duration_s if duration_s < 0.0 else duration_s
 	_cancel_snap()

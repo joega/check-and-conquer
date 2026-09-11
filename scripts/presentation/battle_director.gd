@@ -90,27 +90,60 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
-	var bolt := MeshInstance3D.new()
+	var bolt := Node3D.new()
 	bolt.name = "QueenArcaneBolt"
-	var bolt_mesh := SphereMesh.new()
-	bolt_mesh.radius = 0.18
-	bolt_mesh.height = 0.36
-	bolt.mesh = bolt_mesh
-	var bolt_material := StandardMaterial3D.new()
-	bolt_material.albedo_color = Color(0.78, 0.28, 1.0)
-	bolt_material.emission_enabled = true
-	bolt_material.emission = Color(0.72, 0.12, 1.0)
-	bolt_material.emission_energy_multiplier = 4.0
-	bolt.material_override = bolt_material
 	add_child(bolt)
+	var bolt_core := MeshInstance3D.new()
+	bolt_core.name = "FireCore"
+	var bolt_mesh := SphereMesh.new()
+	bolt_mesh.radius = 0.24
+	bolt_mesh.height = 0.48
+	bolt_core.mesh = bolt_mesh
+	var bolt_material := StandardMaterial3D.new()
+	bolt_material.albedo_color = Color(1.0, 0.31, 0.08)
+	bolt_material.emission_enabled = true
+	bolt_material.emission = Color(1.0, 0.08, 0.01)
+	bolt_material.emission_energy_multiplier = 6.0
+	bolt_core.material_override = bolt_material
+	bolt.add_child(bolt_core)
+	var halo := MeshInstance3D.new()
+	halo.name = "FireHalo"
+	var halo_mesh := TorusMesh.new()
+	halo_mesh.inner_radius = 0.25
+	halo_mesh.outer_radius = 0.33
+	halo_mesh.rings = 8
+	halo_mesh.ring_segments = 16
+	halo.mesh = halo_mesh
+	halo.rotation.x = PI * 0.5
+	halo.material_override = bolt_material
+	bolt.add_child(halo)
+	var bolt_light := OmniLight3D.new()
+	bolt_light.name = "FireLight"
+	bolt_light.light_color = Color(1.0, 0.22, 0.05)
+	bolt_light.light_energy = 4.0
+	bolt_light.omni_range = 5.0
+	bolt.add_child(bolt_light)
+	for shard_index in 4:
+		var shard := MeshInstance3D.new()
+		shard.name = "FireShard%02d" % shard_index
+		var shard_mesh := SphereMesh.new()
+		shard_mesh.radius = 0.07
+		shard_mesh.height = 0.14
+		shard.mesh = shard_mesh
+		var angle := TAU * float(shard_index) / 4.0
+		shard.position = Vector3(cos(angle) * 0.42, sin(angle * 2.0) * 0.20, sin(angle) * 0.42)
+		shard.material_override = bolt_material
+		bolt.add_child(shard)
 	var launch: Vector3 = attacker.global_position + Vector3.UP * 1.7
 	var impact: Vector3 = victim.global_position + Vector3.UP * 1.2
 	bolt.global_position = launch
 	var flight := create_tween()
 	flight.tween_property(bolt, "global_position", impact, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	flight.parallel().tween_property(bolt, "scale", Vector3.ONE * 1.8, 0.30 / playback_speed)
+	flight.parallel().tween_property(halo, "rotation:y", TAU * 3.0, 0.30 / playback_speed)
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
+	_spawn_elemental_impact(impact, Color(1.0, 0.15, 0.03), Color(1.0, 0.48, 0.08))
 	bolt.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
@@ -187,10 +220,17 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	arrow.global_position = launch
 	arrow.look_at(impact, Vector3.UP, true)
 	arrow.scale = Vector3.ONE * 12.0
+	var frost_light := OmniLight3D.new()
+	frost_light.name = "FrostArrowLight"
+	frost_light.light_color = Color(0.32, 0.78, 1.0)
+	frost_light.light_energy = 2.2
+	frost_light.omni_range = 3.5
+	arrow.add_child(frost_light)
 	var flight := create_tween()
 	flight.tween_property(arrow, "global_position", impact, 0.34 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
+	_spawn_elemental_impact(impact, Color(0.22, 0.72, 1.0), Color(0.66, 0.92, 1.0))
 	arrow.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
@@ -208,6 +248,34 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 func request_skip() -> void:
 	if _running:
 		_skip_requested = true
+
+
+func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: Color) -> void:
+	var burst := Node3D.new()
+	burst.name = "ElementalImpact"
+	add_child(burst)
+	burst.global_position = position
+	var material := StandardMaterial3D.new()
+	material.albedo_color = core_color
+	material.emission_enabled = true
+	material.emission = spark_color
+	material.emission_energy_multiplier = 5.0
+	var flash := MeshInstance3D.new()
+	var flash_mesh := SphereMesh.new()
+	flash_mesh.radius = 0.32
+	flash_mesh.height = 0.64
+	flash.mesh = flash_mesh
+	flash.material_override = material
+	burst.add_child(flash)
+	var light := OmniLight3D.new()
+	light.light_color = spark_color
+	light.light_energy = 5.0
+	light.omni_range = 5.5
+	burst.add_child(light)
+	var burst_tween := create_tween()
+	burst_tween.tween_property(flash, "scale", Vector3.ONE * 4.2, 0.22 / playback_speed)
+	burst_tween.parallel().tween_property(light, "light_energy", 0.0, 0.22 / playback_speed)
+	burst_tween.tween_callback(burst.queue_free)
 
 
 func _move_actor(actor, target: Vector3, duration: float) -> void:
