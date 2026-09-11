@@ -46,17 +46,13 @@ const CLIP_MAP := {
 	&"attack.punch.jab_01": &"Punch_Jab",
 	&"attack.push.guard_01": &"Push",
 	&"attack.spell.shot_01": &"Spell_Simple_Shoot",
-	&"celebration.dance_01": &"Dance",
-	&"celebration.punch_cross_01": &"Punch_Cross",
-	&"celebration.spell_cast_01": &"Spell_Simple_Shoot",
-	&"celebration.push_01": &"Push",
+	# Victory reactions must read as acknowledgement from the board camera. Keep
+	# combat clips out of this family: attacks belong to the capture itself.
 	&"reaction.hit.generic_01": &"Hit_Chest",
 	&"reaction.hit.head_01": &"Hit_Head",
 	&"death.backward_01": &"Death01",
 }
 const CLIP_MAP_2 := {
-	&"celebration.sword_combo_01": &"Sword_Regular_Combo",
-	&"celebration.sword_heavy_01": &"Sword_Heavy_Combo",
 	&"celebration.call_01": &"Idle_Rail_Call",
 	&"celebration.salute_01": &"Yes",
 	&"attack.melee.hook_01": &"Melee_Hook",
@@ -227,9 +223,9 @@ func start_battle_stance() -> void:
 
 
 func celebrate_victory(style_index: int) -> void:
-	# Full-body, role-aware victory beats. Source clips are deliberately varied
-	# so a nearby squad reads as a small battle party rather than synchronized
-	# bouncing pieces. This is presentation-only and restores the regular stance.
+	# A teammate acknowledges the capture with a brief, non-combat gesture. The
+	# actual attacker remains in its settled battle stance; its attack already
+	# supplies the decisive action beat.
 	var gestures := _victory_gestures_for_archetype()
 	var gesture := gestures[posmod(style_index + _stance_seed, gestures.size())]
 	if supports_state(gesture):
@@ -238,27 +234,14 @@ func celebrate_victory(style_index: int) -> void:
 
 
 func _victory_gestures_for_archetype() -> Array[StringName]:
-	match archetype:
-		Types.PAWN:
-			return [&"celebration.sword_combo_01", &"celebration.punch_cross_01", &"celebration.dance_01"]
-		Types.KNIGHT:
-			return [&"celebration.sword_heavy_01", &"celebration.dance_01", &"celebration.call_01"]
-		Types.BISHOP:
-			return [&"celebration.spell_cast_01", &"celebration.call_01", &"celebration.salute_01"]
-		Types.ROOK:
-			return [&"celebration.push_01", &"celebration.sword_heavy_01", &"celebration.call_01"]
-		Types.QUEEN:
-			return [&"celebration.spell_cast_01", &"celebration.sword_combo_01", &"celebration.dance_01"]
-		_:
-			return [&"celebration.sword_heavy_01", &"celebration.salute_01", &"celebration.call_01"]
+	# UAL's call and affirmative acknowledgement map well to a cheer/raised-hand
+	# and nod/thumbs-up style beat. Both are deliberately short and contain no
+	# weapon swing, projectile, or lunge.
+	return [&"celebration.call_01", &"celebration.salute_01"]
 
 
 func _victory_duration(gesture: StringName) -> float:
-	# Dance is a looping source clip; let it play multiple beats before returning
-	# to the regular stance. The rest are complete authored actions.
-	if gesture == &"celebration.dance_01":
-		return 2.4
-	return maxf(state_duration(gesture), 1.0)
+	return minf(maxf(state_duration(gesture), 0.8), 1.35)
 
 
 func battle_stance_state() -> StringName:

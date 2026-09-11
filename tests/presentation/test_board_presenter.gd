@@ -28,9 +28,19 @@ func _run() -> void:
 	for index in [8, 1, 2, 0, 3, 4]:
 		var celebrant = presenter.actors[index]
 		celebrant.celebrate_victory(index)
-		assert(celebrant.current_semantic_state().begins_with("celebration."), "Every role must use a full authored celebration state after a victory.")
+		assert(celebrant.current_semantic_state() in [&"celebration.call_01", &"celebration.salute_01"], "Victory gestures must remain non-combat acknowledgement poses.")
 		celebration_states[celebrant.current_semantic_state()] = true
-	assert(celebration_states.size() >= 3, "Role-aware victory celebrations must visibly vary across the six chess archetypes.")
+	assert(celebration_states.size() <= 2, "Victory gestures must use the restrained acknowledgement set.")
+	for actor in presenter.actors.values():
+		actor.start_battle_stance()
+	var capture_winner = presenter.actors[8]
+	presenter._celebrate_capture(capture_winner)
+	assert(capture_winner.current_semantic_state() == capture_winner.battle_stance_state(), "The capturing actor must remain focused after settling on its destination square.")
+	var teammate_celebrants := 0
+	for actor in presenter.actors.values():
+		if actor != capture_winner and actor.side == capture_winner.side and actor.current_semantic_state().begins_with("celebration."):
+			teammate_celebrants += 1
+	assert(teammate_celebrants >= 1 and teammate_celebrants <= 2, "Only one or two teammates may acknowledge a capture.")
 	assert(presenter.actors[0].archetype == 4 and presenter.actors[1].archetype == 2)
 	assert(not presenter.actors[8].uses_female_model and not presenter.actors[0].uses_female_model and presenter.actors[1].uses_female_model)
 	var expected_outfits := {

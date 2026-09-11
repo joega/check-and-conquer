@@ -171,9 +171,12 @@ func _celebrate_capture(winner) -> void:
 		if candidate != null and is_instance_valid(candidate) and candidate != winner and candidate.side == winner.side:
 			allies.append(candidate)
 	allies.sort_custom(func(a, b): return a.global_position.distance_squared_to(winner.global_position) < b.global_position.distance_squared_to(winner.global_position))
-	winner.celebrate_victory(0)
-	for index in mini(allies.size(), 3):
-		allies[index].celebrate_victory(index + 1)
+	# The winner has just completed the attack and occupies the destination; do
+	# not make it immediately perform another flourish. A capture earns a small,
+	# varied acknowledgement from one or two nearby teammates at most.
+	var celebration_count := 1 + posmod(int(round(winner.global_position.x + winner.global_position.z)), 2)
+	for index in mini(allies.size(), celebration_count):
+		allies[index].celebrate_victory(index)
 
 
 func _face_actors_toward_opposing_kings() -> void:
