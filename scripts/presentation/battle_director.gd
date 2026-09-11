@@ -40,7 +40,14 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	if choreography.delivery == "arcane_bolt":
 		await _play_queen_arcane_capture(attacker, victim, destination)
 		return
-	var approach_position: Vector3 = destination - Vector3.FORWARD * choreography.anchor_separation_m
+	# Stage on the incoming side of the victim, including en passant where the
+	# victim's square and the final domain destination are different.
+	var approach_direction: Vector3 = attacker.global_position - victim.global_position
+	approach_direction.y = 0.0
+	if approach_direction.length_squared() < 0.000001:
+		approach_direction = Vector3.BACK
+	var approach_position: Vector3 = victim.global_position + approach_direction.normalized() * choreography.anchor_separation_m
+	approach_position.y = attacker.global_position.y
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
 	attacker.play_state(&"locomotion.walk.forward")
@@ -51,8 +58,15 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	var attack_state: StringName = attacker.capture_attack_state(choreography.attacker_clip)
 	attacker.play_state(attack_state)
+	# Keep the short afterimage alive across contact, rather than spending it
+	# during the windup. Both waits honor the same skip path as the attack.
+	var swing_lead_s := minf(0.09, maxf(choreography.impact_time_s, 0.0))
+	await _wait_or_skip(maxf(choreography.impact_time_s - swing_lead_s, 0.0) / playback_speed)
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
 	_spawn_weapon_swing(attacker)
-	await _wait_or_skip(choreography.impact_time_s / playback_speed)
+	await _wait_or_skip(swing_lead_s / playback_speed)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return

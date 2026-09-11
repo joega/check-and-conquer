@@ -188,9 +188,10 @@ func primary_attack_state() -> StringName:
 
 
 func capture_attack_state(fallback: StringName) -> StringName:
-	# Each role prefers a fitting weapon motion while respecting any explicit
-	# signature choreography. Similar units rotate through compatible clips so
-	# their combat beats do not all read as one repeated gesture.
+	# Choreography contact times belong to its authored clip. Only substitute a
+	# compatible motion when the actor cannot play that clip.
+	if supports_state(fallback):
+		return fallback
 	var candidates: Array[StringName] = [fallback]
 	match archetype:
 		Types.PAWN:

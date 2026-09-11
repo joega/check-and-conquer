@@ -30,6 +30,7 @@ tests=(
   tests/presentation/test_arena_audio_director.gd
   tests/presentation/test_weapon_presentation.gd
   tests/presentation/test_battle_death_completion.gd
+  tests/presentation/test_melee_polish.gd
   tests/presentation/test_animation_browser.gd
   tests/presentation/test_board_presenter.gd
   tests/presentation/test_capture_projection.gd
