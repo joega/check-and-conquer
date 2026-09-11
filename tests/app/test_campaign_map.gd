@@ -26,6 +26,10 @@ func _run() -> void:
 	var locked_arena := map.get_node("Route/ArcaneSkyCitadel") as Button
 	assert(locked_arena.modulate.r > 0.8 and locked_arena.modulate.g > 0.6 and locked_arena.get_theme_color("font_disabled_color").g > 0.6, "Locked arena names must retain the readable campaign-gold treatment alongside their lock indicator.")
 	assert(map.get_node("PracticeArenaPicker").item_count == 5, "Practice must offer every arena without campaign-unlock requirements.")
+	var safe_viewport := Rect2(Vector2.ZERO, map.get_viewport_rect().size)
+	for action_name in ["SelectedArena", "EnterArena", "PracticeArenaPicker", "PracticeArena"]:
+		var action := map.get_node(action_name) as Control
+		assert(safe_viewport.encloses(action.get_global_rect()), "%s must remain fully visible in the campaign map viewport." % action_name)
 
 	map.set_campaign_snapshot({
 		"current_arena_id": "arcane_sky_citadel",
