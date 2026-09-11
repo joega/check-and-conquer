@@ -30,7 +30,11 @@ const CHARACTER_PRESENTATION_SCALE := 2.0
 const WEAPON_DISPLAY_SCALE := 9.0
 const CLIP_MAP := {
 	&"idle.neutral": &"Idle",
-	&"combat.idle.sword_01": &"Sword_Idle",
+	&"idle.watch_01": &"Idle_Rail",
+	&"idle.talking_01": &"Idle_Talking",
+	# Sword_Idle ends in a held pose in the supplied library, so it is not a
+	# suitable living board idle. Keep this semantic alias on a looping watch.
+	&"combat.idle.sword_01": &"Idle_Rail",
 	&"combat.idle.spell_01": &"Spell_Simple_Idle",
 	&"locomotion.walk.forward": &"Walk",
 	&"attack.sword.slash_01": &"Sword_Attack",
@@ -42,11 +46,19 @@ const CLIP_MAP := {
 	&"attack.punch.jab_01": &"Punch_Jab",
 	&"attack.push.guard_01": &"Push",
 	&"attack.spell.shot_01": &"Spell_Simple_Shoot",
+	&"celebration.dance_01": &"Dance",
+	&"celebration.punch_cross_01": &"Punch_Cross",
+	&"celebration.spell_cast_01": &"Spell_Simple_Shoot",
+	&"celebration.push_01": &"Push",
 	&"reaction.hit.generic_01": &"Hit_Chest",
 	&"reaction.hit.head_01": &"Hit_Head",
 	&"death.backward_01": &"Death01",
 }
 const CLIP_MAP_2 := {
+	&"celebration.sword_combo_01": &"Sword_Regular_Combo",
+	&"celebration.sword_heavy_01": &"Sword_Heavy_Combo",
+	&"celebration.call_01": &"Idle_Rail_Call",
+	&"celebration.salute_01": &"Yes",
 	&"attack.melee.hook_01": &"Melee_Hook",
 	&"attack.sword.regular_a_01": &"Sword_Regular_A",
 	&"attack.sword.regular_b_01": &"Sword_Regular_B",
@@ -205,9 +217,12 @@ func combat_idle_state() -> StringName:
 
 func start_battle_stance() -> void:
 	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
-	var candidates: Array[StringName] = [combat_idle_state(), &"stance.guard_01", &"stance.challenge_01", &"stance.fold_arms_01"]
+	# Only select looping clips as a board stance. The previous sword block and
+	# sword idle clips ended on a frozen frame, which made a living battlefield
+	# look like a display case between moves.
+	var candidates: Array[StringName] = [combat_idle_state(), &"idle.watch_01", &"stance.fold_arms_01", &"idle.talking_01"]
 	if archetype in [Types.BISHOP, Types.QUEEN]:
-		candidates = [combat_idle_state(), &"stance.challenge_01", &"stance.fold_arms_01"]
+		candidates = [combat_idle_state(), &"idle.watch_01", &"stance.fold_arms_01", &"idle.talking_01"]
 	for offset in candidates.size():
 		var candidate := candidates[(_stance_seed + offset) % candidates.size()]
 		if supports_state(candidate):
@@ -215,28 +230,54 @@ func start_battle_stance() -> void:
 			break
 	play_state(_stance_loop_state)
 	_seek_stance_offset()
-	_stance_timer_s = 2.2 + float(posmod(_stance_seed, 9)) * 0.37
+	_stance_timer_s = 1.6 + float(posmod(_stance_seed, 9)) * 0.43
 	_stance_gesture_time_s = 0.0
 
 
 func celebrate_victory(style_index: int) -> void:
-	# Nearby allies acknowledge a capture with distinct, deliberately brief
-	# gestures. This is presentation-only and always restores the regular stance.
-	var gestures: Array[StringName] = [&"stance.challenge_01", &"attack.punch.jab_01", &"stance.guard_01"]
+	# Full-body, role-aware victory beats. Source clips are deliberately varied
+	# so a nearby squad reads as a small battle party rather than synchronized
+	# bouncing pieces. This is presentation-only and restores the regular stance.
+	var gestures := _victory_gestures_for_archetype()
 	var gesture := gestures[posmod(style_index + _stance_seed, gestures.size())]
 	if supports_state(gesture):
 		play_state(gesture)
-		_stance_gesture_time_s = maxf(state_duration(gesture), 0.8)
-	var celebration_root := _model_root
-	if celebration_root != null:
-		var baseline_y := celebration_root.position.y
-		var cheer := create_tween()
-		cheer.tween_property(celebration_root, "position:y", baseline_y + 0.12, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		cheer.tween_property(celebration_root, "position:y", baseline_y, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		_stance_gesture_time_s = _victory_duration(gesture)
+
+
+func _victory_gestures_for_archetype() -> Array[StringName]:
+	match archetype:
+		Types.PAWN:
+			return [&"celebration.sword_combo_01", &"celebration.punch_cross_01", &"celebration.dance_01"]
+		Types.KNIGHT:
+			return [&"celebration.sword_heavy_01", &"celebration.dance_01", &"celebration.call_01"]
+		Types.BISHOP:
+			return [&"celebration.spell_cast_01", &"celebration.call_01", &"celebration.salute_01"]
+		Types.ROOK:
+			return [&"celebration.push_01", &"celebration.sword_heavy_01", &"celebration.call_01"]
+		Types.QUEEN:
+			return [&"celebration.spell_cast_01", &"celebration.sword_combo_01", &"celebration.dance_01"]
+		_:
+			return [&"celebration.sword_heavy_01", &"celebration.salute_01", &"celebration.call_01"]
+
+
+func _victory_duration(gesture: StringName) -> float:
+	# Dance is a looping source clip; let it play multiple beats before returning
+	# to the regular stance. The rest are complete authored actions.
+	if gesture == &"celebration.dance_01":
+		return 2.4
+	return maxf(state_duration(gesture), 1.0)
 
 
 func battle_stance_state() -> StringName:
 	return _stance_loop_state
+
+
+func battle_stance_loops() -> bool:
+	var player := _animation_player_2 if CLIP_MAP_2.has(_stance_loop_state) else _animation_player
+	var clip: StringName = CLIP_MAP_2.get(_stance_loop_state, CLIP_MAP.get(_stance_loop_state, &"Idle"))
+	var animation := player.get_animation(clip) if player != null else null
+	return animation != null and animation.loop_mode != Animation.LOOP_NONE
 
 
 func _process(delta: float) -> void:
@@ -251,12 +292,12 @@ func _process(delta: float) -> void:
 	_stance_timer_s -= delta
 	if _stance_timer_s > 0.0:
 		return
-	var gestures: Array[StringName] = [&"stance.challenge_01", &"stance.guard_01", &"attack.sword.dash_01"]
+	var gestures: Array[StringName] = [&"stance.challenge_01", &"stance.guard_01", &"attack.sword.dash_01", &"attack.punch.jab_01"]
 	var gesture := gestures[posmod(_stance_seed + int(Time.get_ticks_msec() / 1000), gestures.size())]
 	if supports_state(gesture):
 		play_state(gesture)
 		_stance_gesture_time_s = maxf(state_duration(gesture), 0.65)
-	_stance_timer_s = 4.0 + float(posmod(_stance_seed, 7)) * 0.45
+	_stance_timer_s = 3.4 + float(posmod(_stance_seed, 7)) * 0.45
 
 
 func _seek_stance_offset() -> void:

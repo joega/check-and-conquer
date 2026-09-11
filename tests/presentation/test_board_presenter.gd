@@ -15,8 +15,16 @@ func _run() -> void:
 	var battle_stances := {}
 	for actor in presenter.actors.values():
 		assert(not actor.battle_stance_state().is_empty(), "Every actor must choose a readable battle stance.")
+		assert(actor.battle_stance_loops(), "Every board stance must use a looping source animation so pieces never freeze in a finished pose.")
 		battle_stances[actor.battle_stance_state()] = true
 	assert(battle_stances.size() >= 2, "The opening ranks must use varied battle stances instead of one synchronized idle.")
+	var celebration_states := {}
+	for index in [8, 1, 2, 0, 3, 4]:
+		var celebrant = presenter.actors[index]
+		celebrant.celebrate_victory(index)
+		assert(celebrant.current_semantic_state().begins_with("celebration."), "Every role must use a full authored celebration state after a victory.")
+		celebration_states[celebrant.current_semantic_state()] = true
+	assert(celebration_states.size() >= 3, "Role-aware victory celebrations must visibly vary across the six chess archetypes.")
 	assert(presenter.actors[0].archetype == 4 and presenter.actors[1].archetype == 2)
 	assert(not presenter.actors[8].uses_female_model and not presenter.actors[0].uses_female_model and presenter.actors[1].uses_female_model)
 	var expected_outfits := {
