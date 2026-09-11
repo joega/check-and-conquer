@@ -9,6 +9,9 @@ func _run() -> void:
 	presenter.rebuild_from_state(BoardState.starting_position())
 	await process_frame
 	assert(presenter.actor_count() == 32)
+	var black_king = presenter.actors[60]
+	var white_pawn = presenter.actors[8]
+	assert(white_pawn.global_transform.basis.z.dot((black_king.global_position - white_pawn.global_position).normalized()) > 0.99, "White pieces must face the opposing king rather than hold a fixed board direction.")
 	var battle_stances := {}
 	for actor in presenter.actors.values():
 		assert(not actor.battle_stance_state().is_empty(), "Every actor must choose a readable battle stance.")
@@ -54,8 +57,7 @@ func _run() -> void:
 	assert((presenter.actors[0].get_node("VisualAccents/PieceGlyph") as Label3D).text == "♜", "Base glyphs must use recognizable chess crests instead of single-letter abbreviations.")
 	assert(presenter.actors[4].get_node_or_null("VisualAccents/TeamRing") != null and presenter.actors[4].get_node_or_null("VisualAccents/TeamBase") == null, "Side identity must use a compact ring rather than a full colored disk.")
 	assert(presenter.actors[4].hair_ids.size() == 2, "The king must retain both a hairstyle and beard for a distinct full-character silhouette.")
-	assert(is_zero_approx(presenter.actors[8].rotation.y), "White actors must use the board-forward orientation.")
-	assert(is_equal_approx(abs(presenter.actors[48].rotation.y), PI), "Black actors must face the opposite board direction.")
+	assert(not is_equal_approx(presenter.actors[8].rotation.y, presenter.actors[48].rotation.y), "Opposing armies must orient toward their respective opposing kings.")
 	var white_material := (presenter.actors[8].get_node("ModelRoot/Armature/Skeleton3D").get_child(0) as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
 	var black_material := (presenter.actors[48].get_node("ModelRoot/Armature/Skeleton3D").get_child(0) as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
 	assert(white_material != null and black_material != null and not white_material.albedo_color.is_equal_approx(black_material.albedo_color), "Sides must receive distinct textured material tints.")
@@ -83,6 +85,11 @@ func _run() -> void:
 	presenter.rebuild_from_state(BoardState.from_fen("8/8/8/8/8/8/8/K6k w - - 0 1"))
 	await process_frame
 	assert(presenter.actor_count() == 2)
+	presenter.rebuild_from_state(BoardState.from_fen("3k4/8/8/8/8/8/4P3/4K3 w - - 0 1"))
+	await process_frame
+	var moved_king_pawn = presenter.actors[12]
+	var moved_black_king = presenter.actors[59]
+	assert(moved_king_pawn.global_transform.basis.z.dot((moved_black_king.global_position - moved_king_pawn.global_position).normalized()) > 0.99, "Rebuilding after a king move must reorient the army toward the king's new square.")
 	presenter.queue_free()
 	print("PASS: board presenter rebuilds from FEN state.")
 	quit()

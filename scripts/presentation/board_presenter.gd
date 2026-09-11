@@ -23,6 +23,7 @@ func rebuild_from_state(state) -> void:
 		actor.appearance_seed = square
 		add_child(actor)
 		actors[square] = actor
+	_face_actors_toward_opposing_kings()
 
 func present_quiet_move(result) -> void:
 	if result.is_capture:
@@ -46,6 +47,7 @@ func present_quiet_move(result) -> void:
 			await _walk_actor_to(rook, Mapper.square_to_world(rook_to))
 	_apply_promotion(result)
 	actor.start_battle_stance()
+	_face_actors_toward_opposing_kings()
 
 func actor_count() -> int:
 	return actors.size()
@@ -126,6 +128,7 @@ func settle_capture(result) -> void:
 	_apply_promotion(result)
 	attacker.start_battle_stance()
 	_celebrate_capture(attacker)
+	_face_actors_toward_opposing_kings()
 	piece_landed.emit()
 
 
@@ -138,6 +141,22 @@ func _celebrate_capture(winner) -> void:
 	winner.celebrate_victory(0)
 	for index in mini(allies.size(), 3):
 		allies[index].celebrate_victory(index + 1)
+
+
+func _face_actors_toward_opposing_kings() -> void:
+	# The opposing king is each army's visual command target. Resolving it from
+	# the current projection keeps every unit locked on after a king move, while
+	# chess authority remains entirely in the domain state.
+	var king_positions := {}
+	for actor in actors.values():
+		if actor != null and is_instance_valid(actor) and actor.archetype == Types.KING:
+			king_positions[actor.side] = actor.global_position
+	for actor in actors.values():
+		if actor == null or not is_instance_valid(actor):
+			continue
+		var opposing_king_position: Variant = king_positions.get(-actor.side)
+		if opposing_king_position is Vector3:
+			actor.face_world_position(opposing_king_position)
 
 
 func _walk_actor_to(actor, target: Vector3) -> void:
