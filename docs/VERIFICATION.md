@@ -16,7 +16,7 @@ The suite covers:
 - chess-state FEN/UCI behavior, legal move generation, and start-position perft through depth 4 (`20`, `400`, `8,902`, `197,281`);
 - turn phases, session settings, and Stockfish UCI formatting;
 - a real Stockfish subprocess handshake and 100 sequential independently validated legal moves;
-- board mapping, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
+- board mapping, board-edge coordinate labels, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
 - camera orbit/zoom and capture-shot restoration;
 - capture audio generation, full victim-death completion, the animation browser, and 20 deterministic Combat Lab play/reset cycles;
 - a playable GameScreen turn against Stockfish.
