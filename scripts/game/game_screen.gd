@@ -23,6 +23,7 @@ var engine_configured := false
 var difficulty = NOVICE_DIFFICULTY
 var player_side := Types.WHITE
 var capture_impact_position := Vector3.ZERO
+var replay_index := -1
 var settings: Dictionary = SessionSettings.DEFAULTS.duplicate()
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
@@ -39,6 +40,10 @@ func _ready() -> void:
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
 	$UI/GameOverPanel/Content/RestartGame.pressed.connect(_restart)
 	$UI/GameOverPanel/Content/Menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/app/Main.tscn"))
+	$UI/GameOverPanel/Content/Review.pressed.connect(_begin_review)
+	$UI/GameOverPanel/Content/Previous.pressed.connect(func(): _show_review_position(replay_index - 1))
+	$UI/GameOverPanel/Content/Next.pressed.connect(func(): _show_review_position(replay_index + 1))
+	$UI/GameOverPanel/Content/ReturnFinal.pressed.connect(_return_to_final_position)
 	$UI/Undo.pressed.connect(_undo)
 	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
@@ -84,6 +89,7 @@ func _restart() -> void:
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.disabled = spectator_enabled
 	$UI/GameOverPanel.visible = false
+	replay_index = -1
 	$UI/Status.text = "White to move"
 	$Camera3D.snap_to_side(Types.WHITE, 0.0)
 	if computer_enabled:
@@ -173,6 +179,10 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$UI/Submit.disabled = true
 		$UI/GameOverPanel.visible = true
 		$UI/GameOverPanel/Content/Result.text = "Game over\n%s" % result.game_result.replace("_", " ").capitalize()
+		$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
+		$UI/GameOverPanel/Content/Previous.visible = false
+		$UI/GameOverPanel/Content/Next.visible = false
+		$UI/GameOverPanel/Content/ReturnFinal.visible = false
 	else:
 		var side_name := "White" if controller.game.state.side_to_move == Types.WHITE else "Black"
 		$UI/Status.text = "%s to move%s" % [side_name, " — Check!" if result.gives_check else ""]
@@ -374,3 +384,37 @@ func _unhandled_input(event: InputEvent) -> void:
 		selected_square = Types.NO_SQUARE
 		$ChessBoard.set_highlights(Types.NO_SQUARE, [])
 		_submit()
+
+
+func _begin_review() -> void:
+	if controller == null or controller.game.state_history.size() <= 1:
+		return
+	_show_review_position(0)
+
+
+func _show_review_position(index: int) -> void:
+	if controller == null:
+		return
+	replay_index = clampi(index, 0, controller.game.state_history.size() - 1)
+	$BoardPresenter.rebuild_from_state(controller.game.state_history[replay_index])
+	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$UI/GameOverPanel/Content/Review.visible = false
+	$UI/GameOverPanel/Content/Previous.visible = replay_index > 0
+	$UI/GameOverPanel/Content/Next.visible = replay_index < controller.game.move_history.size()
+	$UI/GameOverPanel/Content/ReturnFinal.visible = replay_index != controller.game.move_history.size()
+	var move_text := "Initial position" if replay_index == 0 else "%d. %s" % [replay_index, controller.game.san_history[replay_index - 1]]
+	$UI/Status.text = "Reviewing %s" % move_text
+	$Camera3D.snap_to_side(controller.game.state_history[replay_index].side_to_move)
+
+
+func _return_to_final_position() -> void:
+	if controller == null:
+		return
+	replay_index = -1
+	$BoardPresenter.rebuild_from_state(controller.game.state)
+	$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
+	$UI/GameOverPanel/Content/Previous.visible = false
+	$UI/GameOverPanel/Content/Next.visible = false
+	$UI/GameOverPanel/Content/ReturnFinal.visible = false
+	$UI/Status.text = "Game over: %s" % controller.game.game_result().replace("_", " ")
+	$Camera3D.snap_to_side(controller.game.state.side_to_move)

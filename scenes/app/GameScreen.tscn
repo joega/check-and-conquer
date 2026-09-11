@@ -237,7 +237,7 @@ visible = false
 offset_left = 460.0
 offset_top = 250.0
 offset_right = 820.0
-offset_bottom = 470.0
+offset_bottom = 570.0
 visible = false
 [node name="Content" type="VBoxContainer" parent="UI/GameOverPanel"]
 layout_mode = 2
@@ -247,6 +247,21 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 autowrap_mode = 2
+[node name="Review" type="Button" parent="UI/GameOverPanel/Content"]
+layout_mode = 2
+text = "Review match"
+[node name="Previous" type="Button" parent="UI/GameOverPanel/Content"]
+layout_mode = 2
+text = "Previous move"
+visible = false
+[node name="Next" type="Button" parent="UI/GameOverPanel/Content"]
+layout_mode = 2
+text = "Next move"
+visible = false
+[node name="ReturnFinal" type="Button" parent="UI/GameOverPanel/Content"]
+layout_mode = 2
+text = "Return to final position"
+visible = false
 [node name="RestartGame" type="Button" parent="UI/GameOverPanel/Content"]
 layout_mode = 2
 text = "Restart"

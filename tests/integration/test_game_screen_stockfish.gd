@@ -51,6 +51,12 @@ func _run() -> void:
 	screen.get_node("UI/Move").text = "e7e5"
 	await screen._submit()
 	assert(screen.controller.game.move_history == ["e2e4", "e7e5"], "Local mode must accept both human sides without an engine turn.")
+	screen._show_review_position(0)
+	assert(screen.replay_index == 0 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state_history[0]), "Review must rebuild the initial authoritative position.")
+	screen._show_review_position(1)
+	assert(screen.replay_index == 1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state_history[1]), "Review must rebuild each committed ply.")
+	screen._return_to_final_position()
+	assert(screen.replay_index == -1 and screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Leaving review must restore the final authoritative position.")
 	screen._set_player_side(0)
 	screen._restart()
 	for uci in ["f2f3", "e7e5", "g2g4", "d8h4"]:

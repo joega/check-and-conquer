@@ -210,4 +210,4 @@ Not V1 commitments:
 - online multiplayer,
 - theme/mod packs.
 
-**Progress:** The Stockfish-versus-Stockfish spectator candidate is implemented as an optional persisted setting. It reuses the same UCI process, independent domain validation, turn phases, board projection, and combat presentation as normal engine play; it does not add online scope. The chess domain now also produces standard PGN movetext with SAN, custom-start FEN headers, and result markers, giving a deterministic base for cinematic replay and export UI.
+**Progress:** The Stockfish-versus-Stockfish spectator candidate is implemented as an optional persisted setting. It reuses the same UCI process, independent domain validation, turn phases, board projection, and combat presentation as normal engine play; it does not add online scope. The chess domain now also produces standard PGN movetext with SAN, custom-start FEN headers, and result markers. Completed games expose a compact review flow that rebuilds each authoritative snapshot, including the initial and final positions; this is the deterministic base for future cinematic replay and export UI.
