@@ -58,6 +58,7 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 		return
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
+	_spawn_role_impact(attacker, victim.global_position + Vector3.UP * 0.95)
 	weapon_impact.emit(_melee_sound_for(attacker))
 	await _wait_or_skip(0.16 / playback_speed)
 	if _skip_requested:
@@ -160,6 +161,7 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 		_finish_capture(attacker, victim, destination)
 		return
 	_spawn_elemental_impact(impact, Color(1.0, 0.15, 0.03), Color(1.0, 0.48, 0.08))
+	_spawn_role_impact(attacker, impact)
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
 	weapon_impact.emit(&"arcane_impact")
@@ -192,6 +194,7 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 		return
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
+	_spawn_role_impact(attacker, target)
 	weapon_impact.emit(&"hammer_impact")
 	await _wait_or_skip(0.12 / playback_speed)
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
@@ -271,6 +274,7 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 		_finish_capture(attacker, victim, destination)
 		return
 	_spawn_elemental_impact(impact, Color(0.22, 0.72, 1.0), Color(0.66, 0.92, 1.0))
+	_spawn_role_impact(attacker, impact)
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
 	weapon_impact.emit(&"arrow_impact")
@@ -339,6 +343,75 @@ func _spawn_projectile_trail(position: Vector3, color: Color) -> void:
 	tween.tween_property(trail, "scale", Vector3.ONE * 2.6, 0.16 / playback_speed)
 	tween.parallel().tween_property(trail, "transparency", 1.0, 0.16 / playback_speed)
 	tween.tween_callback(trail.queue_free)
+
+
+func _spawn_role_impact(attacker, position: Vector3) -> void:
+	# A class-colored impact stamp makes the decisive moment legible from the
+	# player's board view, while every mesh is short-lived and has no gameplay
+	# collision or state responsibility.
+	var color := Color(1.0, 0.72, 0.20)
+	var shard_count := 5
+	match attacker.archetype:
+		Types.PAWN:
+			color = Color(0.95, 0.89, 0.66)
+			shard_count = 7
+		Types.KNIGHT:
+			color = Color(0.30, 0.78, 1.0)
+			shard_count = 6
+		Types.BISHOP:
+			color = Color(0.45, 0.86, 1.0)
+			shard_count = 8
+		Types.ROOK:
+			color = Color(1.0, 0.34, 0.08)
+			shard_count = 10
+		Types.QUEEN:
+			color = Color(0.94, 0.24, 1.0)
+			shard_count = 9
+		Types.KING:
+			color = Color(1.0, 0.78, 0.18)
+			shard_count = 8
+	var impact := Node3D.new()
+	impact.name = "RoleImpact_%s" % _archetype_name(attacker.archetype)
+	add_child(impact)
+	impact.global_position = position
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 4.8
+	var ring := MeshInstance3D.new()
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 0.18
+	ring_mesh.outer_radius = 0.25
+	ring_mesh.rings = 8
+	ring_mesh.ring_segments = 20
+	ring.mesh = ring_mesh
+	ring.material_override = material
+	ring.rotation.x = PI * 0.5
+	impact.add_child(ring)
+	var impact_tween := create_tween()
+	impact_tween.tween_property(ring, "scale", Vector3.ONE * 3.2, 0.28 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	impact_tween.parallel().tween_property(ring, "transparency", 1.0, 0.28 / playback_speed)
+	for index in shard_count:
+		var shard := MeshInstance3D.new()
+		shard.name = "ImpactShard_%02d" % index
+		var shard_mesh := SphereMesh.new()
+		shard_mesh.radius = 0.035 + float(index % 3) * 0.012
+		shard_mesh.height = shard_mesh.radius * 2.0
+		shard.mesh = shard_mesh
+		shard.material_override = material
+		impact.add_child(shard)
+		var angle := TAU * float(index) / float(shard_count) + 0.18 * float(attacker.archetype)
+		var destination := Vector3(cos(angle), 0.20 + float(index % 2) * 0.18, sin(angle)) * (0.55 + float(index % 3) * 0.12)
+		var shard_tween := create_tween()
+		shard_tween.tween_property(shard, "position", destination, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		shard_tween.parallel().tween_property(shard, "transparency", 1.0, 0.30 / playback_speed)
+	impact_tween.tween_callback(impact.queue_free)
+
+
+func _archetype_name(archetype: int) -> String:
+	return ["Unknown", "Pawn", "Knight", "Bishop", "Rook", "Queen", "King"][clampi(archetype, 0, Types.KING)]
 
 
 func _spawn_weapon_swing(attacker) -> void:

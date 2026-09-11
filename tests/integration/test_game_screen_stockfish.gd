@@ -17,6 +17,7 @@ func _run() -> void:
 	await process_frame
 	assert(screen.arena_id == "mountain_fortress" and screen.get_node("BattlefieldEnvironment").arena_id == "mountain_fortress", "A fresh match must stage the first campaign arena.")
 	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaTitle").text, "The active arena must be visible in the in-game HUD.")
+	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaIntro/Panel/Content/Title").text and "Gatekeeper" in screen.get_node("UI/ArenaIntro/Panel/Content/Challenge").text, "Entering an arena must present its chapter, identity, and opponent challenge.")
 	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Spectator").visible, "Configuration controls must begin condensed in the settings menu.")
 	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
 	screen._show_capture_impact()
@@ -140,6 +141,7 @@ func _run() -> void:
 	await process_frame
 	assert(arcane_screen.arena_id == "arcane_sky_citadel" and arcane_screen.get_node("BattlefieldEnvironment").arena_id == "arcane_sky_citadel", "A campaign-selected arena must apply its own presentation environment to the match.")
 	assert("Arcane Sky Citadel" in arcane_screen.get_node("UI/ArenaTitle").text, "The selected arena identity must appear in the match HUD.")
+	assert("Sky Seer" in arcane_screen.get_node("UI/ArenaIntro/Panel/Content/Challenge").text, "Each arena intro must introduce its own campaign opponent.")
 	arcane_screen.queue_free()
 	await process_frame
 	var practice_session := SessionSettings.DEFAULTS.duplicate()

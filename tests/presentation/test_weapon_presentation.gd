@@ -21,7 +21,11 @@ func _run() -> void:
 	battle._spawn_weapon_swing(pawn)
 	assert(battle.get_node_or_null("WeaponSwingArc00") != null and battle.get_node_or_null("WeaponSwingArc01") != null, "Dual-wielding pawns must create two readable weapon afterimages.")
 	assert(battle._melee_sound_for(pawn) == &"dual_sword_impact")
+	battle._spawn_role_impact(pawn, Vector3(0.0, 1.0, -2.0))
+	assert(battle.get_node_or_null("RoleImpact_Pawn") != null and battle.get_node("RoleImpact_Pawn").get_child_count() >= 8, "Pawn strikes must produce a distinct dual-blade impact stamp with visible shards.")
 	pawn.archetype = Types.KNIGHT
+	battle._spawn_role_impact(pawn, Vector3(0.0, 1.0, -2.0))
+	assert(battle.get_node_or_null("RoleImpact_Knight") != null, "Every archetype must emit an identifiable role-colored impact stamp.")
 	assert(battle._melee_sound_for(pawn) == &"spear_impact")
 	pawn.archetype = Types.ROOK
 	assert(battle._melee_sound_for(pawn) == &"hammer_impact")

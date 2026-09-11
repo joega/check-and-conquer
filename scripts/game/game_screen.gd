@@ -105,6 +105,21 @@ func _initialize_game() -> void:
 	if computer_enabled and not engine.start():
 		computer_enabled = false
 	$UI/LoadingOverlay.visible = false
+	_play_arena_intro()
+
+
+func _play_arena_intro() -> void:
+	var arena := ArenaCatalog.definition(arena_id)
+	$UI/ArenaIntro/Panel/Content/Chapter.text = str(arena.chapter).to_upper()
+	$UI/ArenaIntro/Panel/Content/Title.text = str(arena.title)
+	$UI/ArenaIntro/Panel/Content/Challenge.text = "%s  ·  %s" % [str(arena.opponent), str(arena.intro)]
+	$UI/ArenaIntro.visible = true
+	$UI/ArenaIntro.modulate.a = 0.0
+	var reveal := create_tween()
+	reveal.tween_property($UI/ArenaIntro, "modulate:a", 1.0, 0.38).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	reveal.tween_interval(2.2)
+	reveal.tween_property($UI/ArenaIntro, "modulate:a", 0.0, 0.62).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	reveal.tween_callback(func(): $UI/ArenaIntro.visible = false)
 
 func _exit_tree() -> void:
 	get_tree().paused = false
