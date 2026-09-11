@@ -3,6 +3,7 @@ extends Node
 
 const Types = preload("res://scripts/chess/chess_types.gd")
 const ARROW_SCENE = preload("res://assets/weapons/quaternius/Arrow.fbx")
+const RANGED_PROJECTILE_SCALE := 0.42
 
 signal presentation_finished
 signal impact_landed
@@ -85,6 +86,9 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
 	attacker.play_state(&"attack.spell.shot_01")
+	# The cast and arrival are separate presentation beats. Signature queen
+	# captures intentionally retain both so the spell reads as a command followed
+	# by its destructive payoff.
 	impact_landed.emit()
 	await _wait_or_skip(0.24 / playback_speed)
 	if _skip_requested:
@@ -143,11 +147,12 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	flight.parallel().tween_property(halo, "rotation:y", TAU * 3.0, 0.30 / playback_speed)
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
-	_spawn_elemental_impact(impact, Color(1.0, 0.15, 0.03), Color(1.0, 0.48, 0.08))
+		_spawn_projectile_trail(bolt.global_position, Color(1.0, 0.18, 0.04))
 	bolt.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
+	_spawn_elemental_impact(impact, Color(1.0, 0.15, 0.03), Color(1.0, 0.48, 0.08))
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
 	await _wait_or_skip(0.12 / playback_speed)
@@ -219,7 +224,10 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	var impact: Vector3 = victim.global_position + Vector3.UP * 1.15
 	arrow.global_position = launch
 	arrow.look_at(impact, Vector3.UP, true)
-	arrow.scale = Vector3.ONE * 12.0
+	# Imported weapon meshes are authored in centimetre-like source units. A
+	# compact, explicit scale keeps this projectile character-sized instead of
+	# letting a bishop's arrow fill the capture camera.
+	arrow.scale = Vector3.ONE * RANGED_PROJECTILE_SCALE
 	var frost_light := OmniLight3D.new()
 	frost_light.name = "FrostArrowLight"
 	frost_light.light_color = Color(0.32, 0.78, 1.0)
@@ -230,11 +238,12 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	flight.tween_property(arrow, "global_position", impact, 0.34 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
-	_spawn_elemental_impact(impact, Color(0.22, 0.72, 1.0), Color(0.66, 0.92, 1.0))
+		_spawn_projectile_trail(arrow.global_position, Color(0.32, 0.80, 1.0))
 	arrow.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
+	_spawn_elemental_impact(impact, Color(0.22, 0.72, 1.0), Color(0.66, 0.92, 1.0))
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
 	await _wait_or_skip(0.14 / playback_speed)
@@ -276,6 +285,31 @@ func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: 
 	burst_tween.tween_property(flash, "scale", Vector3.ONE * 4.2, 0.22 / playback_speed)
 	burst_tween.parallel().tween_property(light, "light_energy", 0.0, 0.22 / playback_speed)
 	burst_tween.tween_callback(burst.queue_free)
+
+
+func _spawn_projectile_trail(position: Vector3, color: Color) -> void:
+	# A short-lived glow records projectile travel without littering the impact
+	# square with repeated explosions before the shot has actually arrived.
+	var trail := MeshInstance3D.new()
+	trail.name = "ProjectileTrail"
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.055
+	mesh.height = 0.11
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	trail.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 4.0
+	trail.material_override = material
+	add_child(trail)
+	trail.global_position = position
+	var tween := create_tween()
+	tween.tween_property(trail, "scale", Vector3.ONE * 2.6, 0.16 / playback_speed)
+	tween.parallel().tween_property(trail, "transparency", 1.0, 0.16 / playback_speed)
+	tween.tween_callback(trail.queue_free)
 
 
 func _move_actor(actor, target: Vector3, duration: float) -> void:
