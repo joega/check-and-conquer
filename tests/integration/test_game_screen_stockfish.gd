@@ -133,6 +133,17 @@ func _run() -> void:
 	assert("Arcane Sky Citadel" in arcane_screen.get_node("UI/ArenaTitle").text, "The selected arena identity must appear in the match HUD.")
 	arcane_screen.queue_free()
 	await process_frame
+	var practice_session := SessionSettings.DEFAULTS.duplicate()
+	practice_session.selected_arena_id = "lava_forge"
+	practice_session.campaign_enabled = false
+	assert(SessionSettings.save_values(practice_session) == OK)
+	var practice_screen = GAME_SCREEN.instantiate()
+	root.add_child(practice_screen)
+	await process_frame
+	await process_frame
+	assert(practice_screen.arena_id == "lava_forge" and practice_screen.get_node("BattlefieldEnvironment").arena_id == "lava_forge", "Practice must allow any selected arena even while it remains campaign-locked.")
+	practice_screen.queue_free()
+	await process_frame
 	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
 	print("PASS: playable screen completes a player move and Stockfish response.")
 	quit(0)

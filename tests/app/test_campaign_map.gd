@@ -16,6 +16,11 @@ func _run() -> void:
 	assert(map.get_node("MapArt").texture is Texture2D, "The campaign route must be framed by its original illustrated map backdrop.")
 	assert(map.get_node("OpeningHorn") is AudioStreamPlayer and map.get_node("OpeningHorn").stream is AudioStreamMP3, "The opening campaign map must carry the imported war-horn cue.")
 	assert(map.get_node("Route").get_child_count() == 5, "The campaign route must expose five arena nodes.")
+	assert(map.get_node("Route") is HBoxContainer, "Arena cards must use one responsive row rather than manually staggered coordinates.")
+	var first_card := map.get_node("Route/MountainFortress") as Control
+	for arena_node in map.get_node("Route").get_children():
+		var card := arena_node as Control
+		assert(card.size_flags_horizontal == Control.SIZE_EXPAND_FILL and is_equal_approx(card.global_position.y, first_card.global_position.y), "Every campaign arena card must share one aligned responsive row.")
 	assert(map.get_node("Route/MountainFortress").disabled == false, "The first arena must begin available.")
 	assert(map.get_node("Route/ArcaneSkyCitadel").disabled, "Future arenas must begin locked.")
 	var locked_arena := map.get_node("Route/ArcaneSkyCitadel") as Button

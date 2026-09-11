@@ -181,25 +181,12 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
-	var origin: Vector3 = attacker.global_position
-	var target: Vector3 = victim.global_position
-	var direction := target - origin
-	direction.y = 0.0
-	var distance := maxf(direction.length(), 0.1)
-	var wall := Node3D.new()
-	wall.name = "RookCrushWall"
-	_build_rook_wall(wall)
-	add_child(wall)
-	wall.global_position = origin.lerp(target, 0.5) + Vector3.UP * 1.55
-	wall.look_at(target, Vector3.UP, true)
-	wall.scale = Vector3(1.0, 1.0, 0.06)
-	impact_landed.emit()
+	var origin: Vector3 = attacker.global_position + Vector3.UP * 1.55
+	var target: Vector3 = victim.global_position + Vector3.UP * 1.10
+	var volley := _spawn_rook_brick_volley(origin, target)
 	weapon_impact.emit(&"wall_slam")
-	var grow := create_tween()
-	grow.tween_property(wall, "scale", Vector3(1.0, 1.0, distance + 0.75), 0.34 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	while grow.is_running() and not _skip_requested:
-		await get_tree().process_frame
-	wall.queue_free()
+	await _wait_or_skip(0.42 / playback_speed)
+	volley.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
@@ -215,38 +202,37 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	_finish_capture(attacker, victim, destination)
 
 
-func _build_rook_wall(wall: Node3D) -> void:
-	# A crenellated basalt barricade reads as a rook's moving fortress instead of
-	# the prior anonymous gray slab. Scaling its depth still gives it the clear
-	# lane-crushing motion required by the choreography.
-	var dark_stone := StandardMaterial3D.new()
-	dark_stone.albedo_color = Color(0.12, 0.15, 0.20)
-	dark_stone.metallic = 0.28
-	dark_stone.roughness = 0.62
-	var lit_stone := dark_stone.duplicate() as StandardMaterial3D
-	lit_stone.albedo_color = Color(0.31, 0.18, 0.07)
-	lit_stone.emission_enabled = true
-	lit_stone.emission = Color(1.0, 0.22, 0.035)
-	lit_stone.emission_energy_multiplier = 1.4
-	for row in 4:
-		for column in 3:
-			var brick := MeshInstance3D.new()
-			brick.name = "FortressBrick_%d_%d" % [row, column]
-			var brick_mesh := BoxMesh.new()
-			brick_mesh.size = Vector3(0.52, 0.62, 1.0)
-			brick.mesh = brick_mesh
-			brick.position = Vector3((column - 1) * 0.47 + (0.12 if row % 2 else 0.0), -0.95 + row * 0.62, 0.0)
-			brick.material_override = lit_stone if (row + column) % 5 == 0 else dark_stone
-			wall.add_child(brick)
-	for column in 3:
-		var crenel := MeshInstance3D.new()
-		crenel.name = "Crenellation_%d" % column
-		var crenel_mesh := BoxMesh.new()
-		crenel_mesh.size = Vector3(0.38, 0.38, 1.08)
-		crenel.mesh = crenel_mesh
-		crenel.position = Vector3((column - 1) * 0.54, 1.43, 0.0)
-		crenel.material_override = lit_stone if column == 1 else dark_stone
-		wall.add_child(crenel)
+func _spawn_rook_brick_volley(origin: Vector3, target: Vector3) -> Node3D:
+	# The rook now hurls a visible, heavy stack of masonry. Individual blocks
+	# arc toward the victim and make the lane attack instantly legible.
+	var volley := Node3D.new()
+	volley.name = "RookBrickVolley"
+	add_child(volley)
+	var direction := (target - origin).normalized()
+	var right := direction.cross(Vector3.UP).normalized()
+	for index in 8:
+		var brick := MeshInstance3D.new()
+		brick.name = "ThrownBrick_%02d" % index
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.52, 0.30, 0.72)
+		brick.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.34, 0.16, 0.065).lerp(Color(0.55, 0.25, 0.08), float(index % 3) * 0.10)
+		material.metallic = 0.06
+		material.roughness = 0.84
+		brick.material_override = material
+		volley.add_child(brick)
+		var spread_x := float((index % 4) - 1.5) * 0.22
+		var spread_y := float(index / 4) * 0.24
+		brick.global_position = origin + right * spread_x + Vector3.UP * spread_y
+		brick.rotation = Vector3(float(index) * 0.31, float(index) * 0.57, float(index) * 0.19)
+		var impact_spread := right * (float((index % 3) - 1) * 0.28) + Vector3.UP * (float(index % 2) * 0.22)
+		var apex := brick.global_position.lerp(target + impact_spread, 0.48) + Vector3.UP * (0.85 + float(index % 3) * 0.14)
+		var flight := create_tween()
+		flight.tween_property(brick, "global_position", apex, 0.17 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		flight.tween_property(brick, "global_position", target + impact_spread, 0.25 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		flight.parallel().tween_property(brick, "rotation", brick.rotation + Vector3(5.0, 7.0, 4.0), 0.42 / playback_speed)
+	return volley
 
 
 func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void:

@@ -375,7 +375,12 @@ func _load_settings() -> void:
 	campaign = CampaignProgress.new(settings.get("campaign_snapshot", {}))
 	campaign_enabled = bool(settings.get("campaign_enabled", true))
 	arena_id = str(settings.get("selected_arena_id", campaign.current_arena()))
-	if not campaign.is_unlocked(arena_id):
+	# Practice deliberately permits every presentation-only arena, including
+	# locked campaign locations. Campaign routing remains validated as before.
+	if campaign_enabled and not campaign.is_unlocked(arena_id):
+		arena_id = campaign.current_arena()
+		settings.selected_arena_id = arena_id
+	if not arena_id in ArenaCatalog.ARENAS:
 		arena_id = campaign.current_arena()
 		settings.selected_arena_id = arena_id
 	_update_difficulty_readout()
