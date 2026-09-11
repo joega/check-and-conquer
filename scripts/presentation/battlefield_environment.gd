@@ -7,11 +7,11 @@ const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
 ## Keep the stage neutral so character materials and square colors remain
 ## readable in every panorama, including the cold and fire-lit arenas.
 const BOARD_AMBIENT_COLOR := Color(0.82, 0.82, 0.82)
-const BOARD_AMBIENT_ENERGY := 1.05
+const BOARD_AMBIENT_ENERGY := 0.48
 const BOARD_KEY_COLOR := Color(1.0, 1.0, 1.0)
-const BOARD_KEY_ENERGY := 1.15
+const BOARD_KEY_ENERGY := 0.85
 const BOARD_FILL_COLOR := Color(0.90, 0.90, 0.90)
-const BOARD_FILL_ENERGY := 0.92
+const BOARD_FILL_ENERGY := 0.32
 
 ## Lightweight procedural setting around the authoritative chessboard. It has no
 ## gameplay collision or chess-state responsibilities and can be rebuilt freely.

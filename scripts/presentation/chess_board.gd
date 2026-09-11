@@ -10,6 +10,7 @@ var _destinations: Array = []
 var _last_move_squares: Array = []
 var _hint_squares: Array = []
 var _legal_markers: Array[MeshInstance3D] = []
+var _square_markers: Array[Node3D] = []
 
 func _ready() -> void:
 	_create_board_altar()
@@ -22,7 +23,8 @@ func _ready() -> void:
 			tile.mesh = mesh
 			tile.position = Mapper.square_to_world(square, square_size) + Vector3(0, -0.06, 0)
 			var material := StandardMaterial3D.new()
-			material.albedo_color = Color("d8c39a") if (file + rank) % 2 == 0 else Color("4f684e")
+			material.albedo_color = Color("b5a384") if (file + rank) % 2 == 0 else Color("354c43")
+			material.roughness = 0.92
 			tile.material_override = material
 			add_child(tile)
 			tiles[square] = tile
@@ -113,6 +115,10 @@ func clear_hint() -> void:
 
 
 func _refresh_highlights() -> void:
+	for marker in _square_markers:
+		remove_child(marker)
+		marker.queue_free()
+	_square_markers.clear()
 	for square in tiles:
 		var material := tiles[square].material_override as StandardMaterial3D
 		material.emission_enabled = false
@@ -120,19 +126,47 @@ func _refresh_highlights() -> void:
 		if square in _last_move_squares:
 			material.emission_enabled = true
 			material.emission = Color(1.0, 0.62, 0.12)
-			material.emission_energy_multiplier = 1.25
+			material.emission_energy_multiplier = 0.06
 		if square in _destinations:
 			material.emission_enabled = true
 			material.emission = Color(0.22, 1.0, 0.34)
-			material.emission_energy_multiplier = 2.4
+			material.emission_energy_multiplier = 0.10
 		if square == _selected_square:
 			material.emission_enabled = true
 			material.emission = Color(0.20, 0.78, 1.0)
-			material.emission_energy_multiplier = 3.0
+			material.emission_energy_multiplier = 0.14
 		if square in _hint_squares:
 			material.emission_enabled = true
 			material.emission = Color(1.0, 0.78, 0.18)
-			material.emission_energy_multiplier = 3.4
+			material.emission_energy_multiplier = 0.18
+		if square in _hint_squares:
+			_add_square_marker(square, Color("f5c85e"), "Hint")
+		elif square == _selected_square:
+			_add_square_marker(square, Color("5cdce8"), "Selected")
+		elif square in _last_move_squares:
+			_add_square_marker(square, Color("c59851"), "LastMove")
+
+
+func _add_square_marker(square: int, color: Color, kind: String) -> void:
+	var frame := Node3D.new()
+	frame.name = "%sMarker_%d" % [kind, square]
+	frame.position = Mapper.square_to_world(square, square_size) + Vector3.UP * 0.025
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+	var span := square_size * 0.88
+	for index in 4:
+		var edge := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		var horizontal := index < 2
+		mesh.size = Vector3(span, 0.025, 0.07) if horizontal else Vector3(0.07, 0.025, span)
+		edge.mesh = mesh
+		edge.position = Vector3(0, 0, span * (0.5 if index == 0 else -0.5)) if horizontal else Vector3(span * (0.5 if index == 2 else -0.5), 0, 0)
+		edge.material_override = material
+		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		frame.add_child(edge)
+	add_child(frame)
+	_square_markers.append(frame)
 
 
 func _add_legal_marker(square: int) -> void:
@@ -148,11 +182,9 @@ func _add_legal_marker(square: int) -> void:
 	marker.mesh = mesh
 	marker.position = Mapper.square_to_world(square, square_size) + Vector3(0, 0.028, 0)
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.25, 1.0, 0.38, 0.92)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.emission_enabled = true
-	material.emission = Color(0.08, 0.90, 0.22)
-	material.emission_energy_multiplier = 4.0
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color("66e396")
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	marker.material_override = material
 	add_child(marker)
 	_legal_markers.append(marker)
