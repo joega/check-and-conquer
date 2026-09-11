@@ -15,9 +15,15 @@ func _run() -> void:
 	var battle_stances := {}
 	for actor in presenter.actors.values():
 		assert(not actor.battle_stance_state().is_empty(), "Every actor must choose a readable battle stance.")
-		assert(actor.battle_stance_loops(), "Every board stance must use a looping source animation so pieces never freeze in a finished pose.")
+		assert(actor.is_animation_paused(), "Board pieces must hold a clean neutral pose instead of visibly snapping through a loop seam.")
 		battle_stances[actor.battle_stance_state()] = true
-	assert(battle_stances.size() >= 2, "The opening ranks must use varied battle stances instead of one synchronized idle.")
+	assert(battle_stances.size() == 1, "The opening formation must share a clean neutral rest pose before isolated ambient movement begins.")
+	presenter._play_next_ambient_motion()
+	var moving_count := 0
+	for actor in presenter.actors.values():
+		if actor.is_available_for_ambient_motion() == false and actor.current_semantic_state() == actor.battle_stance_state():
+			moving_count += 1
+	assert(moving_count == 1, "The ambient scheduler must animate only one available board piece at a time.")
 	var celebration_states := {}
 	for index in [8, 1, 2, 0, 3, 4]:
 		var celebrant = presenter.actors[index]

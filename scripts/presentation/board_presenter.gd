@@ -9,6 +9,39 @@ signal piece_landed
 
 var actors: Dictionary = {}
 const WALK_SPEED_MPS := 7.0
+var _ambient_rng := RandomNumberGenerator.new()
+var _ambient_motion_timer_s := 4.5
+var _ambient_motion_index := 0
+var _last_ambient_actor: Node
+
+
+func _ready() -> void:
+	_ambient_rng.seed = 88421
+
+
+func _process(delta: float) -> void:
+	_ambient_motion_timer_s -= delta
+	if _ambient_motion_timer_s > 0.0:
+		return
+	_play_next_ambient_motion()
+	# One isolated movement every few seconds makes the formation feel alert
+	# without ever resembling a synchronized animation loop.
+	_ambient_motion_timer_s = _ambient_rng.randf_range(4.2, 8.0)
+
+
+func _play_next_ambient_motion() -> void:
+	var candidates: Array = []
+	for actor in actors.values():
+		if actor != null and is_instance_valid(actor) and actor.is_available_for_ambient_motion() and actor != _last_ambient_actor:
+			candidates.append(actor)
+	if candidates.is_empty() and _last_ambient_actor != null and is_instance_valid(_last_ambient_actor) and _last_ambient_actor.is_available_for_ambient_motion():
+		candidates.append(_last_ambient_actor)
+	if candidates.is_empty():
+		return
+	var actor = candidates[_ambient_rng.randi_range(0, candidates.size() - 1)]
+	actor.play_ambient_motion(_ambient_motion_index)
+	_ambient_motion_index += 1
+	_last_ambient_actor = actor
 
 func rebuild_from_state(state) -> void:
 	for actor in actors.values(): actor.queue_free()

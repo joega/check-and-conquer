@@ -83,8 +83,9 @@ var _animation_speed_multiplier := 1.0
 var _selection_tween: Tween
 var _stance_seed := 0
 var _stance_loop_state: StringName = &"idle.neutral"
-var _stance_timer_s := 0.0
 var _stance_gesture_time_s := 0.0
+var _ambient_motion_active := false
+var _ambient_motion_tween: Tween
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
@@ -217,20 +218,11 @@ func combat_idle_state() -> StringName:
 
 func start_battle_stance() -> void:
 	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
-	# Only select looping clips as a board stance. The previous sword block and
-	# sword idle clips ended on a frozen frame, which made a living battlefield
-	# look like a display case between moves.
-	var candidates: Array[StringName] = [combat_idle_state(), &"idle.watch_01", &"stance.fold_arms_01", &"idle.talking_01"]
-	if archetype in [Types.BISHOP, Types.QUEEN]:
-		candidates = [combat_idle_state(), &"idle.watch_01", &"stance.fold_arms_01", &"idle.talking_01"]
-	for offset in candidates.size():
-		var candidate := candidates[(_stance_seed + offset) % candidates.size()]
-		if supports_state(candidate):
-			_stance_loop_state = candidate
-			break
-	play_state(_stance_loop_state)
-	_seek_stance_offset()
-	_stance_timer_s = 1.6 + float(posmod(_stance_seed, 9)) * 0.43
+	# The supplied looping clips visibly snap at their seams. Hold each actor in
+	# a clean neutral pose, then let BoardPresenter occasionally select one actor
+	# for a small, isolated ambient movement.
+	_stance_loop_state = &"idle.neutral"
+	_restore_battle_pose()
 	_stance_gesture_time_s = 0.0
 
 
@@ -280,24 +272,34 @@ func battle_stance_loops() -> bool:
 	return animation != null and animation.loop_mode != Animation.LOOP_NONE
 
 
+func is_available_for_ambient_motion() -> bool:
+	return visible and not _ambient_motion_active and _stance_gesture_time_s <= 0.0 and _last_played_state == _stance_loop_state
+
+
+func play_ambient_motion(style_index: int) -> void:
+	if not is_available_for_ambient_motion() or _model_root == null:
+		return
+	_ambient_motion_active = true
+	var baseline_position := _model_root.position
+	var baseline_rotation := _model_root.rotation
+	var lean := -0.045 if posmod(_stance_seed + style_index, 2) == 0 else 0.045
+	var turn := -0.035 if posmod(_stance_seed + style_index, 3) == 0 else 0.035
+	_ambient_motion_tween = create_tween()
+	_ambient_motion_tween.set_parallel(true)
+	_ambient_motion_tween.tween_property(_model_root, "rotation:z", baseline_rotation.z + lean, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "rotation:y", baseline_rotation.y + turn, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "position:y", baseline_position.y + 0.018, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.chain().set_parallel(true)
+	_ambient_motion_tween.tween_property(_model_root, "rotation", baseline_rotation, 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "position", baseline_position, 0.70).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambient_motion_tween.finished.connect(func(): _ambient_motion_active = false)
+
+
 func _process(delta: float) -> void:
 	if _stance_gesture_time_s > 0.0:
 		_stance_gesture_time_s -= delta
 		if _stance_gesture_time_s <= 0.0:
-			play_state(_stance_loop_state)
-			_seek_stance_offset()
-		return
-	if _last_played_state != _stance_loop_state:
-		return
-	_stance_timer_s -= delta
-	if _stance_timer_s > 0.0:
-		return
-	var gestures: Array[StringName] = [&"stance.challenge_01", &"stance.guard_01", &"attack.sword.dash_01", &"attack.punch.jab_01"]
-	var gesture := gestures[posmod(_stance_seed + int(Time.get_ticks_msec() / 1000), gestures.size())]
-	if supports_state(gesture):
-		play_state(gesture)
-		_stance_gesture_time_s = maxf(state_duration(gesture), 0.65)
-	_stance_timer_s = 3.4 + float(posmod(_stance_seed, 7)) * 0.45
+			_restore_battle_pose()
 
 
 func _seek_stance_offset() -> void:
@@ -308,6 +310,20 @@ func _seek_stance_offset() -> void:
 	var animation := player.get_animation(clip)
 	if animation != null and animation.length > 0.05:
 		player.seek(fmod(float(_stance_seed) * 0.173, animation.length), true)
+
+
+func _restore_battle_pose() -> void:
+	if _ambient_motion_tween != null and _ambient_motion_tween.is_valid():
+		_ambient_motion_tween.kill()
+	_ambient_motion_active = false
+	if _model_root != null:
+		_model_root.position = Vector3.ZERO
+		_model_root.rotation = Vector3.ZERO
+	play_state(_stance_loop_state)
+	_seek_stance_offset()
+	# Pausing a clean sampled frame avoids the visible seam in the third-party
+	# idle loop. Brief ambient movements supply life without a constant reset.
+	set_animation_paused(true)
 
 
 func state_duration(semantic_id: StringName) -> float:
