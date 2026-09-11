@@ -431,18 +431,18 @@ func _create_role_prop() -> void:
 		return
 	match archetype:
 		Types.PAWN:
-			_add_weapon(skeleton, &"hand_r", "PawnRightDagger", DAGGER_SCENE, 8.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
-			_add_weapon(skeleton, &"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 8.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_r", "PawnRightDagger", DAGGER_SCENE, 0.08, Vector3(0, 0, 0.01), Vector3.ZERO)
+			_add_weapon(skeleton, &"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 0.08, Vector3(0, 0, 0.01), Vector3.ZERO)
 		Types.KNIGHT:
-			_add_weapon(skeleton, &"hand_r", "KnightSpear", SPEAR_SCENE, 10.0, Vector3(0, 0, 0.015), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_r", "KnightSpear", SPEAR_SCENE, 0.12, Vector3(0, 0, 0.015), Vector3.ZERO)
 		Types.BISHOP:
-			_add_weapon(skeleton, &"hand_l", "BishopGoldenBow", BOW_SCENE, 10.0, Vector3(0, 0, 0.015), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_l", "BishopGoldenBow", BOW_SCENE, 0.10, Vector3(0, 0, 0.015), Vector3.ZERO)
 		Types.ROOK:
-			_add_weapon(skeleton, &"hand_r", "RookWarHammer", HAMMER_SCENE, 8.5, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_r", "RookWarHammer", HAMMER_SCENE, 0.10, Vector3(0, 0, 0.01), Vector3.ZERO)
 		Types.QUEEN:
-			_add_weapon(skeleton, &"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 9.5, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 0.10, Vector3(0, 0, 0.01), Vector3.ZERO)
 		Types.KING:
-			_add_weapon(skeleton, &"hand_r", "KingClaymore", CLAYMORE_SCENE, 9.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_r", "KingClaymore", CLAYMORE_SCENE, 0.11, Vector3(0, 0, 0.01), Vector3.ZERO)
 
 
 func _add_weapon(skeleton: Skeleton3D, bone_name: StringName, weapon_name: String, weapon_scene: PackedScene, display_scale: float, grip_offset: Vector3, rotation_degrees_value: Vector3) -> void:
