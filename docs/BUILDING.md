@@ -8,7 +8,7 @@ Launch the demo from the repository root:
 godot --path .
 ```
 
-Choose **Play vs Stockfish**. The default game is White versus Stockfish. The compact in-game toolbar keeps move, restart, undo, and Settings visible; Settings opens the computer/local, side, difficulty, promotion, capture-speed, audio, camera, fullscreen, and diagnostic controls. These options persist in `user://warboard_settings.cfg`. Right-drag rotates the board; the mouse wheel zooms. After each move, the camera settles into a three-quarter view from the side deciding next; manual close zoom raises its focus to face level. Captures use a temporary fixed action shot before the normal board view returns.
+Choose **Play vs Stockfish**. The default game is White versus Stockfish. The compact in-game toolbar keeps move, restart, undo, and Settings visible; Settings opens the computer/local, side, difficulty, promotion, capture-speed, audio, camera, fullscreen, and diagnostic controls. These options persist in `user://warboard_settings.cfg`. Right-drag rotates the board, middle-drag pans the focus across it, and the mouse wheel zooms. After each move, the camera settles into a three-quarter view from the side deciding next; pan to a character then close-zoom for a face-level view. Captures use a temporary fixed action shot before the normal board view returns.
 
 Run every deterministic headless gate, including the real Stockfish process test, with:
 

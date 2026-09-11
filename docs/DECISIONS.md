@@ -68,7 +68,7 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 
 **Status:** Accepted
 **Date:** 2026-09-10
-**Decision:** Keep right-drag orbit and mouse-wheel inspection, but snap to a mirrored three-quarter board view after each committed move. White's default view looks from rank one toward Black; Black's mirrors it from rank eight. Close zoom smoothly raises its focal point to the character face level.
+**Decision:** Keep right-drag orbit, middle-drag pan, and mouse-wheel inspection, but snap to a mirrored three-quarter board view after each committed move. White's default view looks from rank one toward Black; Black's mirrors it from rank eight. Close zoom smoothly raises its focal point to the character face level.
 **Reason:** A free-orbit-only camera can leave the player viewing the board from an unhelpful angle, while a floor-centered close zoom obscures the character models. The turn-aware framing presents the relevant side and keeps close character inspection usable.
 **Consequences:** `BoardCameraController` owns default side framing; `GameScreen` requests it after restart, undo, and move presentation. Capture camera transforms still restore first, then the normal board view snaps for the next decision.
 

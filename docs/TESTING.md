@@ -72,7 +72,7 @@ Run the board-camera control test with:
 godot --headless --path . --script res://tests/presentation/test_board_camera_controller.gd
 ```
 
-The current manual demo path is `godot --path .` → **Play vs Stockfish**. Click a piece and a destination square, or enter a UCI move. Right-drag rotates the board; the mouse wheel zooms. Use `Debug Position Loader` to exercise FEN reconstruction and **Animation Browser** to preview every full-character archetype.
+The current manual demo path is `godot --path .` → **Play vs Stockfish**. Click a piece and a destination square, or enter a UCI move. Right-drag rotates the board, middle-drag pans its focus, and the mouse wheel zooms. Use `Debug Position Loader` to exercise FEN reconstruction and **Animation Browser** to preview every full-character archetype.
 
 Run a scripted local-game smoke test with:
 
