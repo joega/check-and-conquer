@@ -9,7 +9,7 @@
 ## What you can play today
 
 - A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
-- Human versus human or Stockfish 19, with selectable side and difficulty.
+- Human versus human or Stockfish 19, with selectable side and difficulty, plus a Stockfish-versus-Stockfish spectator mode.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
 - A turn-aware three-quarter camera with readable board-edge coordinates that settles behind the player to move. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
@@ -36,7 +36,7 @@ Open the project in Godot or run:
 godot --path .
 ```
 
-Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds move entry, restart, undo, and capture skip; **Settings** contains game mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
+Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds move entry, restart, undo, and capture skip; **Settings** contains local play, player-versus-Stockfish, spectator mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
 
 ## Development
 

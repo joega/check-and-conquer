@@ -209,3 +209,5 @@ Not V1 commitments:
 - analysis after game,
 - online multiplayer,
 - theme/mod packs.
+
+**Progress:** The Stockfish-versus-Stockfish spectator candidate is implemented as an optional persisted setting. It reuses the same UCI process, independent domain validation, turn phases, board projection, and combat presentation as normal engine play; it does not add online scope.

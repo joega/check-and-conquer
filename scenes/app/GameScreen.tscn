@@ -170,6 +170,12 @@ offset_right = 330.0
 offset_bottom = 264.0
 button_pressed = true
 text = "Play Stockfish (Black)"
+[node name="Spectator" type="CheckButton" parent="UI"]
+offset_left = 44.0
+offset_top = 274.0
+offset_right = 330.0
+offset_bottom = 312.0
+text = "Watch Stockfish vs Stockfish"
 [node name="Difficulty" type="OptionButton" parent="UI"]
 offset_left = 44.0
 offset_top = 322.0

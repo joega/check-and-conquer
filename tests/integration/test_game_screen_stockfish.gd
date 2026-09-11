@@ -31,6 +31,13 @@ func _run() -> void:
 	assert(screen.controller.phase == screen.controller.Phase.PLAYER_INPUT, "Input must unlock after the engine move is presented.")
 	assert("bestmove" in screen.get_node("UI/EngineLog").get_parsed_text(), "The screen must expose recent Stockfish UCI output for diagnosis.")
 	assert(screen.get_node("BoardPresenter").actor_count() == 32, "The board projection must remain synchronized after engine play.")
+	screen._set_spectator_enabled(true)
+	deadline = Time.get_ticks_msec() + 12000
+	while screen.controller.game.move_history.size() < 2 and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	assert(screen.spectator_enabled and screen.controller.game.move_history.size() >= 2, "Spectator mode must autonomously stage legal Stockfish moves for both sides.")
+	assert(screen.get_node("UI/Submit").disabled, "Spectator mode must lock human move submission while engines take both turns.")
+	screen._set_spectator_enabled(false)
 	screen._set_player_side(1)
 	deadline = Time.get_ticks_msec() + 12000
 	while screen.controller.game.move_history.size() < 1 and Time.get_ticks_msec() < deadline:

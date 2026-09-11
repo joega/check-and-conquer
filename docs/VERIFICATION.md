@@ -19,7 +19,7 @@ The suite covers:
 - board mapping, board-edge coordinate labels, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
 - camera orbit/zoom and capture-shot restoration;
 - capture audio generation, full victim-death completion, the animation browser, and 20 deterministic Combat Lab play/reset cycles;
-- a playable GameScreen turn against Stockfish.
+- a playable GameScreen turn against Stockfish and autonomous Stockfish-versus-Stockfish spectator turns.
 
 The FEN Position Loader test is part of this command. It verifies valid FEN reconstruction in the scene's actual `BoardPresenter` and confirms invalid input preserves the last valid visual board.
 

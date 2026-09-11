@@ -7,9 +7,11 @@ func _init() -> void:
 	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
 	var defaults := SessionSettings.load_values()
 	assert(defaults.computer_enabled == true)
+	assert(defaults.spectator_enabled == false)
 	assert(defaults.capture_speed_index == 0)
 	var expected := defaults.duplicate()
 	expected.computer_enabled = false
+	expected.spectator_enabled = true
 	expected.difficulty_index = 1
 	expected.player_side_index = 1
 	expected.capture_speed_index = 1

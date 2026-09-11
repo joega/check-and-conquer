@@ -9,7 +9,7 @@ const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
 const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
-	"Computer", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
+	"Computer", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Move", "Submit", "Restart", "Undo", "Back", "Settings", "CameraHelp"]
@@ -17,6 +17,7 @@ var controller
 var selected_square := Types.NO_SQUARE
 var engine
 var computer_enabled := true
+var spectator_enabled := false
 var engine_request_pending := false
 var engine_configured := false
 var difficulty = NOVICE_DIFFICULTY
@@ -53,6 +54,7 @@ func _ready() -> void:
 	_load_settings()
 	_set_settings_menu_visible(false)
 	$UI/Computer.toggled.connect(_set_computer_enabled)
+	$UI/Spectator.toggled.connect(_set_spectator_enabled)
 	$UI/Difficulty.item_selected.connect(_set_difficulty)
 	$UI/PlayerSide.item_selected.connect(_set_player_side)
 	$UI/AnimationSpeed.item_selected.connect(_set_capture_speed)
@@ -80,14 +82,14 @@ func _restart() -> void:
 	selected_square = Types.NO_SQUARE
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
 	$BoardPresenter.rebuild_from_state(controller.game.state)
-	$UI/Submit.disabled = false
+	$UI/Submit.disabled = spectator_enabled
 	$UI/GameOverPanel.visible = false
 	$UI/Status.text = "White to move"
 	$Camera3D.snap_to_side(Types.WHITE, 0.0)
 	if computer_enabled:
 		engine.new_game()
 	engine_request_pending = false
-	if computer_enabled and player_side == Types.BLACK:
+	if computer_enabled and (spectator_enabled or player_side == Types.BLACK):
 		_request_engine_move()
 
 func _undo() -> void:
@@ -105,6 +107,9 @@ func _undo() -> void:
 	$Camera3D.snap_to_side(controller.game.state.side_to_move)
 
 func _submit() -> void:
+	if spectator_enabled:
+		$UI/Status.text = "Spectating Stockfish versus Stockfish."
+		return
 	if computer_enabled and controller.game.state.side_to_move != player_side:
 		$UI/Status.text = "Stockfish is thinking."
 		return
@@ -174,7 +179,7 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
 	if result.game_result == "ongoing":
 		$Camera3D.snap_to_side(controller.game.state.side_to_move)
-	if computer_enabled and not was_engine_move and result.game_result == "ongoing":
+	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
 
 func _request_engine_move() -> void:
@@ -192,6 +197,8 @@ func _on_engine_ready(_engine_name: String) -> void:
 	if not engine_configured:
 		engine_configured = true
 		_apply_difficulty()
+		if spectator_enabled:
+			_request_engine_move()
 		return
 	if engine_request_pending and controller != null and controller.phase == TurnController.Phase.ENGINE_THINKING:
 		engine_request_pending = false
@@ -216,6 +223,8 @@ func _on_engine_error(message: String) -> void:
 	controller.engine_failed()
 	computer_enabled = false
 	$UI/Computer.button_pressed = false
+	spectator_enabled = false
+	$UI/Spectator.button_pressed = false
 	$UI/Status.text = "Computer unavailable: %s. Local play remains available." % message
 
 func _on_engine_line(line: String) -> void:
@@ -225,6 +234,9 @@ func _on_engine_line(line: String) -> void:
 		log.remove_paragraph(0)
 
 func _set_computer_enabled(enabled: bool) -> void:
+	if not enabled and spectator_enabled:
+		spectator_enabled = false
+		$UI/Spectator.button_pressed = false
 	computer_enabled = enabled
 	if enabled and engine != null and not engine.is_running():
 		if not engine.start():
@@ -237,6 +249,21 @@ func _set_computer_enabled(enabled: bool) -> void:
 	$UI/Status.text = "White to move" if controller.game.state.side_to_move == Types.WHITE else "Black to move"
 	settings.computer_enabled = computer_enabled
 	_save_settings()
+
+
+func _set_spectator_enabled(enabled: bool) -> void:
+	spectator_enabled = enabled
+	if spectator_enabled:
+		computer_enabled = true
+		$UI/Computer.button_pressed = true
+		if engine != null and not engine.is_running() and not engine.start():
+			spectator_enabled = false
+			$UI/Spectator.button_pressed = false
+			$UI/Status.text = "Spectator mode requires Stockfish."
+	settings.spectator_enabled = spectator_enabled
+	settings.computer_enabled = computer_enabled
+	_save_settings()
+	_restart()
 
 func _set_difficulty(index: int) -> void:
 	difficulty = NOVICE_DIFFICULTY if index == 0 else MASTER_DIFFICULTY
@@ -280,6 +307,9 @@ func _load_settings() -> void:
 	var player_index := clampi(int(settings.get("player_side_index", 0)), 0, 1)
 	var speed_index := clampi(int(settings.get("capture_speed_index", 0)), 0, 1)
 	computer_enabled = bool(settings.get("computer_enabled", true))
+	spectator_enabled = bool(settings.get("spectator_enabled", false))
+	if spectator_enabled:
+		computer_enabled = true
 	difficulty = NOVICE_DIFFICULTY if difficulty_index == 0 else MASTER_DIFFICULTY
 	player_side = Types.WHITE if player_index == 0 else Types.BLACK
 	$BattleDirector.playback_speed = 1.0 if speed_index == 0 else 2.0
@@ -287,6 +317,7 @@ func _load_settings() -> void:
 	var volume_db := clampf(float(settings.get("master_volume_db", 0.0)), -40.0, 0.0)
 	AudioServer.set_bus_volume_db(0, volume_db)
 	$UI/Computer.button_pressed = computer_enabled
+	$UI/Spectator.button_pressed = spectator_enabled
 	$UI/Difficulty.select(difficulty_index)
 	$UI/PlayerSide.select(player_index)
 	$UI/AnimationSpeed.select(speed_index)
@@ -316,6 +347,8 @@ func _apply_difficulty() -> void:
 	engine.configure_difficulty(skill, elo)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if spectator_enabled:
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT): return
 	var origin: Vector3 = $Camera3D.project_ray_origin(event.position)
 	var direction: Vector3 = $Camera3D.project_ray_normal(event.position)

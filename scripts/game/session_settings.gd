@@ -8,6 +8,7 @@ const SECTION := "session"
 
 const DEFAULTS := {
 	"computer_enabled": true,
+	"spectator_enabled": false,
 	"difficulty_index": 0,
 	"player_side_index": 0,
 	"capture_speed_index": 0,
