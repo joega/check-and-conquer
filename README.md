@@ -74,7 +74,7 @@ See [third-party asset provenance](assets/THIRD_PARTY_ASSETS.md) and [third-part
 
 ## Project status
 
-The playable prototype has passed chess perft through depth 4, real-process Stockfish integration, and repeatable combat reset checks. Current development is focused on visual polish, position-debugging tools, and expanding signature capture content.
+The playable prototype has passed chess perft through depth 4, real-process Stockfish integration, repeatable combat reset checks, and a Linux export smoke launch. Current development is focused on visual polish, camera/input refinement, and human release review.
 
 ## Contributing
 
