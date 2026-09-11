@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/capture_choreography.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"capture.king_vs_bishop.strike_01"
+attacker_clip = &"attack.sword.regular_b_01"
+victim_hit_clip = &"reaction.hit.generic_01"
+victim_hit_variants = Array[StringName]([&"reaction.hit.generic_01", &"reaction.hit.knockback_01", &"reaction.hit.head_01"])
+victim_death_clip = &"death.backward_01"
+victim_death_variants = Array[StringName]([&"death.backward_01", &"death.knockback_01"])
+approach_duration_s = 0.50
+impact_time_s = 0.32
+cleanup_time_s = 1.22
+anchor_separation_m = 2.56
+camera_shot = &"capture_overhead"
+impact_sfx = &"procedural.impact"
+vfx_profile = &"impact.flash"

@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/debug_animation_browser.gd" id="1_browser"]
+
+[node name="DebugAnimationBrowser" type="Node3D"]
+script = ExtResource("1_browser")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -25, 0)
+light_energy = 1.5
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-4, 4, 4)
+light_color = Color(0.25, 0.5, 1, 1)
+light_energy = 3.0
+omni_range = 12.0
+
+[node name="Stage" type="CSGBox3D" parent="."]
+size = Vector3(10, 0.1, 10)
+position = Vector3(0, -0.05, 0)
+use_collision = false
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(6.2, 4.4, 8.4)
+current = true
+fov = 46.0
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Margin" type="MarginContainer" parent="UI"]
+offset_left = 28.0
+offset_top = 28.0
+offset_right = 360.0
+offset_bottom = 550.0
+
+[node name="Controls" type="VBoxContainer" parent="UI/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="UI/Margin/Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.76, 0.34, 1)
+theme_override_font_sizes/font_size = 27
+text = "Animation Browser"
+
+[node name="Archetype" type="OptionButton" parent="UI/Margin/Controls"]
+layout_mode = 2
+tooltip_text = "Character archetype"
+
+[node name="PlaybackSpeed" type="OptionButton" parent="UI/Margin/Controls"]
+layout_mode = 2
+tooltip_text = "Animation playback speed"
+
+[node name="Idle" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Idle"
+
+[node name="Walk" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Walk"
+
+[node name="CombatIdle" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Combat Idle"
+
+[node name="Attack" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Sword Attack"
+
+[node name="Hit" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Hit"
+
+[node name="Death" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Death"
+
+[node name="Pause" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Pause"
+
+[node name="Reset" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Reset Pose"
+
+[node name="Back" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Back to Debug Menu"
+
+[node name="Status" type="Label" parent="UI/Margin/Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.92, 1)
+autowrap_mode = 2
+text = "Select a normalized clip."

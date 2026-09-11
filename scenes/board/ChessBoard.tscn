@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/chess_board.gd" id="1"]
+
+[node name="ChessBoard" type="Node3D"]
+script = ExtResource("1")
+
+[node name="PickPlane" type="StaticBody3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PickPlane"]

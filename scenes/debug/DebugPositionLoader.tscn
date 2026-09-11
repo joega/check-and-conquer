@@ -1,0 +1,50 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/position_loader.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="2"]
+
+[sub_resource type="Environment" id="1"]
+background_mode = 1
+background_color = Color(0.08, 0.1, 0.14, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.62, 0.7, 0.86, 1)
+ambient_light_energy = 0.72
+
+[node name="DebugPositionLoader" type="Node3D"]
+script = ExtResource("1")
+
+[node name="ChessBoard" parent="." instance=ExtResource("2")]
+
+[node name="BoardPresenter" type="Node3D" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("1")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(24, 28, 28)
+rotation_degrees = Vector3(-38, 40, 0)
+current = true
+
+[node name="Light" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -30, 0)
+shadow_enabled = true
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, 145, 0)
+light_color = Color(0.48, 0.62, 0.95, 1)
+light_energy = 0.55
+shadow_enabled = false
+
+[node name="UI" type="CanvasLayer" parent="."]
+[node name="FEN" type="LineEdit" parent="UI"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 800.0
+offset_bottom = 60.0
+text = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+[node name="Load" type="Button" parent="UI"]
+offset_left = 810.0
+offset_top = 20.0
+offset_right = 910.0
+offset_bottom = 60.0
+text = "Load FEN"
