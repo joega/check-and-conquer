@@ -133,3 +133,11 @@ Record after M1 evidence:
 **Decision:** Use original runtime-synthesized looping music profiles for each arena, weapon-family procedural effects for combat, and deterministic actor-specific idle stance selection from the licensed animation library.
 **Reason:** The demo needs a coherent soundtrack and readable weapon feedback now, without acquiring unreviewed audio packs or coupling audio choices to chess logic. Per-character stance phase and gesture variation removes the mechanical synchronized idle that made the board look staged.
 **Consequences:** `ArenaAudioDirector` is presentation-only and derives only from arena ID and BattleDirector events. Board landing, bow, arcane, sword, spear, and hammer/wall effects have distinct triggers. `PieceActor` can be rebuilt from state while retaining a deterministic stance choice based on its projected position and identity.
+
+## ADR-019 — Readable board cues and authored contact timing
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Keep board lighting neutral with a dominant shadowed key and restrained fill/ambient. Use unshaded perimeter cues for selection, hints and last move; last move persists until replacement, restart, undo or review. Camera telemetry is visible with Match Settings. Supported choreography attack clips take precedence over stance-seeded alternatives, and melee anchors follow the attacker's direction relative to the victim.
+**Reason:** Rendered audit showed clipped tile colors, saturated cues and competing settings copy. Arbitrary attack variants invalidated authored hit timing; fixed-world staging could cross through a victim.
+**Consequences:** Idle variety remains, but adding attack variants requires corresponding timing data. Choreography still owns contact time, domain state still owns final destination, and no rules or engine behavior changes. See `ASTRA_VISUAL_DIRECTION.md` for the ranked follow-up plan and reproducible visual route.

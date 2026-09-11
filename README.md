@@ -70,6 +70,8 @@ The game opens directly on **The Warpath**. Win the current arena to unlock the 
 
 ## Development
 
+The prioritized visual audit and follow-up work are in [Astra visual direction](docs/ASTRA_VISUAL_DIRECTION.md). It includes an isolated-save command to capture the campaign, real engine reply, all five arena views, settings, and the three debug scenes. Camera tuning telemetry is available while Match Settings is open; selection and hint outlines preserve square colors, and amber last-move outlines remain through decision time.
+
 Run the deterministic test suite, including chess perft and the real Stockfish subprocess test:
 
 ```sh

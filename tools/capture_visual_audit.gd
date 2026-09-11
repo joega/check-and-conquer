@@ -41,6 +41,13 @@ func _run() -> void:
 	await _shot("04-engine-reply")
 	game._set_settings_menu_visible(true)
 	await _shot("05-settings")
+	game._set_settings_menu_visible(false)
+	for arena_id in ["mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins"]:
+		game.get_node("BattlefieldEnvironment").apply_arena(arena_id)
+		for side in [1, -1]:
+			game.get_node("Camera3D").snap_to_side(side, 0.0)
+			await create_timer(0.2).timeout
+			await _shot("arena-%s-%d" % [arena_id, side])
 	var loader = await _scene("res://scenes/debug/DebugPositionLoader.tscn")
 	loader.load_fen(loader.PRESETS["Capture framing"])
 	await _shot("06-position-loader")

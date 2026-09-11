@@ -107,3 +107,21 @@ XDG_DATA_HOME=/tmp/cac-audit-data XDG_CONFIG_HOME=/tmp/cac-audit-config XDG_CACH
 ```
 
 Headless tests establish behavior, not visual quality. Compare before/after rendered board, selection, settings and contact. Additional lighting views must cover all arenas and both sides. GPU exit texture-cleanup diagnostics are recorded separately from scene/script failures.
+
+## Implemented tranche and verification record
+
+Items 1–4 are implemented. Lighting is 0.48 ambient / 0.85 key / 0.32 fill; matte limestone/slate squares retain color under that rig. Selection and hints use explicit cyan/gold perimeters, green legal rings remain, and last move uses persistent amber perimeters. Undo/restart/review remove stale cues. Melee staging uses the incoming direction and victim location (including en passant); authored clips retain their timing, and swing begins 0.09 s before impact. Settings now use an opaque dark surface, manual UCI controls fit inside, engine output scrolls within a fixed rectangle, and camera telemetry appears only with Menu.
+
+Verification:
+
+- `bash tools/run_headless_tests.sh`: exit 0, all 32 test programs passed. Includes perft 20/400/8,902/197,281; 100 real Stockfish turns; 36 choreography pairings; castling, en passant and promotion projection; 20 complete Combat Lab play/reset cycles.
+- New melee regression: twenty captures across eight directions, authored clips across stance seeds, distinct victim/destination, coincident-position fallback, windup skip, contact-visible swing, exact settlement. This accelerated test skips at impact; the separate Combat Lab gate verifies full-duration resets.
+- Board tests verify cue priority, bounded emission, removal and retained last move. Game integration checks menu telemetry, opaque panel, contained controls, last-move persistence beyond the former timeout and clearing on restart/review.
+- Rendered audit: exit 0. Inspected both sides of all five arenas, selection, real e2e4/Stockfish reply, settings and all required debug scenes. Before/first-after were 922×518; final desktop layout produced 1882×1058. Final screenshots: `/tmp/cac-visual-final/`; prior comparisons: `/tmp/cac-visual-before/` and `/tmp/cac-visual-after/`. Arena comparison shots switch presentation only, so their HUD retains the mountain match title.
+- First suite import encountered sandbox-denied editor-settings/socket writes; a separate isolated-XDG import with desktop permissions exited 0 with no errors. Test exit cleanup reports resource/ObjectDB leftovers; rendered audit reports two small GL texture leftovers at shutdown, also present before changes. No script assertions or scene-load failures. No claim of a leak-free release build or a measured 60 FPS budget.
+
+Inspection: launch `godot --path .`, Enter Arena, select e2 and play e4; wait more than four seconds after the reply to see retained amber outlines. Open Menu to inspect settings and telemetry. Run Combat Lab, Play Capture, Reset; use the documented capture command for the entire repeatable route.
+
+Remaining limitations: hand-to-weapon and anatomical hit contact still need role-specific authoring; far-rank class silhouettes remain similar; debug-room lighting retains its pre-existing bright calibration; spell cores, peripheral landmark emission and campaign footer still need polish. Current work adds no assets and requires no provenance changes. README, roadmap and ADR-019 record the behavior changes.
+
+Terra's next three investments: (1) translucent, bounded spell impacts/trails (item 5), (2) game/lab audio parity (item 6), (3) a combined six-role silhouette and weapon-grip pass (items 7–8), with screenshots of idle, walk and contact before acquiring more content.
