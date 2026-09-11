@@ -35,6 +35,7 @@ tests=(
   tests/presentation/test_capture_projection.gd
   tests/presentation/test_special_move_projection.gd
   tests/presentation/test_choreography_resolver.gd
+  tests/presentation/test_signature_delivery_followups.gd
   tests/presentation/test_combat_lab.gd
   tests/presentation/test_local_game_projection.gd
   tests/integration/test_game_screen_stockfish.gd
