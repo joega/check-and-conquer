@@ -20,8 +20,13 @@ Warboard is early in development. The focus is a polished offline Linux prototyp
 ### Requirements
 
 - [Godot 4.7.2](https://godotengine.org/download/archive/4.7.2-stable/)
-- Linux (the included Stockfish integration and export target are Linux-specific)
-- The local Stockfish executable at `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
+- Linux (the Stockfish integration and export target are Linux-specific)
+- A local Stockfish 19 Linux x86-64 executable at `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
+
+The Stockfish executable is excluded from Git because of its size. Download the
+Linux x86-64 universal build from the [official Stockfish site](https://stockfishchess.org/download/),
+place it at the path above, and ensure it is executable. The committed source
+tree and GPL notice provide the corresponding-source material used by releases.
 
 Open the project in Godot or run:
 
@@ -59,7 +64,7 @@ The exporter creates `build/linux-x86_64/` and places Stockfish beside the game 
 
 Character models, outfits, and animation source packs are by [Quaternius](https://quaternius.com/) under CC0 1.0. The bundled chess engine is [Stockfish](https://stockfishchess.org/), distributed under GPLv3; its executable, source, and notices are staged with Linux exports. Godot is MIT licensed.
 
-See [third-party asset provenance](assets/THIRD_PARTY_ASSETS.md) and [third-party software notices](THIRD_PARTY_SOFTWARE.md) for the complete record.
+See [third-party asset provenance](assets/THIRD_PARTY_ASSETS.md) and [third-party software notices](docs/THIRD_PARTY_SOFTWARE.md) for the complete record.
 
 ## Project status
 
