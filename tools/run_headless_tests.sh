@@ -21,6 +21,7 @@ tests=(
   tests/presentation/test_chess_board.gd
   tests/presentation/test_position_loader.gd
   tests/presentation/test_board_camera_controller.gd
+  tests/presentation/test_battlefield_environment.gd
   tests/presentation/test_camera_director.gd
   tests/presentation/test_procedural_impact_audio.gd
   tests/presentation/test_battle_death_completion.gd

@@ -43,7 +43,7 @@ The expected smoke-test exit is `124`: the game remains running for the two-seco
 
 Before tagging a public release, run the game from the editor and review:
 
-1. Each player-side default camera framing and close face-level zoom.
+1. Each player-side default camera framing, close face-level zoom, and the storm mountain setting with its lightning pulse.
 2. Ordinary walk movement and all six role-specific props at gameplay distance.
 3. A capture with the action camera centered on the attacking pair, followed by the restored turn-aware board view.
 4. Settings-menu readability at the target window size.

@@ -16,9 +16,10 @@ extends Camera3D
 @export var close_focus_pitch := 0.30
 @export var default_board_distance := 46.0
 @export var default_board_pitch := 0.78
-@export var move_follow_distance := 8.5
-@export var move_follow_height := 4.6
-@export var move_follow_target_height := 1.7
+@export var move_follow_distance := 5.4
+@export var move_follow_height := 3.6
+@export var move_follow_lateral_offset := 2.0
+@export var move_follow_target_height := 1.55
 @export var default_snap_duration_s := 0.32
 
 var _distance := 40.0
@@ -52,7 +53,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _follow_actor != null and is_instance_valid(_follow_actor):
 		var focus := _follow_actor.global_position + Vector3.UP * move_follow_target_height
-		var position := focus - _follow_direction * move_follow_distance + Vector3.UP * move_follow_height
+		# Keep a shoulder offset: the camera stays visibly behind the walker but
+		# avoids the allied piece that often occupies the square directly behind.
+		var lateral := Vector3.UP.cross(_follow_direction).normalized() * move_follow_lateral_offset
+		var position := focus - _follow_direction * move_follow_distance + lateral + Vector3.UP * move_follow_height
 		global_transform = Transform3D(Basis.looking_at(focus - position, Vector3.UP), position)
 
 

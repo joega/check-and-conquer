@@ -37,8 +37,8 @@ func _run() -> void:
 	browser._select_archetype(3)
 	await process_frame
 	await process_frame
-	assert(browser._actor.get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/RookMaceHandle") != null, "Rook must carry a visible hand prop without restoring the shield.")
-	assert(browser._actor.get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/RookMaceHead") != null)
+	assert(browser._actor.get_node_or_null("ModelRoot/Armature/Skeleton3D/RookWarHammerAttachment/RookWarHammer") != null, "Rook must carry the imported war hammer without restoring the shield.")
+	assert(browser._actor.get_node_or_null("ModelRoot/Armature/Skeleton3D/RookWarHammerAttachment") != null)
 	assert(browser._actor.supports_state(browser._actor.combat_idle_state()))
 	browser.queue_free()
 	print("PASS: animation browser switches and previews full-character archetypes.")

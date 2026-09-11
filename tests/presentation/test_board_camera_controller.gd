@@ -37,6 +37,8 @@ func _run() -> void:
 	await process_frame
 	assert(not camera.controls_enabled(), "Move follow must lock manual orbit while the actor is walking.")
 	assert(camera.global_position.z > walker.global_position.z, "Move follow must stay behind the actor relative to its destination.")
+	assert(absf(camera.global_position.x - walker.global_position.x) > 0.5, "Move follow must use a shoulder offset so adjacent pieces do not hide the walker.")
+	assert(camera.global_position.y > walker.global_position.y + 3.0, "Move follow must frame the actor from above the board surface.")
 	camera.end_move_follow()
 	assert(camera.controls_enabled(), "Move follow must restore manual inspection after the walk.")
 	walker.queue_free()
