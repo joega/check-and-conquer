@@ -270,13 +270,13 @@ func play_ambient_motion(style_index: int) -> void:
 	var baseline_rotation := _model_root.rotation
 	# This needs to read from the normal board camera, not only in a close-up.
 	# It is still a weight shift rather than a jump or a repeated exercise loop.
-	var lean := -0.085 if posmod(_stance_seed + style_index, 2) == 0 else 0.085
-	var turn := -0.075 if posmod(_stance_seed + style_index, 3) == 0 else 0.075
+	var lean := -0.11 if posmod(_stance_seed + style_index, 2) == 0 else 0.11
+	var turn := -0.10 if posmod(_stance_seed + style_index, 3) == 0 else 0.10
 	_ambient_motion_tween = create_tween()
 	_ambient_motion_tween.set_parallel(true)
 	_ambient_motion_tween.tween_property(_model_root, "rotation:z", baseline_rotation.z + lean, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_ambient_motion_tween.tween_property(_model_root, "rotation:y", baseline_rotation.y + turn, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_ambient_motion_tween.tween_property(_model_root, "position:y", baseline_position.y + 0.045, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_ambient_motion_tween.tween_property(_model_root, "position:y", baseline_position.y + 0.075, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_ambient_motion_tween.chain().set_parallel(true)
 	_ambient_motion_tween.tween_property(_model_root, "rotation", baseline_rotation, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_ambient_motion_tween.tween_property(_model_root, "position", baseline_position, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
