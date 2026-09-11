@@ -37,7 +37,7 @@ bash tools/export_linux.sh
 timeout 2s build/linux-x86_64/warchessed.x86_64 --headless
 ```
 
-The expected smoke-test exit is `124`: the game remains running for the two-second window. The exporter stages the executable Stockfish binary beside the game and copies its corresponding source and notices.
+The expected smoke-test exit is `124`: the game remains running for the two-second window. This check passed for `warchessed.x86_64` on 2026-09-10 using Godot 4.7.2 export templates. The exporter stages the executable Stockfish binary beside the game and copies its corresponding source and notices.
 
 ## Manual visual review
 
