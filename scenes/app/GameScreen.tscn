@@ -266,6 +266,14 @@ offset_top = 92.0
 offset_right = 204.0
 offset_bottom = 136.0
 text = "Menu"
+[node name="Hint" type="Button" parent="UI"]
+offset_left = 220.0
+offset_top = 92.0
+offset_right = 400.0
+offset_bottom = 136.0
+theme_override_colors/font_color = Color(1, 0.78, 0.26, 1)
+text = "Hint ✦"
+tooltip_text = "Ask the Beginner Coach for one strong move"
 [node name="SettingsPanel" type="Panel" parent="UI"]
 offset_left = 24.0
 offset_top = 152.0
@@ -318,6 +326,13 @@ offset_right = 456.0
 offset_bottom = 454.0
 button_pressed = true
 text = "Camera shake"
+[node name="BeginnerCoach" type="CheckButton" parent="UI"]
+offset_left = 560.0
+offset_top = 350.0
+offset_right = 876.0
+offset_bottom = 376.0
+button_pressed = true
+text = "Beginner Coach"
 [node name="MasterVolume" type="HSlider" parent="UI"]
 offset_left = 48.0
 offset_top = 520.0
@@ -434,7 +449,7 @@ visible = false
 [node name="DifficultyReadout" type="Label" parent="UI"]
 offset_left = 48.0
 offset_top = 350.0
-offset_right = 876.0
+offset_right = 540.0
 offset_bottom = 376.0
 theme_override_colors/font_color = Color(0.72, 0.82, 0.96, 1)
 text = "Campaign opponent: Beginner"

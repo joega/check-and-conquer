@@ -21,6 +21,7 @@ func _run() -> void:
 	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaTitle").text, "The active arena must be visible in the in-game HUD.")
 	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaIntro/Panel/Content/Title").text and "Gatekeeper" in screen.get_node("UI/ArenaIntro/Panel/Content/Challenge").text, "Entering an arena must present its chapter, identity, and opponent challenge.")
 	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Spectator").visible, "Configuration controls must begin condensed in the settings menu.")
+	assert(screen.beginner_coach_enabled and screen.get_node("UI/Hint").visible, "Beginner Coach must begin enabled with a visible hint action.")
 	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
 	screen._show_capture_impact()
 	var impact_sparks: GPUParticles3D = screen.get_node("ImpactSparks")
@@ -28,7 +29,7 @@ func _run() -> void:
 	screen._toggle_settings_menu()
 	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Spectator").visible, "Settings must reveal grouped configuration controls, including spectator mode, on demand.")
 	var settings_panel := screen.get_node("UI/SettingsPanel") as Control
-	for node_name in ["Restart", "Undo", "Pause", "Back", "Difficulty", "PlayerSide", "Promotion", "Spectator", "AnimationSpeed", "CameraShake", "Fullscreen", "ResetView", "MasterVolume", "EngineLog"]:
+	for node_name in ["Restart", "Undo", "Pause", "Back", "Difficulty", "PlayerSide", "Promotion", "Spectator", "AnimationSpeed", "CameraShake", "BeginnerCoach", "Fullscreen", "ResetView", "MasterVolume", "EngineLog"]:
 		assert(settings_panel.get_global_rect().encloses((screen.get_node("UI/%s" % node_name) as Control).get_global_rect()), "Every settings control must fit inside the compact settings panel.")
 	for left_right in [["Restart", "Undo"], ["Undo", "Pause"], ["Pause", "Back"], ["Difficulty", "PlayerSide"], ["PlayerSide", "Promotion"], ["Promotion", "Spectator"]]:
 		assert(not (screen.get_node("UI/%s" % left_right[0]) as Control).get_global_rect().intersects((screen.get_node("UI/%s" % left_right[1]) as Control).get_global_rect()), "Settings row controls must not overlap.")
@@ -45,6 +46,15 @@ func _run() -> void:
 		await create_timer(0.02).timeout
 	assert(screen.controller.game.move_history.size() == 2, "A player move must receive one Stockfish response.")
 	assert(screen.controller.phase == screen.controller.Phase.PLAYER_INPUT, "Input must unlock after the engine move is presented.")
+	screen._request_hint()
+	deadline = Time.get_ticks_msec() + 6000
+	while screen.hint_request_pending and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	assert(not screen.hint_request_pending and screen.get_node("ChessBoard")._hint_squares.size() == 2, "Coach must use the real Stockfish process to return a concrete legal source and destination.")
+	assert("Hint:" in screen.get_node("UI/Status").text, "Coach must explain the highlighted suggestion in plain language.")
+	screen._set_beginner_coach_enabled(false)
+	assert(not screen.get_node("UI/Hint").visible and screen.get_node("ChessBoard")._hint_squares.is_empty(), "Players must be able to disable Beginner Coach and clear its board guidance.")
+	screen._set_beginner_coach_enabled(true)
 	assert("bestmove" in screen.get_node("UI/EngineLog").get_parsed_text(), "The screen must expose recent Stockfish UCI output for diagnosis.")
 	assert(screen.get_node("BoardPresenter").actor_count() == 32, "The board projection must remain synchronized after engine play.")
 	screen._set_spectator_enabled(true)

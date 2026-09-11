@@ -5,6 +5,11 @@ const Mapper = preload("res://scripts/presentation/board_mapper.gd")
 @export var square_size := Mapper.SQUARE_SIZE_M
 var tiles: Dictionary = {}
 var coordinate_labels: Array[Label3D] = []
+var _selected_square := -1
+var _destinations: Array = []
+var _last_move_squares: Array = []
+var _hint_squares: Array = []
+var _legal_markers: Array[MeshInstance3D] = []
 
 func _ready() -> void:
 	_create_board_altar()
@@ -79,11 +84,88 @@ func _create_board_altar() -> void:
 		add_child(rune)
 
 func set_highlights(selected_square: int, destinations: Array) -> void:
+	_selected_square = selected_square
+	_destinations = destinations.duplicate()
+	_clear_legal_markers()
+	for square in _destinations:
+		_add_legal_marker(square)
+	_refresh_highlights()
+
+
+func show_last_move(from_square: int, to_square: int) -> void:
+	_last_move_squares = [from_square, to_square]
+	_refresh_highlights()
+
+
+func clear_last_move() -> void:
+	_last_move_squares.clear()
+	_refresh_highlights()
+
+
+func show_hint(from_square: int, to_square: int) -> void:
+	_hint_squares = [from_square, to_square]
+	_refresh_highlights()
+
+
+func clear_hint() -> void:
+	_hint_squares.clear()
+	_refresh_highlights()
+
+
+func _refresh_highlights() -> void:
 	for square in tiles:
 		var material := tiles[square].material_override as StandardMaterial3D
-		material.emission_enabled = square == selected_square or square in destinations
-		material.emission = Color(0.25, 0.8, 1.0) if square == selected_square else Color(0.2, 0.9, 0.35)
-		material.emission_energy_multiplier = 0.7
+		material.emission_enabled = false
+		material.emission_energy_multiplier = 0.0
+		if square in _last_move_squares:
+			material.emission_enabled = true
+			material.emission = Color(1.0, 0.62, 0.12)
+			material.emission_energy_multiplier = 1.25
+		if square in _destinations:
+			material.emission_enabled = true
+			material.emission = Color(0.22, 1.0, 0.34)
+			material.emission_energy_multiplier = 2.4
+		if square == _selected_square:
+			material.emission_enabled = true
+			material.emission = Color(0.20, 0.78, 1.0)
+			material.emission_energy_multiplier = 3.0
+		if square in _hint_squares:
+			material.emission_enabled = true
+			material.emission = Color(1.0, 0.78, 0.18)
+			material.emission_energy_multiplier = 3.4
+
+
+func _add_legal_marker(square: int) -> void:
+	if not tiles.has(square):
+		return
+	var marker := MeshInstance3D.new()
+	marker.name = "LegalMoveMarker_%d" % square
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = square_size * 0.17
+	mesh.outer_radius = square_size * 0.25
+	mesh.rings = 8
+	mesh.ring_segments = 20
+	marker.mesh = mesh
+	marker.position = Mapper.square_to_world(square, square_size) + Vector3(0, 0.028, 0)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.25, 1.0, 0.38, 0.92)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.emission_enabled = true
+	material.emission = Color(0.08, 0.90, 0.22)
+	material.emission_energy_multiplier = 4.0
+	marker.material_override = material
+	add_child(marker)
+	_legal_markers.append(marker)
+	var pulse := marker.create_tween().set_loops()
+	pulse.tween_property(marker, "scale", Vector3.ONE * 1.13, 0.48).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(marker, "scale", Vector3.ONE, 0.48).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+
+func _clear_legal_markers() -> void:
+	for marker in _legal_markers:
+		if is_instance_valid(marker):
+			marker.queue_free()
+	_legal_markers.clear()
 
 
 func coordinate_label_count() -> int:

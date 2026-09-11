@@ -8,12 +8,14 @@ func _init() -> void:
 	var defaults := SessionSettings.load_values()
 	assert(defaults.computer_enabled == true)
 	assert(defaults.spectator_enabled == false)
+	assert(defaults.beginner_coach_enabled == true)
 	assert(defaults.capture_speed_index == 0)
 	assert(defaults.campaign_enabled == true)
 	assert(defaults.selected_arena_id == "mountain_fortress" and defaults.campaign_snapshot.is_empty(), "A fresh session must start at the first campaign arena.")
 	var expected := defaults.duplicate()
 	expected.computer_enabled = false
 	expected.spectator_enabled = true
+	expected.beginner_coach_enabled = false
 	expected.difficulty_index = 3
 	expected.player_side_index = 1
 	expected.capture_speed_index = 1

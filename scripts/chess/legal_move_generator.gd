@@ -31,6 +31,12 @@ static func _is_in_check(state, side: int) -> bool:
 	return king_square == Types.NO_SQUARE or _is_attacked(state, king_square, -side)
 
 
+## Presentation may ask for a plain-language coaching warning, but the chess
+## domain remains the sole authority for whether a square is attacked.
+static func is_square_attacked(state, square: int, by_side: int) -> bool:
+	return _is_attacked(state, square, by_side)
+
+
 static func _is_attacked(state, square: int, by_side: int) -> bool:
 	for from in Types.BOARD_SIZE:
 		var piece: int = state.get_piece(from)

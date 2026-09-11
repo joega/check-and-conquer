@@ -8,9 +8,10 @@ const ChoreographyResolver = preload("res://scripts/presentation/capture_choreog
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
+const LegalMoveGenerator = preload("res://scripts/chess/legal_move_generator.gd")
 const SETTINGS_MENU_NODES := [
 	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
-	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
+	"CameraShake", "BeginnerCoach", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
 	"MenuHeading", "DifficultyCaption", "PlayerCaption", "PromotionCaption", "SpeedCaption", "ViewCaption", "VolumeCaption", "DifficultyReadout",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Settings"]
@@ -20,6 +21,9 @@ var engine
 var computer_enabled := true
 var spectator_enabled := false
 var engine_request_pending := false
+var hint_request_pending := false
+var beginner_coach_enabled := true
+var _last_move_trail_token := 0
 var engine_configured := false
 var difficulty_index := 0
 var player_side := Types.WHITE
@@ -60,6 +64,7 @@ func _initialize_game() -> void:
 	$UI/PauseOverlay/Content/Resume.pressed.connect(_resume_match)
 	$UI/PauseOverlay/Content/Quit.pressed.connect(_quit_from_pause)
 	$UI/Settings.pressed.connect(_toggle_settings_menu)
+	$UI/Hint.pressed.connect(_request_hint)
 	$UI/Fullscreen.pressed.connect(_toggle_fullscreen)
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
 	$UI/QuickResetView.pressed.connect($Camera3D.reset_view)
@@ -98,6 +103,7 @@ func _initialize_game() -> void:
 	$UI/PlayerSide.item_selected.connect(_set_player_side)
 	$UI/AnimationSpeed.item_selected.connect(_set_capture_speed)
 	$UI/CameraShake.toggled.connect(_set_camera_shake)
+	$UI/BeginnerCoach.toggled.connect(_set_beginner_coach_enabled)
 	$UI/MasterVolume.value_changed.connect(_set_master_volume)
 	engine = StockfishAdapter.new()
 	add_child(engine)
@@ -108,6 +114,7 @@ func _initialize_game() -> void:
 	if computer_enabled and not engine.start():
 		computer_enabled = false
 	$UI/LoadingOverlay.visible = false
+	_update_coach_prompt()
 	_play_arena_intro()
 
 
@@ -192,12 +199,15 @@ func _restart() -> void:
 	controller.start()
 	selected_square = Types.NO_SQUARE
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$ChessBoard.clear_hint()
+	$ChessBoard.clear_last_move()
 	$BoardPresenter.set_selected_square(Types.NO_SQUARE)
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.disabled = spectator_enabled
 	$UI/GameOverPanel.visible = false
 	replay_index = -1
 	$UI/Status.text = "White to move"
+	_update_coach_prompt()
 	$Camera3D.snap_to_side(player_side, 0.0)
 	if computer_enabled:
 		engine.new_game()
@@ -226,6 +236,7 @@ func _submit() -> void:
 	if spectator_enabled:
 		$UI/Status.text = "Spectating Stockfish versus Stockfish."
 		return
+	$ChessBoard.clear_hint()
 	if controller.game.state.side_to_move != player_side:
 		$UI/Status.text = "Stockfish is thinking."
 		return
@@ -305,6 +316,7 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	if not $BoardPresenter.matches_state(controller.game.state):
 		$BoardPresenter.rebuild_from_state(controller.game.state)
 	controller.presentation_finished()
+	_show_last_move_trail(result)
 	if result.game_result != "ongoing":
 		var campaign_victory := _record_campaign_victory_if_earned(result)
 		var outcome := _outcome_copy(result, campaign_victory)
@@ -327,6 +339,8 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$BoardPresenter.show_check_on_side(controller.game.state.side_to_move)
 		if result.game_result == "ongoing":
 			_show_outcome_banner("CHECK!", Color(1.0, 0.30, 0.12), 1.55)
+			if beginner_coach_enabled and controller.game.state.side_to_move == player_side:
+				$UI/Status.text = "Your king is in check — move, block, or capture the threat!"
 	else:
 		$BoardPresenter.clear_check_indicator()
 	# Keep a player's deliberate framing throughout both quiet moves and captures.
@@ -335,6 +349,64 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$Camera3D.snap_to_side(player_side)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
+	elif result.game_result == "ongoing":
+		_update_coach_prompt()
+
+
+func _show_last_move_trail(result) -> void:
+	_last_move_trail_token += 1
+	var token := _last_move_trail_token
+	$ChessBoard.show_last_move(result.from_square, result.to_square)
+	_clear_last_move_trail_later(token)
+
+
+func _clear_last_move_trail_later(token: int) -> void:
+	await get_tree().create_timer(3.2).timeout
+	if token == _last_move_trail_token:
+		$ChessBoard.clear_last_move()
+
+
+func _request_hint() -> void:
+	if not beginner_coach_enabled:
+		return
+	if controller == null or spectator_enabled or controller.phase != TurnController.Phase.PLAYER_INPUT or controller.game.state.side_to_move != player_side:
+		$UI/Status.text = "Hints are ready when it is your turn."
+		return
+	if engine == null or not engine.is_ready_for_requests():
+		$UI/Status.text = "Coach is preparing a hint…"
+		return
+	hint_request_pending = engine.request_move(controller.game.state.to_fen(), 180)
+	if hint_request_pending:
+		$UI/Hint.disabled = true
+		$UI/Status.text = "Coach is scouting the board…"
+
+
+func _show_hint(uci: String) -> void:
+	if uci.length() < 4:
+		return
+	var from_square := Types.square_from_name(uci.substr(0, 2))
+	var to_square := Types.square_from_name(uci.substr(2, 2))
+	if from_square == Types.NO_SQUARE or to_square == Types.NO_SQUARE:
+		return
+	$ChessBoard.show_hint(from_square, to_square)
+	var capture := Types.piece_side(controller.game.state.get_piece(to_square)) == -player_side
+	$UI/Status.text = "Hint: try %s → %s%s" % [Types.square_name(from_square), Types.square_name(to_square), " — you can capture there!" if capture else "."]
+
+
+func _update_coach_prompt() -> void:
+	$UI/Hint.visible = beginner_coach_enabled and not spectator_enabled
+	$UI/Hint.disabled = not beginner_coach_enabled or controller == null or controller.phase != TurnController.Phase.PLAYER_INPUT or controller.game.state.side_to_move != player_side
+	if beginner_coach_enabled and controller != null and controller.phase == TurnController.Phase.PLAYER_INPUT and controller.game.state.side_to_move == player_side and selected_square == Types.NO_SQUARE:
+		$UI/Status.text = "Your turn — choose a piece, then a glowing green square."
+
+
+func _set_beginner_coach_enabled(enabled: bool) -> void:
+	beginner_coach_enabled = enabled
+	settings.beginner_coach_enabled = enabled
+	if not enabled:
+		$ChessBoard.clear_hint()
+	_update_coach_prompt()
+	_save_settings()
 
 
 func _outcome_copy(result, campaign_victory: bool) -> Dictionary:
@@ -389,6 +461,11 @@ func _on_engine_ready(_engine_name: String) -> void:
 		$UI/Status.text = "White to move"
 
 func _on_engine_bestmove(uci: String) -> void:
+	if hint_request_pending:
+		hint_request_pending = false
+		$UI/Hint.disabled = false
+		_show_hint(uci)
+		return
 	if controller == null or controller.phase != TurnController.Phase.ENGINE_THINKING:
 		return
 	var result = controller.submit_engine_uci(uci)
@@ -399,6 +476,11 @@ func _on_engine_bestmove(uci: String) -> void:
 	_after_presentation(result, true)
 
 func _on_engine_error(message: String) -> void:
+	if hint_request_pending:
+		hint_request_pending = false
+		$UI/Hint.disabled = false
+		$UI/Status.text = "Coach could not find a hint right now."
+		return
 	engine_request_pending = false
 	controller.engine_failed()
 	computer_enabled = false
@@ -473,6 +555,7 @@ func _load_settings() -> void:
 	computer_enabled = true
 	settings.computer_enabled = true
 	spectator_enabled = bool(settings.get("spectator_enabled", false))
+	beginner_coach_enabled = bool(settings.get("beginner_coach_enabled", true))
 	if spectator_enabled:
 		computer_enabled = true
 	player_side = Types.WHITE if player_index == 0 else Types.BLACK
@@ -485,6 +568,7 @@ func _load_settings() -> void:
 	$UI/PlayerSide.select(player_index)
 	$UI/AnimationSpeed.select(speed_index)
 	$UI/CameraShake.button_pressed = $CameraDirector.shake_enabled
+	$UI/BeginnerCoach.button_pressed = beginner_coach_enabled
 	$UI/MasterVolume.value = volume_db
 	_apply_fullscreen(bool(settings.get("fullscreen", false)))
 	campaign = CampaignProgress.new(settings.get("campaign_snapshot", {}))
@@ -548,7 +632,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			for move in controller.game.legal_moves():
 				if move.from_square == square: destinations.append(move.to_square)
 			$ChessBoard.set_highlights(selected_square, destinations)
-			$UI/Status.text = "Selected %s" % Types.square_name(square)
+			$ChessBoard.clear_hint()
+			if beginner_coach_enabled and LegalMoveGenerator.is_square_attacked(controller.game.state, square, -player_side):
+				$UI/Status.text = "That piece is under attack — choose a glowing green square."
+			else:
+				$UI/Status.text = "Selected %s — choose a glowing green square." % Types.square_name(square)
 	else:
 		var uci := Types.square_name(selected_square) + Types.square_name(square)
 		if Types.piece_type(controller.game.state.get_piece(selected_square)) == Types.PAWN and Types.rank_of(square) in [0, 7]:

@@ -19,6 +19,7 @@ const DEFAULTS := {
 	"campaign_snapshot": {},
 	"selected_arena_id": "mountain_fortress",
 	"campaign_enabled": true,
+	"beginner_coach_enabled": true,
 }
 
 
