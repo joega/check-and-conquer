@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" path="res://assets/environment/generated/mountain_fortress_panorama_v1.png" id="9"]
 [ext_resource type="Script" path="res://scripts/presentation/arena_audio_director.gd" id="10"]
 [ext_resource type="Texture2D" path="res://assets/ui/check-and-conquer-logo.png" id="11_logo"]
+[ext_resource type="AudioStream" path="res://assets/audio/war-horn.mp3" id="12_horn"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
@@ -64,6 +65,9 @@ script = ExtResource("3")
 script = ExtResource("4")
 [node name="ArenaAudioDirector" type="Node" parent="."]
 script = ExtResource("10")
+[node name="ArenaEntryHorn" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("12_horn")
+volume_db = -8.0
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(24, 28, 28)
 current = true

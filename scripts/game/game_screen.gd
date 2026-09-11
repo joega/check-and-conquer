@@ -87,6 +87,9 @@ func _initialize_game() -> void:
 	_load_settings()
 	$BattlefieldEnvironment.apply_arena(arena_id)
 	$ArenaAudioDirector.set_arena(arena_id)
+	# The horn is an arena-entry punctuation, leaving the campaign theme to
+	# establish the Warpath screen without competing with it.
+	$ArenaEntryHorn.play()
 	$UI/ArenaTitle.text = "%s  —  %s" % [ArenaCatalog.definition(arena_id).chapter, ArenaCatalog.definition(arena_id).title]
 	$Camera3D.snap_to_side(player_side, 0.0)
 	_set_settings_menu_visible(false)

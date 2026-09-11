@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/app/campaign_map.gd" id="1_campaign_map"]
 [ext_resource type="Texture2D" path="res://assets/ui/check-and-conquer-campaign-map.png" id="2_map"]
-[ext_resource type="AudioStream" path="res://assets/audio/war-horn.mp3" id="3_horn"]
+[ext_resource type="AudioStream" path="res://assets/audio/check-and-conquer-theme.ogg" id="3_theme"]
 
 [node name="CampaignMap" type="Control"]
 layout_mode = 3
@@ -35,9 +35,10 @@ grow_vertical = 2
 color = Color(0.015, 0.025, 0.06, 0.10)
 mouse_filter = 2
 
-[node name="OpeningHorn" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("3_horn")
-volume_db = -7.0
+[node name="ThemeMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_theme")
+volume_db = -10.0
+autoplay = true
 
 [node name="Title" type="Label" parent="."]
 layout_mode = 0

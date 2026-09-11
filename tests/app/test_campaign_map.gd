@@ -14,7 +14,9 @@ func _run() -> void:
 	root.add_child(map)
 	await process_frame
 	assert(map.get_node("MapArt").texture is Texture2D, "The campaign route must be framed by its original illustrated map backdrop.")
-	assert(map.get_node("OpeningHorn") is AudioStreamPlayer and map.get_node("OpeningHorn").stream is AudioStreamMP3, "The opening campaign map must carry the imported war-horn cue.")
+	var theme_music := map.get_node("ThemeMusic") as AudioStreamPlayer
+	assert(theme_music.stream is AudioStreamOggVorbis and theme_music.autoplay, "The campaign map must begin with the Check & Conquer Ogg theme.")
+	assert(not map.has_node("OpeningHorn"), "The war horn belongs to arena entry rather than the campaign map.")
 	assert(map.get_node("Route").get_child_count() == 5, "The campaign route must expose five arena nodes.")
 	assert(map.get_node("Route") is HBoxContainer, "Arena cards must use one responsive row rather than manually staggered coordinates.")
 	var first_card := map.get_node("Route/MountainFortress") as Control

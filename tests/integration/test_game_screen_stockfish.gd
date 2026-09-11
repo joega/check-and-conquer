@@ -15,6 +15,8 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	await process_frame
+	var entry_horn := screen.get_node("ArenaEntryHorn") as AudioStreamPlayer
+	assert(entry_horn.stream is AudioStreamMP3 and entry_horn.playing, "Entering a chess arena must trigger the war-horn cue.")
 	assert(screen.arena_id == "mountain_fortress" and screen.get_node("BattlefieldEnvironment").arena_id == "mountain_fortress", "A fresh match must stage the first campaign arena.")
 	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaTitle").text, "The active arena must be visible in the in-game HUD.")
 	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaIntro/Panel/Content/Title").text and "Gatekeeper" in screen.get_node("UI/ArenaIntro/Panel/Content/Challenge").text, "Entering an arena must present its chapter, identity, and opponent challenge.")
