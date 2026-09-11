@@ -5,9 +5,13 @@ const Mapper = preload("res://scripts/presentation/board_mapper.gd")
 @export var square_size := Mapper.SQUARE_SIZE_M
 var tiles: Dictionary = {}
 var coordinate_labels: Array[Label3D] = []
+var _levitation_time := 0.0
+var _levitation_glyphs: Array[Node3D] = []
+var _levitation_ring: MeshInstance3D
 
 func _ready() -> void:
 	_create_board_altar()
+	_create_levitation_aura()
 	for rank in 8:
 		for file in 8:
 			var square := rank * 8 + file
@@ -22,6 +26,77 @@ func _ready() -> void:
 			add_child(tile)
 			tiles[square] = tile
 	_create_coordinate_labels()
+
+
+func _process(delta: float) -> void:
+	_levitation_time += delta
+	if _levitation_ring != null:
+		_levitation_ring.rotation.y = _levitation_time * 0.12
+	for index in _levitation_glyphs.size():
+		var glyph := _levitation_glyphs[index]
+		glyph.position.y = -0.91 + sin(_levitation_time * 1.45 + index * 0.9) * 0.075
+
+
+func _create_levitation_aura() -> void:
+	# The mountain environment is a panorama, so it has no physical surface on
+	# which an authoritative chessboard can rest. Make the altar's separation a
+	# deliberate fantasy feature while leaving board-square world coordinates
+	# unchanged for actors, picking, and combat anchors.
+	var aura_material := StandardMaterial3D.new()
+	aura_material.albedo_color = Color(0.10, 0.62, 1.0, 0.72)
+	aura_material.emission_enabled = true
+	aura_material.emission = Color(0.02, 0.30, 1.0)
+	aura_material.emission_energy_multiplier = 2.1
+	aura_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	aura_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_levitation_ring = MeshInstance3D.new()
+	_levitation_ring.name = "LevitationRing"
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 14.6
+	ring_mesh.outer_radius = 15.0
+	ring_mesh.rings = 8
+	ring_mesh.ring_segments = 64
+	_levitation_ring.mesh = ring_mesh
+	_levitation_ring.position.y = -0.88
+	_levitation_ring.material_override = aura_material
+	add_child(_levitation_ring)
+	var glow := MeshInstance3D.new()
+	glow.name = "LevitationGlow"
+	var glow_mesh := CylinderMesh.new()
+	glow_mesh.top_radius = 13.8
+	glow_mesh.bottom_radius = 13.8
+	glow_mesh.height = 0.035
+	glow_mesh.radial_segments = 64
+	glow.mesh = glow_mesh
+	glow.position.y = -1.02
+	glow.material_override = aura_material
+	add_child(glow)
+	var glyph_positions := [
+		Vector3(-15.8, -0.91, -15.8), Vector3(15.8, -0.91, -15.8),
+		Vector3(-15.8, -0.91, 15.8), Vector3(15.8, -0.91, 15.8),
+		Vector3(0, -0.91, -16.5), Vector3(0, -0.91, 16.5),
+		Vector3(-16.5, -0.91, 0), Vector3(16.5, -0.91, 0),
+	]
+	for index in glyph_positions.size():
+		var glyph := MeshInstance3D.new()
+		glyph.name = "LevitationGlyph%02d" % index
+		var glyph_mesh := SphereMesh.new()
+		glyph_mesh.radius = 0.18
+		glyph_mesh.height = 0.26
+		glyph_mesh.radial_segments = 12
+		glyph.mesh = glyph_mesh
+		glyph.position = glyph_positions[index]
+		glyph.material_override = aura_material
+		add_child(glyph)
+		_levitation_glyphs.append(glyph)
+	var underlight := OmniLight3D.new()
+	underlight.name = "LevitationUnderlight"
+	underlight.position.y = -1.3
+	underlight.light_color = Color(0.12, 0.48, 1.0)
+	underlight.light_energy = 0.55
+	underlight.omni_range = 22.0
+	underlight.shadow_enabled = false
+	add_child(underlight)
 
 
 func _create_board_altar() -> void:

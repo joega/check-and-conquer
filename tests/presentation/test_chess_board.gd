@@ -15,6 +15,13 @@ func _run() -> void:
 	assert(board.coordinate_label_count() == 16, "Board-edge coordinates must provide every file and rank without covering actors.")
 	assert(board.get_node_or_null("Coordinate_a") != null and board.get_node_or_null("Coordinate_8") != null, "Board coordinates must include standard chess file and rank labels.")
 	assert(board.get_node_or_null("BoardPedestal") != null, "The playable grid must sit on a physical board pedestal.")
+	assert(board.get_node_or_null("LevitationRing") != null and board.get_node_or_null("LevitationGlow") != null, "The altar must use an intentional levitation aura when framed against the depthless mountain panorama.")
+	assert(board.get_node_or_null("LevitationUnderlight") is OmniLight3D, "The levitating altar must light its underside.")
+	var glyph_count := 0
+	for child in board.get_children():
+		if child.name.begins_with("LevitationGlyph"):
+			glyph_count += 1
+	assert(glyph_count == 8, "The levitation aura must surround the altar with eight animated ritual glyphs.")
 	var rail_count := 0
 	var rune_count := 0
 	for child in board.get_children():
