@@ -27,6 +27,14 @@ var replay_index := -1
 var settings: Dictionary = SessionSettings.DEFAULTS.duplicate()
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
+	$UI/LoadingOverlay.visible = true
+	call_deferred("_initialize_game")
+
+
+func _initialize_game() -> void:
+	# Give the scene one rendered frame with the loading card before the 32
+	# character rigs, animation libraries, and Stockfish adapter initialize.
+	await get_tree().process_frame
 	controller = TurnController.new()
 	add_child(controller)
 	controller.start()
@@ -76,6 +84,7 @@ func _ready() -> void:
 	if computer_enabled and not engine.start():
 		computer_enabled = false
 		$UI/Computer.button_pressed = false
+	$UI/LoadingOverlay.visible = false
 
 func _exit_tree() -> void:
 	if engine != null:

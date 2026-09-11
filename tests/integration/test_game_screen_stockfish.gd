@@ -13,6 +13,7 @@ func _run() -> void:
 	var screen = GAME_SCREEN.instantiate()
 	root.add_child(screen)
 	await process_frame
+	await process_frame
 	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Computer").visible, "Configuration controls must begin condensed in the settings menu.")
 	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
 	screen._show_capture_impact()
@@ -94,6 +95,7 @@ func _run() -> void:
 	await process_frame
 	var restored_screen = GAME_SCREEN.instantiate()
 	root.add_child(restored_screen)
+	await process_frame
 	await process_frame
 	assert(not restored_screen.computer_enabled, "Local-play preference must survive a relaunch.")
 	assert(restored_screen.get_node("UI/AnimationSpeed").selected == 1, "Capture-speed preference must survive a relaunch.")
