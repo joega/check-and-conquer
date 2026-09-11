@@ -92,7 +92,7 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
-	attacker.play_state(&"attack.spell.shot_01")
+	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
 	weapon_impact.emit(&"arcane_cast")
 	# The cast and arrival are separate presentation beats. Signature queen
 	# captures intentionally retain both so the spell reads as a command followed
@@ -166,6 +166,10 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	impact_landed.emit()
 	weapon_impact.emit(&"arcane_impact")
 	await _wait_or_skip(0.12 / playback_speed)
+	await _play_delivery_followup(attacker, victim, impact)
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
@@ -177,7 +181,7 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
-	attacker.play_state(&"attack.push.guard_01")
+	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
 	_spawn_weapon_swing(attacker)
 	await _wait_or_skip(0.22 / playback_speed)
 	if _skip_requested:
@@ -197,6 +201,10 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	_spawn_role_impact(attacker, target)
 	weapon_impact.emit(&"hammer_impact")
 	await _wait_or_skip(0.12 / playback_speed)
+	await _play_delivery_followup(attacker, victim, target)
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
@@ -241,7 +249,7 @@ func _spawn_rook_brick_volley(origin: Vector3, target: Vector3) -> Node3D:
 func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
-	attacker.play_state(&"attack.spell.shot_01")
+	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
 	await _wait_or_skip(0.28 / playback_speed)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
@@ -279,6 +287,10 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	impact_landed.emit()
 	weapon_impact.emit(&"arrow_impact")
 	await _wait_or_skip(0.14 / playback_speed)
+	await _play_delivery_followup(attacker, victim, impact)
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
@@ -290,6 +302,22 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 func request_skip() -> void:
 	if _running:
 		_skip_requested = true
+
+
+func _play_delivery_followup(attacker, victim, impact_position: Vector3) -> void:
+	# Special delivery paths (arrow, wall, arcane) return early from the generic
+	# choreography flow, so they explicitly honor the same optional second beat.
+	if choreography.attacker_followup_clip.is_empty() or _skip_requested:
+		return
+	attacker.face_world_position(victim.global_position)
+	attacker.play_state(choreography.attacker_followup_clip)
+	await _wait_or_skip(choreography.followup_time_s / playback_speed)
+	if _skip_requested:
+		return
+	_spawn_role_impact(attacker, impact_position)
+	impact_landed.emit()
+	weapon_impact.emit(_melee_sound_for(attacker))
+	await _wait_or_skip(0.10 / playback_speed)
 
 
 func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: Color) -> void:

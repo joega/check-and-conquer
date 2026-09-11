@@ -80,6 +80,8 @@ func _run() -> void:
 	await process_frame
 	assert(bishop.supports_state(bishop_signature.attacker_clip) and bishop.supports_state(bishop_signature.attacker_followup_clip))
 	bishop.queue_free()
+	for signature_choreography in [bishop_signature, rook_signature, queen_signature]:
+		assert(not signature_choreography.attacker_followup_clip.is_empty() and signature_choreography.followup_time_s > 0.0, "Every delivery-based signature must declare its second authored combat beat.")
 	assert(Resolver.resolve_matchup(Types.KNIGHT, Types.BISHOP).id == Resolver.resolve(Types.KNIGHT).id, "Unmapped matchups must retain their generic fallback.")
 	assert(ids.size() == 6 and not ids.has(&""))
 	print("PASS: all 36 archetype matchups resolve with a tested signature override and generic fallbacks.")
