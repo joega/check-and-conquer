@@ -72,6 +72,7 @@ func _initialize_game() -> void:
 		$UI/Promotion.add_item(label)
 	$UI/Promotion.select(0)
 	_load_settings()
+	$Camera3D.snap_to_side(player_side, 0.0)
 	_set_settings_menu_visible(false)
 	$UI/Spectator.toggled.connect(_set_spectator_enabled)
 	$UI/Difficulty.item_selected.connect(_set_difficulty)
@@ -106,7 +107,7 @@ func _restart() -> void:
 	$UI/GameOverPanel.visible = false
 	replay_index = -1
 	$UI/Status.text = "White to move"
-	$Camera3D.snap_to_side(Types.WHITE, 0.0)
+	$Camera3D.snap_to_side(player_side, 0.0)
 	if computer_enabled:
 		engine.new_game()
 	engine_request_pending = false
@@ -126,7 +127,7 @@ func _undo() -> void:
 	$UI/Move.clear()
 	$UI/Submit.disabled = false
 	$UI/Status.text = "%d move%s undone. %s to move" % [undone, "s" if undone != 1 else "", "White" if controller.game.state.side_to_move == Types.WHITE else "Black"]
-	$Camera3D.snap_to_side(controller.game.state.side_to_move)
+	$Camera3D.snap_to_side(player_side)
 
 func _submit() -> void:
 	if spectator_enabled:
@@ -159,7 +160,7 @@ func _present_result(result) -> void:
 			# The next-turn board framing is the only useful post-capture view. Cut
 			# straight to it instead of orbiting back through the prior camera pose.
 			$CameraDirector.end_capture()
-			$Camera3D.snap_to_side(controller.game.state.side_to_move, 0.0)
+			$Camera3D.snap_to_side(player_side, 0.0)
 			$UI/Skip.visible = false
 			_set_capture_ui_visible(true)
 		else:
@@ -211,7 +212,7 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	else:
 		$BoardPresenter.clear_check_indicator()
 	if result.game_result == "ongoing":
-		$Camera3D.snap_to_side(controller.game.state.side_to_move)
+		$Camera3D.snap_to_side(player_side)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
 
@@ -412,7 +413,7 @@ func _show_review_position(index: int) -> void:
 	$UI/GameOverPanel/Content/ReturnFinal.visible = replay_index != controller.game.move_history.size()
 	var move_text := "Initial position" if replay_index == 0 else "%d. %s" % [replay_index, controller.game.san_history[replay_index - 1]]
 	$UI/Status.text = "Reviewing %s" % move_text
-	$Camera3D.snap_to_side(controller.game.state_history[replay_index].side_to_move)
+	$Camera3D.snap_to_side(player_side)
 
 
 func _return_to_final_position() -> void:
@@ -425,7 +426,7 @@ func _return_to_final_position() -> void:
 	$UI/GameOverPanel/Content/Next.visible = false
 	$UI/GameOverPanel/Content/ReturnFinal.visible = false
 	$UI/Status.text = "Game over: %s" % controller.game.game_result().replace("_", " ")
-	$Camera3D.snap_to_side(controller.game.state.side_to_move)
+	$Camera3D.snap_to_side(player_side)
 
 
 

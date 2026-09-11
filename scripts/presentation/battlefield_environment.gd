@@ -6,13 +6,15 @@ extends Node3D
 
 @export var terrain_extent := 150.0
 @export var storm_cycle_s := 18.0
+const SUMMIT_HALF_EXTENT := 22.0
+const SUMMIT_EDGE_EXTENT := 46.0
 
 var _storm_time := 0.0
 var _flash: OmniLight3D
 var _beacon_lights: Array[OmniLight3D] = []
 
 func _ready() -> void:
-	_create_valley_floor()
+	_create_summit_terrain()
 	_create_storm_beacons()
 	_flash = OmniLight3D.new()
 	_flash.name = "StormFlash"
@@ -31,23 +33,47 @@ func _process(delta: float) -> void:
 	# without introducing random visual test failures or gameplay coupling.
 	_flash.light_energy = 4.0 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
 
-func _create_valley_floor() -> void:
+func _create_summit_terrain() -> void:
 	var terrain := MeshInstance3D.new()
-	terrain.name = "ValleyFloorTerrain"
-	var floor := PlaneMesh.new()
-	floor.size = Vector2(terrain_extent, terrain_extent)
-	terrain.mesh = floor
-	terrain.position.y = -0.32
+	terrain.name = "SummitTerrain"
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var resolution := 64
+	var half_extent := minf(terrain_extent * 0.5, SUMMIT_EDGE_EXTENT)
+	var step := half_extent * 2.0 / float(resolution)
+	for z_index in resolution:
+		for x_index in resolution:
+			var x0 := -half_extent + float(x_index) * step
+			var z0 := -half_extent + float(z_index) * step
+			var a := _summit_vertex(x0, z0)
+			var b := _summit_vertex(x0 + step, z0)
+			var c := _summit_vertex(x0, z0 + step)
+			var d := _summit_vertex(x0 + step, z0 + step)
+			surface.add_vertex(a)
+			surface.add_vertex(c)
+			surface.add_vertex(b)
+			surface.add_vertex(b)
+			surface.add_vertex(c)
+			surface.add_vertex(d)
+	surface.generate_normals()
+	terrain.mesh = surface.commit()
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.055, 0.09, 0.14)
-	# The generated panorama provides the detailed mountains. This calm valley
-	# floor supports the altar without putting a low-poly horizon silhouette in
-	# front of that artwork.
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.roughness = 0.92
-	material.metallic = 0.08
+	material.albedo_color = Color(0.12, 0.16, 0.18)
+	# A broad, descending rock summit gives the altar a physical home. It only
+	# falls away from the board, so it cannot form a ridge across the panorama.
+	material.roughness = 1.0
+	material.metallic = 0.0
 	terrain.material_override = material
 	add_child(terrain)
+
+
+func _summit_vertex(x: float, z: float) -> Vector3:
+	var distance_from_altar := maxf(absf(x), absf(z))
+	if distance_from_altar <= SUMMIT_HALF_EXTENT:
+		return Vector3(x, -0.32, z)
+	var descent := smoothstep(SUMMIT_HALF_EXTENT, SUMMIT_EDGE_EXTENT, distance_from_altar)
+	var rock_variation := sin(x * 0.38) * cos(z * 0.31) * 0.5 * descent
+	return Vector3(x, -0.32 - descent * 13.0 + rock_variation, z)
 
 func _create_storm_beacons() -> void:
 	var positions := [Vector3(-21, 0, -21), Vector3(21, 0, -21), Vector3(-21, 0, 21), Vector3(21, 0, 21)]
