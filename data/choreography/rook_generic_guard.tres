@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"capture.rook.generic_guard_01"
+delivery = &"wall_crush"
 attacker_clip = &"attack.push.guard_01"
 victim_hit_clip = &"reaction.hit.generic_01"
 victim_hit_variants = Array[StringName]([&"reaction.hit.generic_01", &"reaction.hit.head_01"])

@@ -3,6 +3,7 @@ extends Resource
 
 @export var id: StringName = &"capture.pawn.generic_sword_01"
 @export var attacker_clip: StringName = &"Sword_Attack"
+@export_enum("melee", "arrow", "wall_crush") var delivery: String = "melee"
 @export var attacker_followup_clip: StringName = &""
 @export var victim_hit_clip: StringName = &"Hit_Chest"
 @export var victim_hit_variants: Array[StringName] = []

@@ -83,8 +83,8 @@ model, VFX pack, or other third-party visual asset.
 - Source URL: https://quaternius.itch.io/lowpoly-medieval-weapons (archive mirrored by OpenGameArt)
 - License: CC0 1.0 Universal
 - Date acquired: 2026-09-10
-- Original archive/file: `Medieval Weapons Pack - Sept 2018.zip` (SHA-256 `6da4976b10352d5e95f6a33d6eff3f5e0dcd57ed589e2d84fb7358c4373ecf4f`)
-- Files used in project: imported FBX meshes for Dagger, Dagger_2, Spear, Bow_Golden, Arrow, Hammer_Double, Sword_Golden, and Claymore under `assets/weapons/quaternius/`.
+- Original archive/file: `Medieval Weapons Pack - Sept 2018.zip` (SHA-256 `b8a18124c460387a02b9ed3e940229eaa091b540699fad75627d0c0291d33912`)
+- Files used in project: imported FBX meshes for Dagger, Dagger_2, Spear, Bow_Golden, Arrow, Hammer_Double, Scythe, Spear, Sword, Sword_2, Sword_Golden, and Claymore under `assets/weapons/quaternius/`.
 - Modifications: Selected compatible meshes only; runtime attaches them to named humanoid hand bones with normalized display scale. The arrow is instantiated only during Bishop ranged captures.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; the source archive is retained locally in ignored `assets/source-archives/`.

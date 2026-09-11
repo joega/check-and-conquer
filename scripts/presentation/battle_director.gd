@@ -29,10 +29,10 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	_active_destination = destination
 	attacker.set_animation_speed(playback_speed)
 	victim.set_animation_speed(playback_speed)
-	if attacker.archetype == Types.BISHOP:
+	if choreography.delivery == "arrow":
 		await _play_bishop_ranged_capture(attacker, victim, destination)
 		return
-	if attacker.archetype == Types.ROOK:
+	if choreography.delivery == "wall_crush":
 		await _play_rook_wall_capture(attacker, victim, destination)
 		return
 	var approach_position: Vector3 = destination - Vector3.FORWARD * choreography.anchor_separation_m
