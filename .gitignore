@@ -1,0 +1,17 @@
+# Godot editor/import state
+.godot/
+
+# Local Godot user-data overrides used by headless tests
+.godot-test-data/
+
+# Build artifacts
+builds/
+build/
+
+# Source-asset archives are recorded in assets/THIRD_PARTY_ASSETS.md, not committed.
+assets/source-archives/
+
+# The platform-specific Stockfish executable is supplied locally and staged by
+# the exporter. Keep its GPL source and notices versioned, but do not put the
+# 103 MB binary in ordinary Git history.
+third_party/stockfish/**/stockfish-linux-x86-64-universal

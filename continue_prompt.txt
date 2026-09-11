@@ -1,0 +1,11 @@
+Continue Project Warboard from the current repository state.
+
+  Read AGENTS.md, BATTLE_CHESS_MASTER_PLAN.md, docs/ROADMAP.md,
+  docs/ACCEPTANCE_CRITERIA.md, docs/DECISIONS.md, and docs/TESTING.md.
+  Inspect existing code and tests before changing anything.
+
+  Current completed milestone/status: <fill this in>.
+  Current next acceptance target: <fill this in>.
+
+  Preserve the established architecture, run relevant tests, update docs and
+  provenance for material decisions, and report visible reproduction steps.
