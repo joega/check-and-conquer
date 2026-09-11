@@ -4,7 +4,17 @@
 
 ![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux%20%2B%20Windows-lightgrey)
 
-[![Test](https://github.com/joega/warboard/actions/workflows/test.yml/badge.svg)](https://github.com/joega/warboard/actions/workflows/test.yml)
+[![Test](https://github.com/joega/check-and-conquer/actions/workflows/test.yml/badge.svg)](https://github.com/joega/check-and-conquer/actions/workflows/test.yml)
+
+## See it in action
+
+### The Warpath
+
+![The Check & Conquer campaign map](assets/ui/screenshots/title-screenshot.png)
+
+### The battlefield
+
+![A Check & Conquer match in progress](assets/ui/screenshots/gameplay-screenshot.png)
 
 ## What you can play today
 
