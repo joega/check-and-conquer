@@ -67,16 +67,19 @@ func refresh_state() -> void:
 		var conquered := arena_id in campaign.completed_ids
 		var available := campaign.is_unlocked(arena_id) and not conquered
 		node.disabled = not available
+		var label_color := Color(1.0, 0.82, 0.35)
 		if conquered:
 			node.text = "✓  %s\nCONQUERED" % ARENA_TITLES[index]
-			node.modulate = Color(0.48, 0.92, 0.62)
+			label_color = Color(0.48, 0.92, 0.62)
 		elif available:
 			node.text = "◆  %s\nCURRENT ARENA" % ARENA_TITLES[index]
-			node.modulate = Color(1.0, 0.82, 0.35)
 		else:
 			node.text = "🔒  %s\nLOCKED" % ARENA_TITLES[index]
-			node.modulate = Color(0.88, 0.72, 0.30)
-			node.add_theme_color_override("font_disabled_color", Color(0.88, 0.72, 0.30))
+		# Lock state must not dim the whole card; the icon and text carry the
+		# availability cue while the illustrated map remains legible behind it.
+		node.modulate = Color.WHITE
+		node.add_theme_color_override("font_color", label_color)
+		node.add_theme_color_override("font_disabled_color", label_color)
 	$EnterArena.disabled = not campaign.is_unlocked(arena_selected) or arena_selected in campaign.completed_ids
 	var practice_index := CampaignProgress.ARENA_IDS.find(practice_arena_id)
 	$PracticeArenaPicker.select(maxi(practice_index, 0))
