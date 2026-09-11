@@ -75,3 +75,17 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 `GameScreen.tscn` uses a short one-shot `GPUParticles3D` burst of small emissive
 procedural meshes at the committed capture contact point. It uses no texture,
 model, VFX pack, or other third-party visual asset.
+
+
+### LowPoly Medieval Weapons
+
+- Creator: Quaternius
+- Source URL: https://quaternius.itch.io/lowpoly-medieval-weapons (archive mirrored by OpenGameArt)
+- License: CC0 1.0 Universal
+- Date acquired: 2026-09-10
+- Original archive/file: `Medieval Weapons Pack - Sept 2018.zip` (SHA-256 `6da4976b10352d5e95f6a33d6eff3f5e0dcd57ed589e2d84fb7358c4373ecf4f`)
+- Files used in project: imported FBX meshes for Dagger, Dagger_2, Spear, Bow_Golden, Arrow, Hammer_Double, Sword_Golden, and Claymore under `assets/weapons/quaternius/`.
+- Modifications: Selected compatible meshes only; runtime attaches them to named humanoid hand bones with normalized display scale. The arrow is instantiated only during Bishop ranged captures.
+- Attribution required: no
+- Redistribution notes: CC0 public-domain dedication; the source archive is retained locally in ignored `assets/source-archives/`.
+- Verification notes: Godot 4.7.2 imported each selected FBX. Board reconstruction, capture death completion, and Combat Lab's 20-cycle reset passed with weapon-bearing actors.

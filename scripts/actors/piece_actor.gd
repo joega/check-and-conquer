@@ -14,13 +14,20 @@ const HAIR_SIMPLE_PARTED_SCENE := preload("res://assets/characters/quaternius/ha
 const ANIMATION_LIBRARY_SCENE := preload("res://assets/animations/quaternius/UAL1_Standard.glb")
 const ANIMATION_LIBRARY_2_SCENE := preload("res://assets/animations/quaternius/UAL2_Standard.glb")
 const Types = preload("res://scripts/chess/chess_types.gd")
+const DAGGER_SCENE := preload("res://assets/weapons/quaternius/Dagger.fbx")
+const DAGGER_2_SCENE := preload("res://assets/weapons/quaternius/Dagger_2.fbx")
+const SPEAR_SCENE := preload("res://assets/weapons/quaternius/Spear.fbx")
+const BOW_SCENE := preload("res://assets/weapons/quaternius/Bow_Golden.fbx")
+const HAMMER_SCENE := preload("res://assets/weapons/quaternius/Hammer_Double.fbx")
+const GOLDEN_SWORD_SCENE := preload("res://assets/weapons/quaternius/Sword_Golden.fbx")
+const CLAYMORE_SCENE := preload("res://assets/weapons/quaternius/Claymore.fbx")
 ## Presentation scale only. The actor root stays in board metres so chess
 ## coordinates, capture destinations, and rebuild checks remain authoritative.
 const CHARACTER_PRESENTATION_SCALE := 2.0
 ## Props live below the doubled imported-character root. Keep them deliberately
 ## compact so a close board inspection still shows the outfit and face rather
 ## than a primitive mesh filling the camera.
-const ROLE_PROP_SCALE := 0.62
+const WEAPON_DISPLAY_SCALE := 9.0
 const CLIP_MAP := {
 	&"idle.neutral": &"Idle",
 	&"combat.idle.sword_01": &"Sword_Idle",
@@ -418,59 +425,36 @@ func _is_head_vertex(vertex_index: int, joints: PackedInt32Array, weights: Packe
 
 
 func _create_role_prop() -> void:
-	var skeleton = _model_root.get_node_or_null("Armature/Skeleton3D") as Skeleton3D
+	var skeleton := _model_root.get_node_or_null("Armature/Skeleton3D") as Skeleton3D
 	if skeleton == null:
 		return
-	var hand_attachment := BoneAttachment3D.new()
-	hand_attachment.name = "RightHandProp"
-	hand_attachment.bone_name = &"hand_r"
-	skeleton.add_child(hand_attachment)
-	# Keep blades and mace heads neutral. The board fill light is intentionally
-	# cool for character readability; blue-tinted metal under that light looked
-	# like a team-coloured placeholder weapon at close range.
-	var steel := Color(0.67, 0.68, 0.72)
-	var gold := Color(0.82, 0.62, 0.2)
-	var wood := Color(0.28, 0.14, 0.055)
-	var gem := side_color.lightened(0.22)
 	match archetype:
 		Types.PAWN:
-			_add_hand_prop(hand_attachment, "PawnSwordGrip", _cylinder(0.055, 0.055, 0.18), Vector3(0, -0.18, 0), wood, 0.0)
-			_add_hand_prop(hand_attachment, "PawnSwordGuard", _box(Vector3(0.34, 0.05, 0.08)), Vector3(0, -0.29, 0), gold, 0.7)
-			_add_hand_prop(hand_attachment, "PawnSwordBlade", _cone(0.12, 0.018, 0.72), Vector3(0, -0.67, 0), steel, 0.86)
+			_add_weapon(skeleton, &"hand_r", "PawnRightDagger", DAGGER_SCENE, 8.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
+			_add_weapon(skeleton, &"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 8.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
 		Types.KNIGHT:
-			_add_hand_prop(hand_attachment, "KnightLanceShaft", _cylinder(0.045, 0.045, 1.15), Vector3(0, -0.58, 0), wood, 0.0)
-			_add_hand_prop(hand_attachment, "KnightLanceTip", _cone(0.12, 0.0, 0.3), Vector3(0, -1.3, 0), steel, 0.86)
-			_add_hand_prop(hand_attachment, "KnightPennant", _box(Vector3(0.32, 0.2, 0.025)), Vector3(0.14, -0.82, 0.035), gem, 0.2)
+			_add_weapon(skeleton, &"hand_r", "KnightSpear", SPEAR_SCENE, 10.0, Vector3(0, 0, 0.015), Vector3(-90, 0, 0))
 		Types.BISHOP:
-			_add_hand_prop(hand_attachment, "BishopStaff", _cylinder(0.06, 0.06, 0.96), Vector3(0, -0.45, 0), wood, 0.0)
-			_add_hand_prop(hand_attachment, "BishopFocusOrb", _sphere(0.16, 0.3), Vector3(0, -0.98, 0), gem, 0.35)
-			_add_hand_prop(hand_attachment, "BishopFocusCollar", _cylinder(0.12, 0.12, 0.07), Vector3(0, -0.82, 0), gold, 0.7)
+			_add_weapon(skeleton, &"hand_l", "BishopGoldenBow", BOW_SCENE, 10.0, Vector3(0, 0, 0.015), Vector3(-90, 0, 0))
 		Types.ROOK:
-			_add_hand_prop(hand_attachment, "RookMaceHandle", _cylinder(0.07, 0.07, 0.68), Vector3(0, -0.32, 0), wood, 0.0)
-			_add_hand_prop(hand_attachment, "RookMaceHead", _sphere(0.22, 0.42), Vector3(0, -0.82, 0), steel, 0.82)
-			_add_hand_prop(hand_attachment, "RookMaceSpike", _cone(0.08, 0.0, 0.18), Vector3(0, -1.1, 0), gold, 0.7)
+			_add_weapon(skeleton, &"hand_r", "RookWarHammer", HAMMER_SCENE, 8.5, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
 		Types.QUEEN:
-			_add_hand_prop(hand_attachment, "QueenSceptre", _cylinder(0.045, 0.055, 0.82), Vector3(0, -0.38, 0), gold, 0.72)
-			_add_hand_prop(hand_attachment, "QueenCrownOrb", _sphere(0.16, 0.32), Vector3(0, -0.9, 0), gem, 0.35)
+			_add_weapon(skeleton, &"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 9.5, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
 		Types.KING:
-			_add_hand_prop(hand_attachment, "KingSwordGrip", _cylinder(0.06, 0.06, 0.2), Vector3(0, -0.16, 0), wood, 0.0)
-			_add_hand_prop(hand_attachment, "KingSwordGuard", _box(Vector3(0.42, 0.06, 0.09)), Vector3(0, -0.29, 0), gold, 0.75)
-			_add_hand_prop(hand_attachment, "KingBlade", _cone(0.14, 0.018, 0.9), Vector3(0, -0.76, 0), steel, 0.9)
-			_add_hand_prop(hand_attachment, "KingPommel", _sphere(0.08, 0.16), Vector3(0, -0.04, 0), gem, 0.35)
+			_add_weapon(skeleton, &"hand_r", "KingClaymore", CLAYMORE_SCENE, 9.0, Vector3(0, 0, 0.01), Vector3(-90, 0, 0))
 
 
-func _add_hand_prop(parent: Node3D, prop_name: String, mesh: Mesh, prop_position: Vector3, color: Color, metallic := 0.45) -> void:
-	var prop := MeshInstance3D.new()
-	prop.name = prop_name
-	prop.mesh = mesh
-	prop.position = prop_position * ROLE_PROP_SCALE
-	prop.scale = Vector3.ONE * ROLE_PROP_SCALE
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.metallic = metallic
-	material.roughness = 0.52 if metallic > 0.5 else 0.62
-	prop.material_override = material
-	parent.add_child(prop)
+func _add_weapon(skeleton: Skeleton3D, bone_name: StringName, weapon_name: String, weapon_scene: PackedScene, display_scale: float, grip_offset: Vector3, rotation_degrees_value: Vector3) -> void:
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "%sAttachment" % weapon_name
+	attachment.bone_name = bone_name
+	skeleton.add_child(attachment)
+	var weapon := weapon_scene.instantiate() as Node3D
+	weapon.name = weapon_name
+	weapon.position = grip_offset
+	weapon.rotation_degrees = rotation_degrees_value
+	weapon.scale = Vector3.ONE * display_scale
+	attachment.add_child(weapon)
 
 
 func _add_marker(marker_name: String, mesh: Mesh, marker_position: Vector3, color: Color, rotation := Vector3.ZERO) -> void:
