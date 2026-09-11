@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/presentation/board_camera_controller.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/presentation/procedural_impact_audio.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/presentation/battlefield_environment.gd" id="8"]
-[ext_resource type="Texture2D" path="res://assets/environment/generated/storm_mountain_panorama_v1.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/environment/generated/storm_mountain_panorama_v2.png" id="9"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
