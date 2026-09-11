@@ -16,9 +16,9 @@ jobs:
     env:
       GODOT_VERSION: 4.7.2
       GODOT_BIN: ${{ github.workspace }}/.ci/bin/godot
-      WARB_TEST_DATA_HOME: ${{ runner.temp }}/warboard-data
-      WARB_TEST_CACHE_HOME: ${{ runner.temp }}/warboard-cache
-      WARB_TEST_CONFIG_HOME: ${{ runner.temp }}/warboard-config
+      CAC_TEST_DATA_HOME: ${{ github.workspace }}/.ci/test-data
+      CAC_TEST_CACHE_HOME: ${{ github.workspace }}/.ci/test-cache
+      CAC_TEST_CONFIG_HOME: ${{ github.workspace }}/.ci/test-config
 
     steps:
       - name: Check out source
@@ -56,4 +56,7 @@ jobs:
 
       - name: Run deterministic game suite
         shell: bash
-        run: bash tools/run_headless_tests.sh
+        run: |
+          set -euo pipefail
+          mkdir -p "$CAC_TEST_DATA_HOME" "$CAC_TEST_CACHE_HOME" "$CAC_TEST_CONFIG_HOME"
+          bash tools/run_headless_tests.sh

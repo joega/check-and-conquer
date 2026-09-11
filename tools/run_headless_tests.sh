@@ -3,9 +3,9 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 godot_bin="${GODOT_BIN:-godot}"
-data_root="${WARB_TEST_DATA_HOME:-/tmp/warboard-godot-data}"
-cache_root="${WARB_TEST_CACHE_HOME:-/tmp/warboard-godot-cache}"
-config_root="${WARB_TEST_CONFIG_HOME:-/tmp/warboard-godot-config}"
+data_root="${CAC_TEST_DATA_HOME:-/tmp/check-and-conquer-godot-data}"
+cache_root="${CAC_TEST_CACHE_HOME:-/tmp/check-and-conquer-godot-cache}"
+config_root="${CAC_TEST_CONFIG_HOME:-/tmp/check-and-conquer-godot-config}"
 
 tests=(
   tests/test_bootstrap.gd

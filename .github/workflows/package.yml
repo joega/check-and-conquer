@@ -71,9 +71,10 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="$(dirname "$GODOT_BIN"):$PATH"
-          export WARB_TEST_DATA_HOME="${RUNNER_TEMP}/check-and-conquer-data"
-          export WARB_TEST_CACHE_HOME="${RUNNER_TEMP}/check-and-conquer-cache"
-          export WARB_TEST_CONFIG_HOME="${RUNNER_TEMP}/check-and-conquer-config"
+          export CAC_TEST_DATA_HOME="${RUNNER_TEMP}/check-and-conquer-data"
+          export CAC_TEST_CACHE_HOME="${RUNNER_TEMP}/check-and-conquer-cache"
+          export CAC_TEST_CONFIG_HOME="${RUNNER_TEMP}/check-and-conquer-config"
+          mkdir -p "$CAC_TEST_DATA_HOME" "$CAC_TEST_CACHE_HOME" "$CAC_TEST_CONFIG_HOME"
           bash tools/run_headless_tests.sh
 
       - name: Download official Windows Stockfish 19

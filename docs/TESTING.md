@@ -3,9 +3,9 @@
 Run the bootstrap gate from the repository root:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/test_bootstrap.gd
 ```
 
@@ -14,9 +14,9 @@ The XDG overrides keep Godot's transient logs, caches, and user data outside the
 Run the deterministic M1 cycle gate with:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/presentation/test_combat_lab.gd
 ```
 
@@ -31,18 +31,18 @@ godot --headless --path . --script res://tests/presentation/test_animation_brows
 Run the M2 board-state gate with:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/chess/test_board_state.gd
 ```
 
 Run legal-move generation and the required start-position perft gate with:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/chess/test_legal_moves.gd
 ```
 
@@ -98,9 +98,9 @@ godot --headless --path . --script res://tests/presentation/test_board_presenter
 Run the Stockfish integration gate with the supplied Linux executable present:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/engine/test_stockfish_adapter.gd
 ```
 
@@ -109,9 +109,9 @@ It launches the real UCI process, verifies its handshake, and validates 100 sequ
 Run the playable-screen opponent smoke test with:
 
 ```sh
-XDG_DATA_HOME=/tmp/warboard-godot-data \
-  XDG_CACHE_HOME=/tmp/warboard-godot-cache \
-  XDG_CONFIG_HOME=/tmp/warboard-godot-config \
+XDG_DATA_HOME=/tmp/check-and-conquer-godot-data \
+  XDG_CACHE_HOME=/tmp/check-and-conquer-godot-cache \
+  XDG_CONFIG_HOME=/tmp/check-and-conquer-godot-config \
   godot --headless --path . --script res://tests/integration/test_game_screen_stockfish.gd
 ```
 
