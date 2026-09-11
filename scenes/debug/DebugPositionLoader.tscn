@@ -9,7 +9,7 @@ background_mode = 1
 background_color = Color(0.08, 0.1, 0.14, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.62, 0.7, 0.86, 1)
-ambient_light_energy = 0.72
+ambient_light_energy = 0.92
 
 [node name="DebugPositionLoader" type="Node3D"]
 script = ExtResource("1")
@@ -29,12 +29,14 @@ current = true
 
 [node name="Light" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -30, 0)
+light_energy = 0.95
 shadow_enabled = true
+shadow_opacity = 0.62
 
 [node name="FillLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-48, 145, 0)
-light_color = Color(0.48, 0.62, 0.95, 1)
-light_energy = 0.55
+light_color = Color(0.66, 0.75, 1, 1)
+light_energy = 0.78
 shadow_enabled = false
 
 [node name="UI" type="CanvasLayer" parent="."]
