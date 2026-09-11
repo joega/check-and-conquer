@@ -52,7 +52,7 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 
 ## ADR-009 — Working title only
 
-**Status:** Accepted  
+**Status:** Superseded by ADR-012
 **Decision:** Use “Project Warboard” internally until naming/product review.  
 **Reason:** Avoid treating an existing game title/identity as ours.
 
@@ -71,6 +71,14 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 **Decision:** Keep right-drag orbit and mouse-wheel inspection, but snap to a mirrored three-quarter board view after each committed move. White's default view looks from rank one toward Black; Black's mirrors it from rank eight. Close zoom smoothly raises its focal point to the character face level.
 **Reason:** A free-orbit-only camera can leave the player viewing the board from an unhelpful angle, while a floor-centered close zoom obscures the character models. The turn-aware framing presents the relevant side and keeps close character inspection usable.
 **Consequences:** `BoardCameraController` owns default side framing; `GameScreen` requests it after restart, undo, and move presentation. Capture camera transforms still restore first, then the normal board view snaps for the next decision.
+
+## ADR-012 — Provisional public name: Warboard
+
+**Status:** Accepted
+**Date:** 2026-09-10
+**Decision:** Present the game as “Warboard” in its runtime title, main menu, and public README. Keep the longer “Project Warboard” phrase only in historical/internal planning material.
+**Reason:** The public repository and player-facing materials need one consistent name, while the original working-title policy remains preserved in the decision record.
+**Consequences:** The Godot application name and main menu read “Warboard.” This is a provisional product identity and does not replace a jurisdiction-specific trademark review before commercial release.
 
 ## Pending decisions
 
