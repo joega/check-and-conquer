@@ -1,74 +1,151 @@
 class_name BattlefieldEnvironment
 extends Node3D
 
+const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
+
 ## Lightweight procedural setting around the authoritative chessboard. It has no
 ## gameplay collision or chess-state responsibilities and can be rebuilt freely.
 
 @export var terrain_extent := 150.0
 @export var storm_cycle_s := 18.0
+@export_enum("mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins") var arena_id := "mountain_fortress"
 
 var _storm_time := 0.0
 var _flash: OmniLight3D
 var _beacon_lights: Array[OmniLight3D] = []
+var _architecture: Node3D
 
 func _ready() -> void:
-	_create_storm_beacons()
 	_flash = OmniLight3D.new()
-	_flash.name = "StormFlash"
+	_flash.name = "ArenaAtmosphereLight"
 	_flash.position = Vector3(0, 24, -18)
-	_flash.light_color = Color(0.56, 0.7, 1.0)
 	_flash.light_energy = 0.0
 	_flash.omni_range = 68.0
 	add_child(_flash)
+	apply_arena(arena_id)
 
 func _process(delta: float) -> void:
 	_storm_time += delta
 	for index in _beacon_lights.size():
 		_beacon_lights[index].light_energy = 2.0 + sin(_storm_time * 2.8 + index * 1.7) * 0.45
 	var cycle := fmod(_storm_time, storm_cycle_s)
-	# A brief, deterministic distant lightning flash adds weather movement
-	# without introducing random visual test failures or gameplay coupling.
-	_flash.light_energy = 4.0 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
+	# A gentle deterministic atmosphere pulse keeps an arena alive without
+	# affecting board visibility or coupling environment state to chess.
+	_flash.light_energy = 1.7 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
 
-func _create_storm_beacons() -> void:
-	var positions := [Vector3(-21, 0, -21), Vector3(21, 0, -21), Vector3(-21, 0, 21), Vector3(21, 0, 21)]
-	for index in positions.size():
-		var beacon := Node3D.new()
-		beacon.name = "StormBeacon%02d" % index
-		beacon.position = positions[index]
-		add_child(beacon)
-		var pillar := MeshInstance3D.new()
-		var pillar_mesh := CylinderMesh.new()
-		pillar_mesh.top_radius = 0.48
-		pillar_mesh.bottom_radius = 0.86
-		pillar_mesh.height = 3.2
-		pillar_mesh.radial_segments = 6
-		pillar.mesh = pillar_mesh
-		pillar.position.y = 1.6
+
+func apply_arena(requested_arena_id: String) -> void:
+	arena_id = requested_arena_id if requested_arena_id in ArenaCatalog.ARENAS else "mountain_fortress"
+	var arena := ArenaCatalog.definition(arena_id)
+	_apply_sky_and_lighting(arena)
+	if _architecture != null:
+		_architecture.queue_free()
+	_architecture = Node3D.new()
+	_architecture.name = "ArenaArchitecture"
+	add_child(_architecture)
+	_beacon_lights.clear()
+	_create_grand_terrace(arena)
+	_create_arena_markers(arena)
+	_flash.light_color = arena.accent
+
+
+func _apply_sky_and_lighting(arena: Dictionary) -> void:
+	var world_environment := get_parent().get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if world_environment != null and world_environment.environment != null:
+		var sky_material := PanoramaSkyMaterial.new()
+		sky_material.panorama = load(arena.backdrop_path) as Texture2D
+		sky_material.energy_multiplier = 0.78
+		var sky := Sky.new()
+		sky.sky_material = sky_material
+		world_environment.environment.sky = sky
+		world_environment.environment.ambient_light_color = arena.ambient
+		world_environment.environment.ambient_light_energy = 0.82
+	var key_light := get_parent().get_node_or_null("Light") as DirectionalLight3D
+	if key_light != null:
+		key_light.light_color = arena.ambient.lerp(Color.WHITE, 0.35)
+	var fill_light := get_parent().get_node_or_null("FillLight") as DirectionalLight3D
+	if fill_light != null:
+		fill_light.light_color = arena.accent.lerp(Color.WHITE, 0.40)
+
+
+func _create_grand_terrace(arena: Dictionary) -> void:
+	# A narrow ring of individual weathered slabs physically frames the board.
+	# Unlike the earlier full terrain mesh, it terminates near the altar and can
+	# never create a flat or jagged false horizon over the panoramic artwork.
+	var slab_materials: Array[StandardMaterial3D] = []
+	for brightness in [0.82, 1.0, 1.16]:
+		var material := StandardMaterial3D.new()
+		material.albedo_color = arena.stone * brightness
+		material.roughness = 0.86
+		material.metallic = 0.08
+		slab_materials.append(material)
+	for x in range(-22, 23, 4):
+		for z in [-20, 20]:
+			_add_terrace_slab(Vector3(x, -0.78, z), slab_materials[absi(x + z) % slab_materials.size()])
+	for z in range(-16, 17, 4):
+		for x in [-20, 20]:
+			_add_terrace_slab(Vector3(x, -0.78, z), slab_materials[absi(x + z) % slab_materials.size()])
+
+
+func _add_terrace_slab(position: Vector3, material: StandardMaterial3D) -> void:
+	var slab := MeshInstance3D.new()
+	slab.name = "TerraceSlab"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(3.82, 0.22, 3.82)
+	slab.mesh = mesh
+	slab.position = position
+	slab.material_override = material
+	_architecture.add_child(slab)
+
+
+func _create_arena_markers(arena: Dictionary) -> void:
+	for index in [0, 1, 2, 3]:
+		var position: Vector3 = [Vector3(-22, 0, -22), Vector3(22, 0, -22), Vector3(-22, 0, 22), Vector3(22, 0, 22)][index]
+		var marker := Node3D.new()
+		marker.name = "ArenaMarker%02d" % index
+		marker.position = position
+		_architecture.add_child(marker)
+		var pedestal := MeshInstance3D.new()
+		var pedestal_mesh := CylinderMesh.new()
+		pedestal_mesh.top_radius = 0.50
+		pedestal_mesh.bottom_radius = 0.90
+		pedestal_mesh.height = 2.1
+		pedestal_mesh.radial_segments = 8
+		pedestal.mesh = pedestal_mesh
+		pedestal.position.y = 1.05
 		var stone := StandardMaterial3D.new()
-		stone.albedo_color = Color(0.10, 0.14, 0.19)
-		stone.metallic = 0.12
-		stone.roughness = 0.84
-		pillar.material_override = stone
-		beacon.add_child(pillar)
-		var flame := MeshInstance3D.new()
-		var flame_mesh := SphereMesh.new()
-		flame_mesh.radius = 0.52
-		flame_mesh.height = 1.4
-		flame.mesh = flame_mesh
-		flame.position.y = 3.55
-		var flame_material := StandardMaterial3D.new()
-		flame_material.albedo_color = Color(0.18, 0.58, 1.0)
-		flame_material.emission_enabled = true
-		flame_material.emission = Color(0.06, 0.32, 1.0)
-		flame_material.emission_energy_multiplier = 5.0
-		flame.material_override = flame_material
-		beacon.add_child(flame)
+		stone.albedo_color = arena.stone * 0.72
+		stone.roughness = 0.9
+		pedestal.material_override = stone
+		marker.add_child(pedestal)
+		var crown := MeshInstance3D.new()
+		crown.name = "ArenaAccent"
+		if arena.marker == "obelisk":
+			var prism := PrismMesh.new()
+			prism.left_to_right = 0.5
+			prism.size = Vector3(1.05, 2.2, 1.05)
+			crown.mesh = prism
+			crown.position.y = 3.0
+		else:
+			var gem := SphereMesh.new()
+			gem.radius = 0.43 if arena.marker == "crystal" else 0.56
+			gem.height = 1.35 if arena.marker == "crystal" else 0.8
+			gem.radial_segments = 10
+			crown.mesh = gem
+			crown.position.y = 2.45
+		var accent := StandardMaterial3D.new()
+		accent.albedo_color = arena.accent
+		accent.emission_enabled = true
+		accent.emission = arena.accent
+		accent.emission_energy_multiplier = 3.2
+		crown.material_override = accent
+		marker.add_child(crown)
 		var light := OmniLight3D.new()
-		light.name = "BeaconLight"
-		light.position.y = 3.5
-		light.light_color = Color(0.22, 0.53, 1.0)
-		light.light_energy = 2.0
-		light.omni_range = 9.0
-		beacon.add_child(light)
+		light.name = "ArenaMarkerLight"
+		light.position.y = 2.5
+		light.light_color = arena.accent
+		light.light_energy = 1.4
+		light.omni_range = 8.0
+		light.shadow_enabled = false
+		marker.add_child(light)
 		_beacon_lights.append(light)

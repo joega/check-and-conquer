@@ -15,7 +15,9 @@ tests=(
   tests/chess/test_chess_game.gd
   tests/chess/test_turn_controller.gd
   tests/game/test_session_settings.gd
+  tests/game/test_campaign_progress.gd
   tests/app/test_main_loading.gd
+  tests/app/test_campaign_map.gd
   tests/engine/test_uci_protocol.gd
   tests/engine/test_stockfish_adapter.gd
   tests/presentation/test_board_mapper.gd

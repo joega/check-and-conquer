@@ -48,6 +48,15 @@ XDG_DATA_HOME=/tmp/warboard-godot-data \
 
 The expected perft counts are depth 1 = 20, depth 2 = 400, depth 3 = 8,902, and depth 4 = 197,281.
 
+Run campaign progression and the map UI checks with:
+
+```sh
+godot --headless --path . --script res://tests/game/test_campaign_progress.gd
+godot --headless --path . --script res://tests/app/test_campaign_map.gd
+```
+
+The first check validates sequential unlocks and safe snapshot restore. The second validates the five-route UI, locked/conquered states, and arena selection persistence.
+
 Run deterministic board mapping tests with:
 
 ```sh

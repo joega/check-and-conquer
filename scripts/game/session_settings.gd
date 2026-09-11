@@ -16,6 +16,8 @@ const DEFAULTS := {
 	"camera_shake": true,
 	"master_volume_db": 0.0,
 	"fullscreen": false,
+	"campaign_snapshot": {},
+	"selected_arena_id": "mountain_fortress",
 }
 
 

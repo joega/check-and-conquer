@@ -15,6 +15,7 @@ The suite covers:
 - bootstrap configuration and required debug scenes;
 - chess-state FEN/UCI behavior, legal move generation, and start-position perft through depth 4 (`20`, `400`, `8,902`, `197,281`);
 - turn phases, session settings, and Stockfish UCI formatting;
+- sequential campaign progression, snapshot validation, map lock/conquered states, and persisted arena selection;
 - a real Stockfish subprocess handshake and 100 sequential independently validated legal moves;
 - board mapping, board-edge coordinate labels, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
 - camera orbit/zoom and capture-shot exit;
@@ -43,7 +44,7 @@ The expected smoke-test exit is `124`: the game remains running for the two-seco
 
 Before tagging a public release, run the game from the editor and review:
 
-1. Each player-side default camera framing, close face-level zoom, and the storm mountain setting with its lightning pulse.
+1. Each player-side default camera framing, close face-level zoom, and all five grand-arena panorama/terrace combinations.
 2. Ordinary walk movement and all six role-specific props at gameplay distance.
 3. A capture with the action camera centered on the attacking pair, followed by a clean cut to the next turn-aware board view.
 4. Settings-menu readability at the target window size.

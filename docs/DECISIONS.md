@@ -109,3 +109,11 @@ Record after M1 evidence:
 **Decision:** Present the game as “Warchessed” in the runtime title, main menu, Linux package name, and public README. Retain `warboard` only in the repository URL, historic records, and legacy settings migration.
 **Reason:** The name immediately communicates animated combat chess and is more distinctive than a generic fantasy title. An exact-term preliminary web search on 2026-09-10 returned no public game or trademark results.
 **Consequences:** Existing `user://warboard_settings.cfg` values load when no `user://warchessed_settings.cfg` exists, and subsequent saves use the new path. This preliminary screen is not trademark clearance; jurisdiction-appropriate review is still required before commercial release.
+
+## ADR-015 — Campaign arenas are presentation skins over standard chess
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Introduce a sequential five-location campaign with Mountain Fortress Terrace as its first arena, followed by Arcane Sky Citadel, Frozen Keep, Lava Forge, and the final Forest Ruins. Keep campaign progress in a pure game-layer object and keep arena identity in presentation/session state.
+**Reason:** Multiple locations create a strong long-term progression structure without allowing visual scenes to affect authoritative chess. A reusable grand-arena frame also prevents each new location from re-solving camera, board, and combat staging.
+**Consequences:** Wins only unlock the next arena after an authoritative human checkmate. Each arena supplies original panorama art, lighting, a physical local terrace ring, and themed markers through `ArenaCatalog`; chess position, Stockfish, piece coordinates, and capture choreography remain shared.

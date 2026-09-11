@@ -6,6 +6,8 @@ const Mapper = preload("res://scripts/presentation/board_mapper.gd")
 const StockfishAdapter = preload("res://scripts/engine/stockfish_adapter.gd")
 const ChoreographyResolver = preload("res://scripts/presentation/capture_choreography_resolver.gd")
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
+const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
+const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
 const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
 const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
@@ -25,6 +27,8 @@ var player_side := Types.WHITE
 var capture_impact_position := Vector3.ZERO
 var replay_index := -1
 var settings: Dictionary = SessionSettings.DEFAULTS.duplicate()
+var campaign: RefCounted
+var arena_id := "mountain_fortress"
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
 	$UI/LoadingOverlay.visible = true
@@ -48,12 +52,12 @@ func _initialize_game() -> void:
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.pressed.connect(_submit)
 	$UI/Restart.pressed.connect(_restart)
-	$UI/Back.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/app/Main.tscn"))
+	$UI/Back.pressed.connect(_return_to_campaign)
 	$UI/Settings.pressed.connect(_toggle_settings_menu)
 	$UI/Fullscreen.pressed.connect(_toggle_fullscreen)
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
 	$UI/GameOverPanel/Content/RestartGame.pressed.connect(_restart)
-	$UI/GameOverPanel/Content/Menu.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/app/Main.tscn"))
+	$UI/GameOverPanel/Content/Menu.pressed.connect(_return_to_campaign)
 	$UI/GameOverPanel/Content/CopyPGN.pressed.connect(_copy_pgn)
 	$UI/GameOverPanel/Content/Review.pressed.connect(_begin_review)
 	$UI/GameOverPanel/Content/Previous.pressed.connect(func(): _show_review_position(replay_index - 1))
@@ -72,6 +76,8 @@ func _initialize_game() -> void:
 		$UI/Promotion.add_item(label)
 	$UI/Promotion.select(0)
 	_load_settings()
+	$BattlefieldEnvironment.apply_arena(arena_id)
+	$UI/ArenaTitle.text = "%s  —  %s" % [ArenaCatalog.definition(arena_id).chapter, ArenaCatalog.definition(arena_id).title]
 	$Camera3D.snap_to_side(player_side, 0.0)
 	_set_settings_menu_visible(false)
 	$UI/Spectator.toggled.connect(_set_spectator_enabled)
@@ -190,15 +196,35 @@ func _set_camera_shake(enabled: bool) -> void:
 	settings.camera_shake = enabled
 	_save_settings()
 
+
+func _record_campaign_victory_if_earned(result) -> bool:
+	# Checkmate leaves the losing side to move. Only a human player win in the
+	# selected, current campaign arena can unlock the next location.
+	if campaign == null or spectator_enabled or not result.is_checkmate:
+		return false
+	if controller.game.state.side_to_move == player_side:
+		return false
+	if not campaign.mark_victory(arena_id):
+		return false
+	settings.campaign_snapshot = campaign.to_snapshot()
+	settings.selected_arena_id = campaign.current_arena()
+	_save_settings()
+	return true
+
+
+func _return_to_campaign() -> void:
+	get_tree().change_scene_to_file("res://scenes/app/CampaignMap.tscn")
+
 func _after_presentation(result, was_engine_move: bool) -> void:
 	if not $BoardPresenter.matches_state(controller.game.state):
 		$BoardPresenter.rebuild_from_state(controller.game.state)
 	controller.presentation_finished()
 	if result.game_result != "ongoing":
-		$UI/Status.text = "Game over: %s" % result.game_result.replace("_", " ")
+		var campaign_victory := _record_campaign_victory_if_earned(result)
+		$UI/Status.text = "Victory! %s secured." % ArenaCatalog.definition(arena_id).title if campaign_victory else "Game over: %s" % result.game_result.replace("_", " ")
 		$UI/Submit.disabled = true
 		$UI/GameOverPanel.visible = true
-		$UI/GameOverPanel/Content/Result.text = "Game over\n%s" % result.game_result.replace("_", " ").capitalize()
+		$UI/GameOverPanel/Content/Result.text = "Victory!\n%s secured\nNext: %s" % [ArenaCatalog.definition(arena_id).title, ArenaCatalog.definition(campaign.current_arena()).title] if campaign_victory and not campaign.campaign_complete() else "Campaign complete!\nThe Final Grove is yours." if campaign_victory else "Game over\n%s" % result.game_result.replace("_", " ").capitalize()
 		$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
 		$UI/GameOverPanel/Content/Previous.visible = false
 		$UI/GameOverPanel/Content/Next.visible = false
@@ -341,6 +367,11 @@ func _load_settings() -> void:
 	$UI/CameraShake.button_pressed = $CameraDirector.shake_enabled
 	$UI/MasterVolume.value = volume_db
 	_apply_fullscreen(bool(settings.get("fullscreen", false)))
+	campaign = CampaignProgress.new(settings.get("campaign_snapshot", {}))
+	arena_id = str(settings.get("selected_arena_id", campaign.current_arena()))
+	if not campaign.is_unlocked(arena_id):
+		arena_id = campaign.current_arena()
+		settings.selected_arena_id = arena_id
 
 func _save_settings() -> void:
 	SessionSettings.save_values(settings)

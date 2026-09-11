@@ -6,6 +6,7 @@ const DEBUG_SCENES := {
 	"PositionLoader": "res://scenes/debug/DebugPositionLoader.tscn",
 }
 const GAME_SCREEN := "res://scenes/app/GameScreen.tscn"
+const CAMPAIGN_MAP := "res://scenes/app/CampaignMap.tscn"
 
 var _loading_scene_path := ""
 var _loading_started_at_msec := 0
@@ -13,12 +14,13 @@ var _loading_started_at_msec := 0
 
 func _ready() -> void:
 	$Margin/Content/PlayLocal.pressed.connect(_begin_loading.bind(GAME_SCREEN))
+	$Margin/Content/Campaign.pressed.connect(_begin_loading.bind(CAMPAIGN_MAP))
 	for button_name: String in DEBUG_SCENES:
 		get_node("Margin/Content/%s" % button_name).pressed.connect(_begin_loading.bind(DEBUG_SCENES[button_name]))
 	$LoadingOverlay.visible = false
 	# Make the first action immediately available from a keyboard/controller.
 	# This also makes a fresh launch feel responsive before a pointer is moved.
-	$Margin/Content/PlayLocal.grab_focus()
+	$Margin/Content/Campaign.grab_focus()
 
 
 func _begin_loading(scene_path: String) -> void:
@@ -29,13 +31,13 @@ func _begin_loading(scene_path: String) -> void:
 	$LoadingOverlay.visible = true
 	$LoadingOverlay/Panel/Message.text = "Preparing the battlefield…"
 	$LoadingOverlay/Panel/Progress.value = 4.0
-	for button_name: String in ["PlayLocal", "CombatLab", "AnimationBrowser", "PositionLoader"]:
+	for button_name: String in ["PlayLocal", "Campaign", "CombatLab", "AnimationBrowser", "PositionLoader"]:
 		get_node("Margin/Content/%s" % button_name).disabled = true
 	var request_error := ResourceLoader.load_threaded_request(scene_path)
 	if request_error != OK:
 		$LoadingOverlay/Panel/Message.text = "Unable to load this scene. Please try again."
 		_loading_scene_path = ""
-		for button_name: String in ["PlayLocal", "CombatLab", "AnimationBrowser", "PositionLoader"]:
+		for button_name: String in ["PlayLocal", "Campaign", "CombatLab", "AnimationBrowser", "PositionLoader"]:
 			get_node("Margin/Content/%s" % button_name).disabled = false
 
 
@@ -58,5 +60,5 @@ func _process(_delta: float) -> void:
 	elif status == ResourceLoader.THREAD_LOAD_FAILED:
 		$LoadingOverlay/Panel/Message.text = "Unable to load this scene. Please try again."
 		_loading_scene_path = ""
-		for button_name: String in ["PlayLocal", "CombatLab", "AnimationBrowser", "PositionLoader"]:
+		for button_name: String in ["PlayLocal", "Campaign", "CombatLab", "AnimationBrowser", "PositionLoader"]:
 			get_node("Margin/Content/%s" % button_name).disabled = false

@@ -10,9 +10,10 @@
 
 - A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
 - Play versus Stockfish 19, with selectable side and difficulty, plus a Stockfish-versus-Stockfish spectator mode.
+- A five-stop campaign route: win Mountain Fortress Terrace, Arcane Sky Citadel, Frozen Keep, and Lava Forge to unlock the final Forest Ruins match.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
-- A high turn-aware player-side board view from behind the active team, a shoulder follow shot during ordinary movement, and an original generated storm-mountain valley layered with lightning, blue-flame beacons, a stone altar, and bronze board rails. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
+- A stable player-side board view that remains behind the human player while Stockfish moves across the board. Five themed grand arenas use original generated 360° panoramas, local stone terraces, and arena-specific lighting. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
 - Post-game move review and one-click PGN copy built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
 Warchessed is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
@@ -36,7 +37,7 @@ Open the project in Godot or run:
 godot --path .
 ```
 
-Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The board stays clear during play; the **Menu** button contains restart, undo, controls, side, difficulty, spectator mode, promotion, animation speed, audio, fullscreen, and engine diagnostics.
+Choose **Begin Campaign — The Warpath** from the main menu. Win the current arena to unlock the next location, then select it from the campaign route. **Quick Match vs Stockfish** remains available for an immediate standard game. Select a piece and then a highlighted square to move it. The board stays clear during play; the **Menu** button contains restart, undo, controls, side, difficulty, spectator mode, promotion, animation speed, audio, fullscreen, and engine diagnostics.
 
 ## Development
 
@@ -64,6 +65,7 @@ The exporter creates `build/linux-x86_64/` and places Stockfish beside the game 
 - The pure chess domain owns the game state; 3D actors can be rebuilt from it at any time.
 - Stockfish is an isolated UCI subprocess whose moves are independently validated before use.
 - Every capture pairing has a generic fallback before bespoke choreography is added.
+- Campaign progress is a small pure game-layer model. Arena visuals are presentation-only, so every standard chess match remains rebuildable and portable between locations.
 - Warchessed uses original presentation and does not reproduce art, animations, audio, UI, or branding from any existing chess-combat game.
 
 ## Credits and licenses

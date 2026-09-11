@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/presentation/board_camera_controller.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/presentation/procedural_impact_audio.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/presentation/battlefield_environment.gd" id="8"]
-[ext_resource type="Texture2D" path="res://assets/environment/generated/storm_mountain_panorama_v2.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/environment/generated/mountain_fortress_panorama_v1.png" id="9"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
@@ -156,6 +156,14 @@ offset_right = 600.0
 offset_bottom = 56.0
 theme_override_font_sizes/font_size = 22
 text = "White to move"
+[node name="ArenaTitle" type="Label" parent="UI"]
+offset_left = 24.0
+offset_top = 57.0
+offset_right = 720.0
+offset_bottom = 82.0
+theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 0.94)
+theme_override_font_sizes/font_size = 16
+text = "I · The First Gate  —  Mountain Fortress Terrace"
 [node name="CameraDebug" type="Label" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0
@@ -210,7 +218,7 @@ offset_left = 44.0
 offset_top = 180.0
 offset_right = 330.0
 offset_bottom = 218.0
-text = "Back to menu"
+text = "Back to campaign"
 visible = false
 [node name="Fullscreen" type="Button" parent="UI"]
 offset_left = 44.0
@@ -337,4 +345,4 @@ layout_mode = 2
 text = "Restart"
 [node name="Menu" type="Button" parent="UI/GameOverPanel/Content"]
 layout_mode = 2
-text = "Back to menu"
+text = "Back to campaign"

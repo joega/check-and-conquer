@@ -2,6 +2,7 @@ extends SceneTree
 
 const GAME_SCREEN = preload("res://scenes/app/GameScreen.tscn")
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
+const MoveResult = preload("res://scripts/chess/move_result.gd")
 
 
 func _init() -> void:
@@ -14,6 +15,8 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	await process_frame
+	assert(screen.arena_id == "mountain_fortress" and screen.get_node("BattlefieldEnvironment").arena_id == "mountain_fortress", "A fresh match must stage the first campaign arena.")
+	assert("Mountain Fortress Terrace" in screen.get_node("UI/ArenaTitle").text, "The active arena must be visible in the in-game HUD.")
 	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Spectator").visible, "Configuration controls must begin condensed in the settings menu.")
 	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
 	screen._show_capture_impact()
@@ -86,6 +89,13 @@ func _run() -> void:
 	assert(board_camera.focused_side() == screen.player_side, "After every move the board view must remain behind the human player's side while Stockfish moves across it.")
 	assert(not screen.get_node("UI/Skip").visible)
 	assert(is_zero_approx(screen.get_node("ImpactFlash").light_energy), "Impact flash must clean up after a capture.")
+	var campaign_win = MoveResult.new()
+	campaign_win.is_checkmate = true
+	screen.spectator_enabled = false
+	screen.controller.game.state.side_to_move = -1
+	assert(screen._record_campaign_victory_if_earned(campaign_win), "A human checkmate at the current arena must unlock the next campaign location.")
+	assert(screen.campaign.current_arena() == "arcane_sky_citadel", "Campaign victory must advance from Mountain Fortress Terrace to Arcane Sky Citadel.")
+	assert(not screen._record_campaign_victory_if_earned(campaign_win), "The same arena victory cannot unlock multiple campaign locations.")
 	screen._set_capture_speed(1)
 	screen._set_camera_shake(false)
 	screen._set_master_volume(-8.0)
@@ -101,5 +111,22 @@ func _run() -> void:
 	assert(is_equal_approx(AudioServer.get_bus_volume_db(0), -8.0), "Master-volume preference must survive a relaunch.")
 	restored_screen.queue_free()
 	await process_frame
+	var arena_session := SessionSettings.DEFAULTS.duplicate()
+	arena_session.selected_arena_id = "arcane_sky_citadel"
+	arena_session.campaign_snapshot = {
+		"current_arena_id": "arcane_sky_citadel",
+		"unlocked_ids": ["mountain_fortress", "arcane_sky_citadel"],
+		"completed_ids": ["mountain_fortress"],
+	}
+	assert(SessionSettings.save_values(arena_session) == OK)
+	var arcane_screen = GAME_SCREEN.instantiate()
+	root.add_child(arcane_screen)
+	await process_frame
+	await process_frame
+	assert(arcane_screen.arena_id == "arcane_sky_citadel" and arcane_screen.get_node("BattlefieldEnvironment").arena_id == "arcane_sky_citadel", "A campaign-selected arena must apply its own presentation environment to the match.")
+	assert("Arcane Sky Citadel" in arcane_screen.get_node("UI/ArenaTitle").text, "The selected arena identity must appear in the match HUD.")
+	arcane_screen.queue_free()
+	await process_frame
+	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
 	print("PASS: playable screen completes a player move and Stockfish response.")
 	quit(0)

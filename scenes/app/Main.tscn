@@ -57,7 +57,14 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Play vs Stockfish"
+text = "Quick Match vs Stockfish"
+
+[node name="Campaign" type="Button" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.34, 1)
+theme_override_font_sizes/font_size = 22
+text = "Begin Campaign — The Warpath"
 
 [node name="CombatLab" type="Button" parent="Margin/Content"]
 custom_minimum_size = Vector2(0, 52)
