@@ -27,8 +27,12 @@ func _run() -> void:
 	assert(camera.global_position.y - camera.current_focus_target().y < 1.2, "Close zoom must ease into an eye-level pitch instead of retaining the high board-view angle.")
 	camera.reset_view()
 	assert(camera.focused_side() == 1 and camera.target.is_equal_approx(Vector3.ZERO) and camera.global_position.distance_to(Vector3.ZERO) > 40.0, "Reset view must restore the centered default player-side board framing after close inspection.")
+	for corner in [Vector3(-16, 0, -16), Vector3(-16, 0, 16), Vector3(16, 0, -16), Vector3(16, 0, 16)]:
+		assert(camera.is_position_in_frustum(corner), "Default player-side framing must keep every board corner visible.")
 	camera.snap_to_side(-1, 0.0)
 	assert(camera.focused_side() == -1 and camera.global_position.z > 0.0, "Black's default view must mirror White's from the opposing board end.")
+	for corner in [Vector3(-16, 0, -16), Vector3(-16, 0, 16), Vector3(16, 0, -16), Vector3(16, 0, 16)]:
+		assert(camera.is_position_in_frustum(corner), "Mirrored player-side framing must keep every board corner visible.")
 	var walker := Node3D.new()
 	root.add_child(walker)
 	walker.global_position = Vector3.ZERO
@@ -39,6 +43,9 @@ func _run() -> void:
 	assert(camera.global_position.z > walker.global_position.z, "Move follow must stay behind the actor relative to its destination.")
 	assert(absf(camera.global_position.x - walker.global_position.x) > 0.5, "Move follow must use a shoulder offset so adjacent pieces do not hide the walker.")
 	assert(camera.global_position.y > walker.global_position.y + 3.0, "Move follow must frame the actor from above the board surface.")
+	var walker_screen_position := camera.unproject_position(walker.global_position + Vector3.UP * 1.55)
+	var viewport_center := get_root().get_visible_rect().get_center()
+	assert(walker_screen_position.distance_to(viewport_center) < get_root().get_visible_rect().size.x * 0.18, "Move follow must hold the walking character near screen center.")
 	camera.end_move_follow()
 	assert(camera.controls_enabled(), "Move follow must restore manual inspection after the walk.")
 	walker.queue_free()
