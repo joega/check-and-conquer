@@ -1,102 +1,104 @@
 # Acceptance Criteria
 
-Use this file as the objective review checklist.
+Use this file as the objective review checklist. Checked items are covered by
+the current headless suite or release smoke check; command details and the
+remaining manual review are recorded in [VERIFICATION.md](VERIFICATION.md).
 
 ## Global invariants
 
-- [ ] A visual actor never decides chess legality.
-- [ ] A combat animation never decides who survives.
-- [ ] Stockfish output is validated by the chess domain before application.
-- [ ] Board visuals can be rebuilt from authoritative domain state.
-- [ ] User input cannot mutate the board while a move/engine turn is in-flight.
-- [ ] Missing optional visual polish degrades gracefully rather than breaking game state.
+- [x] A visual actor never decides chess legality.
+- [x] A combat animation never decides who survives.
+- [x] Stockfish output is validated by the chess domain before application.
+- [x] Board visuals can be rebuilt from authoritative domain state.
+- [x] User input cannot mutate the board while a move/engine turn is in-flight.
+- [x] Missing optional visual polish degrades gracefully rather than breaking game state.
 
 ## Chess correctness
 
-- [ ] Starting perft d1 = 20
-- [ ] Starting perft d2 = 400
-- [ ] Starting perft d3 = 8,902
-- [ ] Starting perft d4 = 197,281
-- [ ] Legal castling works.
-- [ ] Castling while in check is rejected.
-- [ ] Castling through attacked square is rejected.
-- [ ] En passant works.
-- [ ] Illegal en passant exposing king is rejected.
-- [ ] Q/R/B/N promotion works.
-- [ ] Promotion capture works.
-- [ ] Check detection works.
-- [ ] Mate detection works.
-- [ ] Stalemate works.
-- [ ] Threefold repetition bookkeeping works.
-- [ ] Fifty-move rule works.
-- [ ] Insufficient material works for supported standard cases.
-- [ ] FEN roundtrip preserves complete state.
+- [x] Starting perft d1 = 20
+- [x] Starting perft d2 = 400
+- [x] Starting perft d3 = 8,902
+- [x] Starting perft d4 = 197,281
+- [x] Legal castling works.
+- [x] Castling while in check is rejected.
+- [x] Castling through attacked square is rejected.
+- [x] En passant works.
+- [x] Illegal en passant exposing king is rejected.
+- [x] Q/R/B/N promotion works.
+- [x] Promotion capture works.
+- [x] Check detection works.
+- [x] Mate detection works.
+- [x] Stalemate works.
+- [x] Threefold repetition bookkeeping works.
+- [x] Fifty-move rule works.
+- [x] Insufficient material works for supported standard cases.
+- [x] FEN roundtrip preserves complete state.
 
 ## Stockfish
 
-- [ ] Process starts from configured/packaged path.
-- [ ] `uci`/`uciok` handshake succeeds.
-- [ ] `isready`/`readyok` succeeds.
-- [ ] New game resets engine.
-- [ ] FEN position can be sent.
-- [ ] `bestmove` parses safely.
-- [ ] Engine stdout does not block render loop.
-- [ ] Timeout/crash is handled.
-- [ ] Engine can be stopped during restart/undo/quit.
-- [ ] Difficulty presets result in valid UCI configuration.
+- [x] Process starts from configured/packaged path.
+- [x] `uci`/`uciok` handshake succeeds.
+- [x] `isready`/`readyok` succeeds.
+- [x] New game resets engine.
+- [x] FEN position can be sent.
+- [x] `bestmove` parses safely.
+- [x] Engine stdout does not block render loop.
+- [x] Timeout/crash is handled.
+- [x] Engine can be stopped during restart/undo/quit.
+- [x] Difficulty presets result in valid UCI configuration.
 
 ## Piece presentation
 
 For each archetype:
 
-- [ ] white/black side presentation exists.
-- [ ] idle works.
-- [ ] locomotion works.
-- [ ] combat idle works or safely falls back to idle.
-- [ ] one primary attack exists.
-- [ ] fallback choreography resolves against all victim archetypes.
-- [ ] actor ends exactly at board square center after move.
-- [ ] dead/hidden actors are cleaned/recycled correctly.
+- [x] white/black side presentation exists.
+- [x] idle works.
+- [x] locomotion works.
+- [x] combat idle works or safely falls back to idle.
+- [x] one primary attack exists.
+- [x] fallback choreography resolves against all victim archetypes.
+- [x] actor ends exactly at board square center after move.
+- [x] dead/hidden actors are cleaned/recycled correctly.
 
 ## Combat
 
-- [ ] input locked during battle.
-- [ ] attacker/victim face appropriate directions.
-- [ ] camera shot activates and returns.
-- [ ] impact event is synchronized.
-- [ ] victim death/hide occurs once.
-- [ ] attacker settles to destination once.
-- [ ] battle can be skipped without state corruption.
-- [ ] battle reset in debug lab is deterministic.
-- [ ] 20 repeat cycles do not drift transforms.
+- [x] input locked during battle.
+- [x] attacker/victim face appropriate directions.
+- [x] camera shot activates and returns.
+- [x] impact event is synchronized.
+- [x] victim death/hide occurs once.
+- [x] attacker settles to destination once.
+- [x] battle can be skipped without state corruption.
+- [x] battle reset in debug lab is deterministic.
+- [x] 20 repeat cycles do not drift transforms.
 
 ## Special moves presentation
 
-- [ ] castling moves both correct actors.
-- [ ] en passant removes the actual victim square actor.
-- [ ] promotion swaps visual archetype after move.
-- [ ] promotion after capture works.
-- [ ] check cue is non-blocking or bounded.
-- [ ] checkmate finishes cleanly into game-over state.
+- [x] castling moves both correct actors.
+- [x] en passant removes the actual victim square actor.
+- [x] promotion swaps visual archetype after move.
+- [x] promotion after capture works.
+- [x] check cue is non-blocking or bounded.
+- [x] checkmate finishes cleanly into game-over state.
 
 ## UX
 
-- [ ] start new human-vs-human game.
-- [ ] start new human-vs-engine game.
-- [ ] choose side.
-- [ ] choose difficulty.
-- [ ] restart.
-- [ ] undo behaves according to mode policy.
-- [ ] skip/fast animations setting.
-- [ ] sound volume control.
-- [ ] camera shake setting/off.
-- [ ] game-over result clear.
+- [x] start new human-vs-human game.
+- [x] start new human-vs-engine game.
+- [x] choose side.
+- [x] choose difficulty.
+- [x] restart.
+- [x] undo behaves according to mode policy.
+- [x] skip/fast animations setting.
+- [x] sound volume control.
+- [x] camera shake setting/off.
+- [x] game-over result clear.
 - [x] Linux release build launches without editor.
 
 ## Licensing/provenance
 
-- [ ] all third-party models/animations logged.
-- [ ] all third-party audio/VFX logged.
-- [ ] Stockfish version/license/source pointer logged.
-- [ ] no ripped/copied Battle Chess assets.
+- [x] all third-party models/animations logged.
+- [x] all third-party audio/VFX logged.
+- [x] Stockfish version/license/source pointer logged.
+- [x] no ripped/copied Battle Chess assets.
 - [ ] shipping title/art reviewed for originality.
