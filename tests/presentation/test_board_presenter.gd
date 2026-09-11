@@ -41,6 +41,18 @@ func _run() -> void:
 		if actor != capture_winner and actor.side == capture_winner.side and actor.current_semantic_state().begins_with("celebration."):
 			teammate_celebrants += 1
 	assert(teammate_celebrants >= 1 and teammate_celebrants <= 2, "Only one or two teammates may acknowledge a capture.")
+	for actor in presenter.actors.values():
+		actor.start_battle_stance()
+	presenter.celebrate_victory_for_side(Types.WHITE)
+	var winning_side_gestures := 0
+	for actor in presenter.actors.values():
+		if actor.side == Types.WHITE and actor.current_semantic_state().begins_with("celebration."):
+			winning_side_gestures += 1
+		if actor.side == Types.BLACK:
+			assert(not actor.current_semantic_state().begins_with("celebration."), "A game-over acknowledgement must animate only the domain-determined winning side.")
+	assert(winning_side_gestures == 16, "Every surviving winner should acknowledge a checkmate once, distinct from the small nearby capture reaction.")
+	for actor in presenter.actors.values():
+		actor.start_battle_stance()
 	assert(presenter.actors[0].archetype == 4 and presenter.actors[1].archetype == 2)
 	assert(not presenter.actors[8].uses_female_model and not presenter.actors[0].uses_female_model and presenter.actors[1].uses_female_model)
 	var expected_outfits := {

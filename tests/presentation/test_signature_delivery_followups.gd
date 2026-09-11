@@ -28,11 +28,12 @@ func _run() -> void:
 		director.impact_landed.connect(func(): impacts[0] += 1)
 		director.choreography = Resolver.resolve_matchup(matchup[0], matchup[1])
 		await director.play_capture(attacker, victim, victim.global_position)
-		assert(impacts[0] >= 2, "%s must play its primary delivery and the resource-authored follow-up impact." % director.choreography.id)
+		var expected_impacts := 1 if director.choreography.delivery == "hammer_smash" else 2
+		assert(impacts[0] >= expected_impacts, "%s must play its authored delivery%s before settlement." % [director.choreography.id, "" if expected_impacts == 1 else " and follow-up impact"])
 		assert(not victim.visible and attacker.global_position.is_equal_approx(Vector3(2.0, 0.0, 0.0)), "%s must still settle deterministically after its signature follow-up." % director.choreography.id)
 		director.queue_free()
 		attacker.queue_free()
 		victim.queue_free()
 		await process_frame
-	print("PASS: delivery-based signature captures play their authored second impact before settlement.")
+	print("PASS: delivery-based signature captures play their authored delivery and declared follow-up beats before settlement.")
 	quit(0)

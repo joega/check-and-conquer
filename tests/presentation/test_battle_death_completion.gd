@@ -70,7 +70,7 @@ func _run() -> void:
 	lab._play_capture()
 	assert(battle.choreography.id == &"capture.rook_vs_knight.breaker_01")
 	await battle.victim_death_finished
-	assert(impact_events.size() - rook_impacts >= 2, "Rook-versus-knight signature must land its delivery and follow-up beats.")
+	assert(impact_events.size() - rook_impacts == 1 and battle.choreography.delivery == "hammer_smash", "Rook-versus-knight must land its authored overhead hammer beat instead of a generic delivery/follow-up pair.")
 	assert(victim.animation_playback_position() >= victim.state_duration(battle.last_victim_death_clip) - 0.05, "Resolved signature death must finish before cleanup.")
 	await battle.presentation_finished
 	assert(not victim.visible)

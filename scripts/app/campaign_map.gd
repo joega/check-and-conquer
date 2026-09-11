@@ -72,7 +72,8 @@ func refresh_state() -> void:
 			node.text = "✓  %s\nCONQUERED" % ARENA_TITLES[index]
 			label_color = Color(0.48, 0.92, 0.62)
 		elif available:
-			node.text = "◆  %s\nCURRENT ARENA" % ARENA_TITLES[index]
+			var arena := ArenaCatalog.definition(arena_id)
+			node.text = "◆  %s\nCURRENT · %s" % [ARENA_TITLES[index], str(arena.opponent).to_upper()]
 		else:
 			node.text = "🔒  %s\nLOCKED" % ARENA_TITLES[index]
 		# Lock state must not dim the whole card; the icon and text carry the
@@ -80,9 +81,33 @@ func refresh_state() -> void:
 		node.modulate = Color.WHITE
 		node.add_theme_color_override("font_color", label_color)
 		node.add_theme_color_override("font_disabled_color", label_color)
+		_apply_route_hierarchy(node, available)
 	$EnterArena.disabled = not campaign.is_unlocked(arena_selected) or arena_selected in campaign.completed_ids
+	var selected_arena := ArenaCatalog.definition(arena_selected)
+	$CampaignFocus/Chapter.text = "%s  ·  CURRENT OBJECTIVE" % str(selected_arena.chapter).to_upper()
+	$CampaignFocus/Title.text = str(selected_arena.title)
+	$CampaignFocus/Detail.text = "%s  —  %s" % [str(selected_arena.opponent), str(selected_arena.intro)]
+	$EnterArena.text = "ENTER ARENA  ·  %s" % str(selected_arena.title).to_upper()
 	var practice_index := CampaignProgress.ARENA_IDS.find(practice_arena_id)
 	$PracticeArenaPicker.select(maxi(practice_index, 0))
+
+
+func _apply_route_hierarchy(card: Button, is_current: bool) -> void:
+	# One current route card acts as the campaign's visual destination. Locked
+	# and conquered locations keep their readable backing but deliberately lose
+	# the gold keyline, so the central action does not compete with five peers.
+	var base := card.get_theme_stylebox("normal") as StyleBoxFlat
+	if base == null:
+		return
+	var style := base.duplicate() as StyleBoxFlat
+	style.border_width_left = 3 if is_current else 1
+	style.border_width_top = 3 if is_current else 1
+	style.border_width_right = 3 if is_current else 1
+	style.border_width_bottom = 3 if is_current else 1
+	style.border_color = Color(1.0, 0.76, 0.25, 0.96) if is_current else Color(0.82, 0.61, 0.22, 0.28)
+	style.bg_color = Color(0.06, 0.09, 0.14, 0.88) if is_current else Color(0.025, 0.045, 0.08, 0.68)
+	card.add_theme_stylebox_override("normal", style)
+	card.add_theme_stylebox_override("disabled", style)
 
 
 func select_arena(arena_id: String) -> void:

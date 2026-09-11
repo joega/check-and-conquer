@@ -320,6 +320,10 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	if result.game_result != "ongoing":
 		var campaign_victory := _record_campaign_victory_if_earned(result)
 		var outcome := _outcome_copy(result, campaign_victory)
+		if result.is_checkmate:
+			# Chess state has already selected the result. The winning army's brief
+			# acknowledgement is presentation-only and cannot affect settlement.
+			$BoardPresenter.celebrate_victory_for_side(-controller.game.state.side_to_move)
 		$UI/Status.text = outcome.status
 		$UI/Submit.disabled = true
 		$UI/GameOverPanel.visible = true

@@ -21,6 +21,7 @@ const BOW_SCENE := preload("res://assets/weapons/quaternius/Bow_Golden.fbx")
 const HAMMER_SCENE := preload("res://assets/weapons/quaternius/Hammer_Double.fbx")
 const GOLDEN_SWORD_SCENE := preload("res://assets/weapons/quaternius/Sword_Golden.fbx")
 const CLAYMORE_SCENE := preload("res://assets/weapons/quaternius/Claymore.fbx")
+const ARROW_SCENE := preload("res://assets/weapons/quaternius/Arrow.fbx")
 ## Presentation scale only. The actor root stays in board metres so chess
 ## coordinates, capture destinations, and rebuild checks remain authoritative.
 const CHARACTER_PRESENTATION_SCALE := 2.0
@@ -59,6 +60,11 @@ const CLIP_MAP := {
 	&"attack.punch.jab_01": &"Punch_Jab",
 	&"attack.push.guard_01": &"Push",
 	&"attack.spell.shot_01": &"Spell_Simple_Shoot",
+	# These are project-authored prop timelines layered over compatible body
+	# motion. They deliberately remain semantic gameplay requests rather than
+	# exposing a source-library filename as a choreography contract.
+	&"attack.bow.draw_release_01": &"Spell_Simple_Shoot",
+	&"recovery.capture_ready_01": &"Idle_Rail",
 	# Victory reactions must read as acknowledgement from the board camera. Keep
 	# combat clips out of this family: attacks belong to the capture itself.
 	&"reaction.hit.generic_01": &"Hit_Chest",
@@ -68,6 +74,7 @@ const CLIP_MAP := {
 const CLIP_MAP_2 := {
 	&"celebration.call_01": &"Idle_Rail_Call",
 	&"celebration.salute_01": &"Yes",
+	&"attack.hammer.overhead_01": &"Melee_Hook",
 	&"attack.melee.hook_01": &"Melee_Hook",
 	&"attack.sword.regular_a_01": &"Sword_Regular_A",
 	&"attack.sword.regular_b_01": &"Sword_Regular_B",
@@ -95,6 +102,9 @@ var _stance_loop_state: StringName = &"idle.neutral"
 var _stance_gesture_time_s := 0.0
 var _ambient_motion_active := false
 var _ambient_motion_tween: Tween
+var _role_action_tween: Tween
+var _recovery_tween: Tween
+var _nocked_arrow: Node3D
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
@@ -177,6 +187,7 @@ func play_clip(clip: StringName) -> void:
 
 
 func play_state(semantic_id: StringName) -> void:
+	_cancel_role_action(semantic_id != &"attack.bow.draw_release_01")
 	_animation_paused = false
 	_last_played_state = semantic_id
 	if CLIP_MAP_2.has(semantic_id):
@@ -185,11 +196,19 @@ func play_state(semantic_id: StringName) -> void:
 			if _animation_player != null:
 				_animation_player.stop()
 			_animation_player_2.play(clip_2)
+			if semantic_id in [&"attack.bow.draw_release_01", &"attack.hammer.overhead_01"]:
+				_play_role_authored_action(semantic_id)
 			return
 	play_clip(CLIP_MAP.get(semantic_id, &"Idle"))
+	if semantic_id in [&"attack.bow.draw_release_01", &"attack.hammer.overhead_01"]:
+		_play_role_authored_action(semantic_id)
 
 
 func supports_state(semantic_id: StringName) -> bool:
+	if semantic_id in [&"attack.bow.draw_release_01", &"recovery.capture_ready_01"]:
+		return _animation_player != null and _animation_player.has_animation(CLIP_MAP[semantic_id])
+	if semantic_id == &"attack.hammer.overhead_01":
+		return _animation_player_2 != null and _animation_player_2.has_animation(CLIP_MAP_2[semantic_id])
 	if CLIP_MAP_2.has(semantic_id):
 		return _animation_player_2 != null and _animation_player_2.has_animation(CLIP_MAP_2[semantic_id])
 	return CLIP_MAP.has(semantic_id) and _animation_player != null and _animation_player.has_animation(CLIP_MAP[semantic_id])
@@ -199,10 +218,12 @@ func primary_attack_state() -> StringName:
 	match archetype:
 		Types.KNIGHT:
 			return &"attack.punch.jab_01"
-		Types.BISHOP, Types.QUEEN:
+		Types.BISHOP:
+			return &"attack.bow.draw_release_01"
+		Types.QUEEN:
 			return &"attack.spell.shot_01"
 		Types.ROOK:
-			return &"attack.push.guard_01"
+			return &"attack.hammer.overhead_01"
 		_:
 			return &"attack.sword.slash_01"
 
@@ -229,6 +250,97 @@ func capture_attack_state(fallback: StringName) -> StringName:
 	return fallback
 
 
+func release_authored_projectile() -> void:
+	# The visible nocked arrow belongs to the draw timeline. BattleDirector owns
+	# the travelling projectile and removes this preparation prop at the exact
+	# release beat, keeping the two representations from overlapping.
+	if _nocked_arrow != null and is_instance_valid(_nocked_arrow):
+		_nocked_arrow.queue_free()
+	_nocked_arrow = null
+
+
+func recover_after_capture() -> void:
+	# Settlement remains on the authoritative board square. This is only a short
+	# local exhale/brace after the decisive beat, so it cannot introduce root
+	# drift or delay the logical turn handoff.
+	_cancel_role_action(true)
+	if _recovery_tween != null and _recovery_tween.is_valid():
+		_recovery_tween.kill()
+	_last_played_state = &"recovery.capture_ready_01"
+	_animation_paused = false
+	play_clip(CLIP_MAP[&"recovery.capture_ready_01"])
+	if _model_root == null:
+		return
+	var rest_position := _model_root.position
+	var rest_rotation := _model_root.rotation
+	_recovery_tween = create_tween()
+	_recovery_tween.set_parallel(true)
+	_recovery_tween.tween_property(_model_root, "position:y", rest_position.y - 0.045, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_recovery_tween.tween_property(_model_root, "rotation:x", rest_rotation.x + 0.055, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_recovery_tween.chain().set_parallel(true)
+	_recovery_tween.tween_property(_model_root, "position", rest_position, 0.24).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_recovery_tween.tween_property(_model_root, "rotation", rest_rotation, 0.24).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_recovery_tween.tween_callback(_restore_battle_pose)
+
+
+func _play_role_authored_action(semantic_id: StringName) -> void:
+	var weapon := _role_weapon_for_action(semantic_id)
+	if weapon == null:
+		return
+	var rest_position := weapon.position
+	var rest_rotation := weapon.rotation
+	_role_action_tween = create_tween()
+	if semantic_id == &"attack.bow.draw_release_01":
+		_create_nocked_arrow(weapon)
+		_role_action_tween.set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position + Vector3(-0.045, 0.025, -0.045), 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation + Vector3(0.12, -0.18, 0.10), 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_role_action_tween.chain().set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position + Vector3(0.03, -0.02, 0.065), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation + Vector3(-0.08, 0.22, -0.12), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_role_action_tween.chain().set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position, 0.20).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation, 0.20).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	else:
+		# The loaded hammer's handle is held in the palm; the authored timeline
+		# gives it a readable lift, overhead commitment, and recovery at board
+		# scale instead of borrowing a push gesture.
+		_role_action_tween.set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position + Vector3(-0.03, 0.12, -0.08), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation + Vector3(-0.95, 0.12, 0.18), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_role_action_tween.chain().set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position + Vector3(0.08, -0.10, 0.18), 0.20).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation + Vector3(0.72, -0.18, -0.22), 0.20).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_role_action_tween.chain().set_parallel(true)
+		_role_action_tween.tween_property(weapon, "position", rest_position, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_role_action_tween.tween_property(weapon, "rotation", rest_rotation, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _role_weapon_for_action(semantic_id: StringName) -> Node3D:
+	var weapon_name := "BishopGoldenBow" if semantic_id == &"attack.bow.draw_release_01" else "RookWarHammer"
+	return get_node_or_null("ModelRoot/Armature/Skeleton3D/%sAttachment/%s" % [weapon_name, weapon_name]) as Node3D
+
+
+func _create_nocked_arrow(bow: Node3D) -> void:
+	release_authored_projectile()
+	_nocked_arrow = ARROW_SCENE.instantiate() as Node3D
+	_nocked_arrow.name = "NockedArrow"
+	_nocked_arrow.scale = Vector3.ONE * 0.34
+	# This is intentionally a short, visible preparation prop; its world-space
+	# successor is spawned by BattleDirector at release.
+	_nocked_arrow.position = Vector3(0.0, 0.02, -0.22)
+	_nocked_arrow.rotation_degrees = Vector3(0.0, 90.0, 0.0)
+	bow.add_child(_nocked_arrow)
+
+
+func _cancel_role_action(remove_arrow: bool) -> void:
+	if _role_action_tween != null and _role_action_tween.is_valid():
+		_role_action_tween.kill()
+	_role_action_tween = null
+	if remove_arrow:
+		release_authored_projectile()
+
+
 func combat_idle_state() -> StringName:
 	# The UAL1 Rail idle is not available on every imported outfit skeleton.
 	# Neutral idle is present for every role and avoids a preview/control state
@@ -237,6 +349,7 @@ func combat_idle_state() -> StringName:
 
 
 func start_battle_stance() -> void:
+	_cancel_role_action(true)
 	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
 	# The supplied looping clips visibly snap at their seams. Hold each actor in
 	# a clean neutral pose, then let BoardPresenter occasionally select one actor
@@ -336,6 +449,12 @@ func _restore_battle_pose() -> void:
 
 
 func state_duration(semantic_id: StringName) -> float:
+	if semantic_id == &"attack.bow.draw_release_01":
+		return 0.52
+	if semantic_id == &"attack.hammer.overhead_01":
+		return 0.60
+	if semantic_id == &"recovery.capture_ready_01":
+		return 0.36
 	var player := _animation_player
 	var clip: StringName = CLIP_MAP.get(semantic_id, &"Idle")
 	if CLIP_MAP_2.has(semantic_id):
@@ -438,6 +557,7 @@ func set_home_transform(value: Transform3D) -> void:
 
 
 func reset_actor() -> void:
+	_cancel_role_action(true)
 	global_transform = _home_transform
 	visible = true
 	if _animation_player != null:

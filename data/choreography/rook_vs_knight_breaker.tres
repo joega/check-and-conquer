@@ -5,16 +5,16 @@
 [resource]
 script = ExtResource("1")
 id = &"capture.rook_vs_knight.breaker_01"
-delivery = &"wall_crush"
-attacker_clip = &"attack.melee.hook_01"
-attacker_followup_clip = &"attack.push.guard_01"
+delivery = &"hammer_smash"
+attacker_clip = &"attack.hammer.overhead_01"
+attacker_followup_clip = &""
 victim_hit_clip = &"reaction.hit.generic_01"
 victim_hit_variants = Array[StringName]([&"reaction.hit.generic_01", &"reaction.hit.knockback_01", &"reaction.hit.head_01"])
 victim_death_clip = &"death.backward_01"
 victim_death_variants = Array[StringName]([&"death.backward_01", &"death.knockback_01"])
 approach_duration_s = 0.48
 impact_time_s = 0.28
-followup_time_s = 0.30
+followup_time_s = 0.0
 cleanup_time_s = 1.34
 anchor_separation_m = 2.5
 camera_shot = &"capture_overhead"

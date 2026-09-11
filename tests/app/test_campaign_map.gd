@@ -27,7 +27,11 @@ func _run() -> void:
 	assert(map.get_node("Route/ArcaneSkyCitadel").disabled, "Future arenas must begin locked.")
 	var locked_arena := map.get_node("Route/ArcaneSkyCitadel") as Button
 	assert(locked_arena.modulate.is_equal_approx(Color.WHITE) and locked_arena.get_theme_color("font_disabled_color").g > 0.7, "Locked arena names must retain the readable campaign-gold treatment alongside their lock indicator.")
-	assert(locked_arena.get_theme_stylebox("disabled") == first_card.get_theme_stylebox("normal"), "Locked arena cards must keep the same readable backing opacity as available arenas.")
+	var current_style := first_card.get_theme_stylebox("normal") as StyleBoxFlat
+	var locked_style := locked_arena.get_theme_stylebox("disabled") as StyleBoxFlat
+	assert(current_style.border_width_left == 3 and current_style.bg_color.a > locked_style.bg_color.a, "The current arena needs the dominant gold keyline while locked cards stay readable but quieter.")
+	assert("CURRENT OBJECTIVE" in map.get_node("CampaignFocus/Chapter").text and "Mountain Fortress Terrace" in map.get_node("CampaignFocus/Title").text, "The campaign map must name one immediate objective above its primary action.")
+	assert("MOUNTAIN FORTRESS TERRACE" in map.get_node("EnterArena").text, "The dominant action must state its exact destination.")
 	assert(map.get_node("PracticeArenaPicker").item_count == 5, "Practice must offer every arena without campaign-unlock requirements.")
 	var safe_viewport := Rect2(Vector2.ZERO, map.get_viewport_rect().size)
 	assert(not map.has_node("SelectedArena"), "The selected route card already communicates the destination; the lower duplicate label must stay removed.")

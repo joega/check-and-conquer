@@ -111,6 +111,17 @@ The first imported Quaternius set is mapped in `scripts/actors/piece_actor.gd`:
 | `reaction.hit.generic_01` | `Hit_Chest` |
 | `death.backward_01` | `Death01` |
 
+Project-authored overlay semantics are kept separate from imported clips:
+
+| Semantic ID | Ownership / base motion |
+| --- | --- |
+| `attack.bow.draw_release_01` | Project prop timeline over `Spell_Simple_Shoot` |
+| `attack.hammer.overhead_01` | Project prop timeline over UAL2 `Melee_Hook` |
+| `recovery.capture_ready_01` | Project local recovery over `Idle_Rail` |
+
+These are not claims that the third-party packs contain skeletal bow or hammer
+clips. A future source clip must go through the complete intake checklist.
+
 The compatibility proof is structural: both imported scenes use `Armature/Skeleton3D`. At runtime, `PieceActor` places the imported animation player under the base-character root, where its existing tracks address that shared hierarchy. Root translation remains code-controlled.
 
 ## Looping

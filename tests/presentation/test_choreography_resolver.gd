@@ -54,7 +54,8 @@ func _run() -> void:
 	rook.archetype = Types.ROOK
 	root.add_child(rook)
 	await process_frame
-	assert(rook.supports_state(rook_signature.attacker_clip) and rook.supports_state(rook_signature.attacker_followup_clip))
+	assert(rook_signature.delivery == "hammer_smash" and rook_signature.attacker_clip == &"attack.hammer.overhead_01", "Rook captures must use the authored overhead hammer delivery rather than the old masonry substitute.")
+	assert(rook.supports_state(rook_signature.attacker_clip))
 	rook.queue_free()
 	var king_signature = Resolver.resolve_matchup(Types.KING, Types.BISHOP)
 	assert(king_signature.id == &"capture.king_vs_bishop.strike_01")
@@ -80,7 +81,8 @@ func _run() -> void:
 	await process_frame
 	assert(bishop.supports_state(bishop_signature.attacker_clip) and bishop.supports_state(bishop_signature.attacker_followup_clip))
 	bishop.queue_free()
-	for signature_choreography in [bishop_signature, rook_signature, queen_signature]:
+	assert(bishop_signature.delivery == "arrow" and bishop_signature.attacker_clip == &"attack.bow.draw_release_01", "Bishop captures must request the authored bow draw/release semantic.")
+	for signature_choreography in [bishop_signature, queen_signature]:
 		assert(not signature_choreography.attacker_followup_clip.is_empty() and signature_choreography.followup_time_s > 0.0, "Every delivery-based signature must declare its second authored combat beat.")
 	assert(Resolver.resolve_matchup(Types.KNIGHT, Types.BISHOP).id == Resolver.resolve(Types.KNIGHT).id, "Unmapped matchups must retain their generic fallback.")
 	assert(ids.size() == 6 and not ids.has(&""))

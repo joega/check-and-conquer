@@ -159,3 +159,23 @@ mesh-specific.
 skip, reset, settlement, and scene exit clear outstanding VFX/audio. The lab
 continues to distinguish routing verification from acoustic listening. Actor
 roots, combat anchors, clips, and chess settlement are unchanged.
+
+## ADR-021 — Project-authored role action overlays and post-result acknowledgements
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Use project-authored semantic prop timelines for the Bishop's bow
+draw/release and Rook's overhead hammer capture while compatible skeletal
+source clips are absent. Follow settled captures with a root-stable local
+recovery and let the domain-determined winning side acknowledge checkmate.
+Campaign selection exposes one visually dominant current objective.
+**Reason:** The available CC0 library supplies generic spell/push motions but
+not credible bow or two-handed hammer contact. Generic victory flourishes also
+made the end state less legible than a short recovery and bounded response.
+Uniform campaign cards obscured the next action.
+**Consequences:** Choreography requests `attack.bow.draw_release_01` or
+`attack.hammer.overhead_01`, never source filenames. BattleDirector owns the
+arrow handoff and authoritative settlement remains unchanged. The overlays are
+not represented as acquired third-party clips; a future skeletal-animation
+intake still needs provenance and compatibility review. See
+`TERRA_VISUAL_TRANCHE_03.md` for timing and visual verification.

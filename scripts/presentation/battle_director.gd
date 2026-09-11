@@ -40,8 +40,8 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	if choreography.delivery == "arrow":
 		await _play_bishop_ranged_capture(attacker, victim, destination)
 		return
-	if choreography.delivery == "wall_crush":
-		await _play_rook_wall_capture(attacker, victim, destination)
+	if choreography.delivery == "hammer_smash":
+		await _play_rook_hammer_capture(attacker, victim, destination)
 		return
 	if choreography.delivery == "arcane_bolt":
 		await _play_queen_arcane_capture(attacker, victim, destination)
@@ -199,30 +199,36 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	_finish_capture(attacker, victim, destination)
 
 
-func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
+func _play_rook_hammer_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
-	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
-	_spawn_weapon_swing(attacker)
-	await _wait_or_skip(0.22 / playback_speed)
+	var approach_direction: Vector3 = attacker.global_position - victim.global_position
+	approach_direction.y = 0.0
+	if approach_direction.length_squared() < 0.000001:
+		approach_direction = Vector3.BACK
+	var approach_position: Vector3 = victim.global_position + approach_direction.normalized() * choreography.anchor_separation_m
+	approach_position.y = attacker.global_position.y
+	attacker.play_state(&"locomotion.walk.forward")
+	await _move_actor(attacker, approach_position, choreography.approach_duration_s / playback_speed)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
-	var origin: Vector3 = attacker.global_position + Vector3.UP * 1.55
-	var target: Vector3 = victim.global_position + Vector3.UP * 1.10
-	var volley := _spawn_rook_brick_volley(origin, target)
-	weapon_impact.emit(&"wall_slam")
-	await _wait_or_skip(0.42 / playback_speed)
-	volley.queue_free()
+	attacker.face_world_position(victim.global_position)
+	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
+	# The impact is aligned to the authored overhead descent, not to the old
+	# masonry volley. This keeps the visible hammer, audio, victim reaction and
+	# contact marker on a single readable beat.
+	await _wait_or_skip(choreography.impact_time_s / playback_speed)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
 	impact_landed.emit()
-	_spawn_role_impact(attacker, target)
+	_spawn_weapon_swing(attacker)
+	_spawn_role_impact(attacker, victim.global_position + Vector3.UP * 1.0)
 	weapon_impact.emit(&"hammer_impact")
 	await _wait_or_skip(0.12 / playback_speed)
-	await _play_delivery_followup(attacker, victim, target)
+	await _play_delivery_followup(attacker, victim, victim.global_position + Vector3.UP * 1.0)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
@@ -271,10 +277,12 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
 	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
-	await _wait_or_skip(0.28 / playback_speed)
+	# Release timing is authored with the Bishop's local bow/arrow timeline.
+	await _wait_or_skip(0.32 / playback_speed)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
+	attacker.release_authored_projectile()
 	var arrow := ARROW_SCENE.instantiate() as Node3D
 	arrow.name = "BishopArrowProjectile"
 	add_child(arrow)

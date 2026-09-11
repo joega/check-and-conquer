@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"capture.bishop.generic_strike_01"
 delivery = &"arrow"
-attacker_clip = &"attack.spell.shot_01"
+attacker_clip = &"attack.bow.draw_release_01"
 victim_hit_clip = &"reaction.hit.generic_01"
 victim_hit_variants = Array[StringName]([&"reaction.hit.generic_01", &"reaction.hit.head_01"])
 victim_death_clip = &"death.backward_01"

@@ -159,7 +159,7 @@ func settle_capture(result) -> void:
 	actors[result.to_square] = attacker
 	attacker.global_position = Mapper.square_to_world(result.to_square)
 	_apply_promotion(result)
-	attacker.start_battle_stance()
+	attacker.recover_after_capture()
 	_celebrate_capture(attacker)
 	_face_actors_toward_opposing_kings()
 	piece_landed.emit()
@@ -177,6 +177,19 @@ func _celebrate_capture(winner) -> void:
 	var celebration_count := 1 + posmod(int(round(winner.global_position.x + winner.global_position.z)), 2)
 	for index in mini(allies.size(), celebration_count):
 		allies[index].celebrate_victory(index)
+
+
+func celebrate_victory_for_side(winning_side: int) -> void:
+	# Checkmate has already been decided by the domain. This is a bounded visual
+	# acknowledgement for the full winning formation, distinct from the smaller
+	# nearby reaction after an ordinary capture.
+	var winners: Array = []
+	for actor in actors.values():
+		if actor != null and is_instance_valid(actor) and actor.side == winning_side:
+			winners.append(actor)
+	winners.sort_custom(func(a, b): return a.global_position.z < b.global_position.z)
+	for index in winners.size():
+		winners[index].celebrate_victory(index)
 
 
 func _face_actors_toward_opposing_kings() -> void:
