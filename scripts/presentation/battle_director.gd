@@ -35,6 +35,9 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	if choreography.delivery == "wall_crush":
 		await _play_rook_wall_capture(attacker, victim, destination)
 		return
+	if choreography.delivery == "arcane_bolt":
+		await _play_queen_arcane_capture(attacker, victim, destination)
+		return
 	var approach_position: Vector3 = destination - Vector3.FORWARD * choreography.anchor_separation_m
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
@@ -74,6 +77,50 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	var death_duration: float = victim.state_duration(last_victim_death_clip) / playback_speed
 	var cleanup_duration := maxf(death_duration, (choreography.cleanup_time_s - elapsed_before_death) / playback_speed)
 	await _wait_or_skip(cleanup_duration)
+	victim_death_finished.emit()
+	_finish_capture(attacker, victim, destination)
+
+
+func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
+	attacker.face_world_position(victim.global_position)
+	victim.face_world_position(attacker.global_position)
+	attacker.play_state(&"attack.spell.shot_01")
+	impact_landed.emit()
+	await _wait_or_skip(0.24 / playback_speed)
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
+	var bolt := MeshInstance3D.new()
+	bolt.name = "QueenArcaneBolt"
+	var bolt_mesh := SphereMesh.new()
+	bolt_mesh.radius = 0.18
+	bolt_mesh.height = 0.36
+	bolt.mesh = bolt_mesh
+	var bolt_material := StandardMaterial3D.new()
+	bolt_material.albedo_color = Color(0.78, 0.28, 1.0)
+	bolt_material.emission_enabled = true
+	bolt_material.emission = Color(0.72, 0.12, 1.0)
+	bolt_material.emission_energy_multiplier = 4.0
+	bolt.material_override = bolt_material
+	add_child(bolt)
+	var launch: Vector3 = attacker.global_position + Vector3.UP * 1.7
+	var impact: Vector3 = victim.global_position + Vector3.UP * 1.2
+	bolt.global_position = launch
+	var flight := create_tween()
+	flight.tween_property(bolt, "global_position", impact, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	flight.parallel().tween_property(bolt, "scale", Vector3.ONE * 1.8, 0.30 / playback_speed)
+	while flight.is_running() and not _skip_requested:
+		await get_tree().process_frame
+	bolt.queue_free()
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
+	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
+	impact_landed.emit()
+	await _wait_or_skip(0.12 / playback_speed)
+	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
+	victim.play_state(last_victim_death_clip)
+	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
 	victim_death_finished.emit()
 	_finish_capture(attacker, victim, destination)
 

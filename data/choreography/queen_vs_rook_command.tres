@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = &"capture.queen_vs_rook.command_01"
+delivery = "arcane_bolt"
 attacker_clip = &"attack.spell.shot_01"
 attacker_followup_clip = &"attack.push.guard_01"
 victim_hit_clip = &"reaction.hit.generic_01"
