@@ -67,7 +67,7 @@ Prove the 3D character/rig/animation problem before investing in the rest of the
 
 ## M3 — Interactive board
 
-**Progress:** In implementation. The prototype has an 8×8 3D board with four-metre squares, deterministic mapping, FEN loader, actor projection, click selection/highlights, local move submission, and walk-clip playback during quiet moves.
+**Progress:** Implemented. The prototype has an 8×8 3D board with four-metre squares, deterministic mapping, actor projection, click selection/highlights, local move submission, walk-clip playback during quiet moves, and special-move projection. The Position Loader validates pasted FEN before rebuilding the visible projection and provides deterministic start, castle, en-passant, promotion, and capture presets.
 
 ### Deliverables
 - 8×8 3D board.
