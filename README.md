@@ -1,40 +1,70 @@
-# Project Warboard — Agent Handoff Pack
+# Warboard
 
-This folder is intended to be copied into the root of a new Godot/Codex repository.
+**Warboard** is an original 3D chess game where every legal move plays out on a living battlefield. Chess rules remain authoritative; animated duels give captures their drama.
 
-## Start here
+![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
-1. Put the files in the repository root.
-2. Open Codex in that repository.
-3. Paste the contents of `KICKOFF_PROMPT.md` into the root agent session.
-4. Let the root agent read and implement the plan milestone-by-milestone.
+## What you can play today
 
-The master specification is `BATTLE_CHESS_MASTER_PLAN.md`.
+- A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
+- Human versus human or Stockfish 19, with selectable side and difficulty.
+- An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
+- Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
+- A turn-aware three-quarter camera that settles behind the player to move. You can right-drag to explore and use the mouse wheel to zoom to face level.
+- Debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
-## Bootstrap
+Warboard is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
 
-The project is pinned to Godot 4.7.2 stable. Launch the debug menu with:
+## Run it
+
+### Requirements
+
+- [Godot 4.7.2](https://godotengine.org/download/archive/4.7.2-stable/)
+- Linux (the included Stockfish integration and export target are Linux-specific)
+- The local Stockfish executable at `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
+
+Open the project in Godot or run:
 
 ```sh
 godot --path .
 ```
 
-The current demo path is **Play vs Stockfish**. It starts with the player as White against Stockfish as Black; use the toggle to switch to local two-player mode, or choose Black and let Stockfish open. Click a source and destination, or enter UCI such as `e2e4`. Choose a difficulty, capture speed, and promotion piece from the controls. Right-drag rotates the board and the mouse wheel zooms; captures temporarily use their own action shot before restoring that view. The in-game button toggles fullscreen. Camera shake, volume, capture speed, game mode, side, difficulty, and fullscreen persist between launches. The chess domain validates every submitted move before the visual actor moves.
+Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds move entry, restart, undo, and capture skip; **Settings** contains game mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
 
-Run the headless bootstrap gate with the command in [`docs/TESTING.md`](docs/TESTING.md).
+## Development
 
-See [docs/BUILDING.md](docs/BUILDING.md) for launch controls and the complete headless verification command.
+Run the deterministic test suite, including chess perft and the real Stockfish subprocess test:
 
-The Linux release exporter is `bash tools/export_linux.sh`; it stages the external Stockfish executable and its license/source material beside the exported game.
+```sh
+bash tools/run_headless_tests.sh
+```
 
-## Why multiple files?
+Create a Linux export with Godot's matching export templates installed:
 
-- `BATTLE_CHESS_MASTER_PLAN.md` is the product/technical source of truth.
-- `AGENTS.md` gives durable repo-level agent behavior and architecture boundaries.
-- `docs/ROADMAP.md` keeps milestone order explicit.
-- `docs/ASSET_PIPELINE.md` isolates the highest-risk 3D workflow.
-- `docs/ACCEPTANCE_CRITERIA.md` prevents agents from calling incomplete work “done.”
-- `docs/DECISIONS.md` prevents architecture drift.
-- `KICKOFF_PROMPT.md` starts the root agent with the right priorities.
+```sh
+bash tools/export_linux.sh
+```
 
-Working title only. Do not ship under “Battle Chess” without an independent naming/IP review.
+The exporter creates `build/linux-x86_64/` and places Stockfish beside the game executable so Godot can launch it as a UCI process.
+
+## Design principles
+
+- Standard chess rules decide every outcome. The combat layer is presentation only.
+- The pure chess domain owns the game state; 3D actors can be rebuilt from it at any time.
+- Stockfish is an isolated UCI subprocess whose moves are independently validated before use.
+- Every capture pairing has a generic fallback before bespoke choreography is added.
+- Warboard uses original presentation and does not reproduce art, animations, audio, UI, or branding from any existing chess-combat game.
+
+## Credits and licenses
+
+Character models, outfits, and animation source packs are by [Quaternius](https://quaternius.com/) under CC0 1.0. The bundled chess engine is [Stockfish](https://stockfishchess.org/), distributed under GPLv3; its executable, source, and notices are staged with Linux exports. Godot is MIT licensed.
+
+See [third-party asset provenance](assets/THIRD_PARTY_ASSETS.md) and [third-party software notices](THIRD_PARTY_SOFTWARE.md) for the complete record.
+
+## Project status
+
+The playable prototype has passed chess perft through depth 4, real-process Stockfish integration, and repeatable combat reset checks. Current development is focused on visual polish, position-debugging tools, and expanding signature capture content.
+
+## Contributing
+
+This project is currently developed in public while the prototype takes shape. Issues and pull requests are welcome when they preserve the separation between chess rules, engine integration, gameplay orchestration, and presentation.
