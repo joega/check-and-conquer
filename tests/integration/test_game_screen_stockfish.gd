@@ -19,7 +19,7 @@ func _run() -> void:
 	var impact_sparks: GPUParticles3D = screen.get_node("ImpactSparks")
 	assert(impact_sparks.emitting and impact_sparks.global_position.is_equal_approx(screen.capture_impact_position), "Capture impacts must restart a visible spark burst at the committed contact point.")
 	screen._toggle_settings_menu()
-	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Computer").visible, "Settings must reveal grouped configuration controls on demand.")
+	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Computer").visible and screen.get_node("UI/Spectator").visible, "Settings must reveal grouped configuration controls, including spectator mode, on demand.")
 	screen._toggle_settings_menu()
 	assert(screen.computer_enabled, "The playable screen should enable Stockfish by default.")
 	screen.get_node("UI/Move").text = "e2e4"
