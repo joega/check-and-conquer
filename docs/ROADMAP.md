@@ -111,7 +111,7 @@ Prove the 3D character/rig/animation problem before investing in the rest of the
 
 ## M5 — Combat integration
 
-**Progress:** Implemented. Captures from the playable board commit in the chess domain and route to the generic BattleDirector choreography before actor-map settlement. En passant and promotion projection are tested, the capture camera temporarily switches to a close overhead shot centered on the victim’s committed impact square, then restores the player’s orbit/zoom. Full death clips finish before cleanup, and skip settles the same committed result immediately. Each choreography selects deterministically between compatible chest/head hits and backward/knockback deaths. An original procedural impact tone, flash, one-shot spark burst, and optional camera shake are synchronized to the impact beat.
+**Progress:** Implemented. Captures from the playable board commit in the chess domain and route to the generic BattleDirector choreography before actor-map settlement. En passant and promotion projection are tested, the capture camera temporarily switches to a close overhead shot centered on the victim’s committed impact square, then cuts directly to the next player’s default board view after the death completes. Full death clips finish before cleanup, and skip settles the same committed result immediately. Each choreography selects deterministically between compatible chest/head hits and backward/knockback deaths. An original procedural impact tone, flash, one-shot spark burst, and optional camera shake are synchronized to the impact beat.
 
 ### Deliverables
 - Captures route from `MoveResult` into `BattleDirector`.

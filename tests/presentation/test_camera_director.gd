@@ -39,9 +39,9 @@ func _run() -> void:
 	director.shake_on_impact()
 	await create_timer(0.05).timeout
 	assert(not camera.global_position.is_equal_approx(capture_position), "Enabled camera shake must move the capture shot.")
-	await director.return_to_board().finished
-	assert(camera.global_transform.is_equal_approx(board_transform), "Camera must restore the exact board transform.")
+	director.end_capture()
 	assert(camera.controls_enabled(), "Board orbit must return after the capture shot.")
+	assert(camera.global_position.y - action_target.y >= director.capture_height_m - 0.1, "Ending capture staging must leave the camera in the action shot until the game applies its next-turn cut.")
 	stage.queue_free()
-	print("PASS: capture camera stages and restores the board shot.")
+	print("PASS: capture camera stages the action shot and releases board controls for the next-turn cut.")
 	quit(0)

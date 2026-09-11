@@ -54,7 +54,7 @@ Run deterministic board mapping tests with:
 godot --headless --path . --script res://tests/presentation/test_board_mapper.gd
 ```
 
-Run the capture-camera restore test with:
+Run the capture-camera staging and exit test with:
 
 ```sh
 godot --headless --path . --script res://tests/presentation/test_camera_director.gd

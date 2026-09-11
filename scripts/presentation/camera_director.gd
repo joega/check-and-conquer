@@ -1,8 +1,9 @@
 class_name CameraDirector
 extends Node
 
-## Keeps board framing as the default and temporarily stages a readable capture
-## shot. It holds no chess state and can always return to the saved board view.
+## Temporarily stages a readable capture shot. The game screen owns the
+## turn-aware board reset after a capture, avoiding an unnecessary detour back
+## through the old player orbit.
 
 @export_node_path("Camera3D") var camera_path: NodePath
 @export var shake_enabled := true
@@ -10,18 +11,15 @@ extends Node
 @export var capture_height_m := 8.0
 
 var _camera: Camera3D
-var _board_transform: Transform3D
 
 
 func _ready() -> void:
 	_camera = get_node(camera_path) as Camera3D
-	_board_transform = _camera.global_transform
 
 
 func begin_capture(_attacker, victim) -> void:
 	if _camera == null:
 		return
-	_board_transform = _camera.global_transform
 	_set_board_controls_enabled(false)
 	# The fight lands at the victim's committed destination, rather than midway
 	# between the pre-approach pieces. Center that exact impact point so the
@@ -35,11 +33,11 @@ func begin_capture(_attacker, victim) -> void:
 	tween.tween_property(_camera, "global_transform", capture_transform, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
-func return_to_board() -> Tween:
-	var tween := create_tween()
-	tween.tween_property(_camera, "global_transform", _board_transform, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.finished.connect(func(): _set_board_controls_enabled(true))
-	return tween
+func end_capture() -> void:
+	# Do not interpolate to the previous board transform. Once a capture is
+	# complete, that view is stale: the next turn uses its own player-side board
+	# framing. The GameScreen makes that intentional cut immediately after this.
+	_set_board_controls_enabled(true)
 
 
 func shake_on_impact() -> void:

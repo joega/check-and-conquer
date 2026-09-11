@@ -17,7 +17,7 @@ The suite covers:
 - turn phases, session settings, and Stockfish UCI formatting;
 - a real Stockfish subprocess handshake and 100 sequential independently validated legal moves;
 - board mapping, board-edge coordinate labels, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
-- camera orbit/zoom and capture-shot restoration;
+- camera orbit/zoom and capture-shot exit;
 - capture audio generation, full victim-death completion, the animation browser, and 20 deterministic Combat Lab play/reset cycles;
 - a playable GameScreen turn against Stockfish and autonomous Stockfish-versus-Stockfish spectator turns.
 
@@ -45,7 +45,7 @@ Before tagging a public release, run the game from the editor and review:
 
 1. Each player-side default camera framing, close face-level zoom, and the storm mountain setting with its lightning pulse.
 2. Ordinary walk movement and all six role-specific props at gameplay distance.
-3. A capture with the action camera centered on the attacking pair, followed by the restored turn-aware board view.
+3. A capture with the action camera centered on the attacking pair, followed by a clean cut to the next turn-aware board view.
 4. Settings-menu readability at the target window size.
 5. The final title, logo, and marketing art for originality and trademark suitability.
 

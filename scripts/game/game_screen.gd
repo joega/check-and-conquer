@@ -156,7 +156,10 @@ func _present_result(result) -> void:
 			$CameraDirector.begin_capture(attacker, victim)
 			await $BattleDirector.play_capture(attacker, victim, Mapper.square_to_world(result.to_square))
 			$BoardPresenter.settle_capture(result)
-			await $CameraDirector.return_to_board().finished
+			# The next-turn board framing is the only useful post-capture view. Cut
+			# straight to it instead of orbiting back through the prior camera pose.
+			$CameraDirector.end_capture()
+			$Camera3D.snap_to_side(controller.game.state.side_to_move, 0.0)
 			$UI/Skip.visible = false
 			_set_capture_ui_visible(true)
 		else:
