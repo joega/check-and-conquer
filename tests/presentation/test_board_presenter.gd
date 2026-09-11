@@ -1,6 +1,7 @@
 extends SceneTree
 const BoardState = preload("res://scripts/chess/board_state.gd")
 const Presenter = preload("res://scripts/presentation/board_presenter.gd")
+const Types = preload("res://scripts/chess/chess_types.gd")
 func _init() -> void: call_deferred("_run")
 func _run() -> void:
 	var presenter = Presenter.new()
@@ -59,6 +60,10 @@ func _run() -> void:
 	assert((selected_ring.material_override as StandardMaterial3D).emission_enabled and not (unselected_ring.material_override as StandardMaterial3D).emission_enabled, "Selecting a square must emphasize only that actor's compact base ring.")
 	presenter.set_selected_square(-1)
 	assert(not (selected_ring.material_override as StandardMaterial3D).emission_enabled, "Clearing selection must return the actor base ring to its non-emissive board state.")
+	presenter.show_check_on_side(Types.BLACK)
+	assert(presenter.actors[60].get_node_or_null("VisualAccents/CheckHalo") != null, "A checking move must mark the threatened king with a compact base halo.")
+	presenter.clear_check_indicator()
+	assert(presenter.actors[60].get_node_or_null("VisualAccents/CheckHalo") == null, "The check indicator must clear on the next non-checking move.")
 	presenter.actors[0].global_position.x += 0.1
 	assert(not presenter.matches_state(BoardState.starting_position()))
 	presenter.rebuild_from_state(BoardState.starting_position())

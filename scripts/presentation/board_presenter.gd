@@ -57,6 +57,45 @@ func set_selected_square(square: int) -> void:
 			actor.set_selected(actor_square == square)
 
 
+func show_check_on_side(side: int) -> void:
+	clear_check_indicator()
+	for actor in actors.values():
+		if actor == null or not is_instance_valid(actor) or actor.side != side or actor.archetype != Types.KING:
+			continue
+		var accents := actor.get_node_or_null("VisualAccents") as Node3D
+		if accents == null:
+			return
+		var halo := MeshInstance3D.new()
+		halo.name = "CheckHalo"
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = 0.48
+		mesh.outer_radius = 0.58
+		mesh.rings = 8
+		mesh.ring_segments = 28
+		halo.mesh = mesh
+		halo.position.y = 0.035
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(1.0, 0.20, 0.05)
+		material.emission_enabled = true
+		material.emission = Color(1.0, 0.06, 0.01)
+		material.emission_energy_multiplier = 2.8
+		halo.material_override = material
+		accents.add_child(halo)
+		var pulse := halo.create_tween().set_loops()
+		pulse.tween_property(halo, "scale", Vector3.ONE * 1.30, 0.42).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		pulse.tween_property(halo, "scale", Vector3.ONE, 0.42).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		return
+
+
+func clear_check_indicator() -> void:
+	for actor in actors.values():
+		if actor == null or not is_instance_valid(actor):
+			continue
+		var halo: Node = actor.get_node_or_null("VisualAccents/CheckHalo")
+		if halo != null:
+			halo.free()
+
+
 func matches_state(state) -> bool:
 	var expected_count := 0
 	for square in Types.BOARD_SIZE:

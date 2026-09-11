@@ -198,6 +198,10 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		var side_name := "White" if controller.game.state.side_to_move == Types.WHITE else "Black"
 		$UI/Status.text = "%s to move%s" % [side_name, " — Check!" if result.gives_check else ""]
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	if result.gives_check:
+		$BoardPresenter.show_check_on_side(controller.game.state.side_to_move)
+	else:
+		$BoardPresenter.clear_check_indicator()
 	if result.game_result == "ongoing":
 		$Camera3D.end_move_follow()
 		$Camera3D.snap_to_side(controller.game.state.side_to_move)
