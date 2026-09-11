@@ -28,7 +28,20 @@
 
 Check & Conquer is early in development. The focus is a polished offline desktop prototype before any distribution features are considered.
 
-## Run it
+## Download and play
+
+Download the package for your platform from the
+[Latest development build](https://github.com/joega/check-and-conquer/releases/tag/continuous),
+extract it, and run the game executable from the extracted folder:
+
+- **Windows:** `check-and-conquer.exe`
+- **Linux:** `check-and-conquer.x86_64`
+
+Each package already includes the correct Stockfish engine, GPL notice, and
+corresponding source. No separate engine download, Godot installation, or
+first-launch update is needed.
+
+## Run from source
 
 ### Requirements
 
@@ -36,8 +49,9 @@ Check & Conquer is early in development. The focus is a polished offline desktop
 - Linux or Windows
 - A local Stockfish 19 executable for the platform being run
 
-The Stockfish executable is excluded from Git because of its size. Download the
-matching official build from the [Stockfish download page](https://stockfishchess.org/download/):
+The Stockfish executable is excluded from Git because of its size. To run a
+source checkout locally, download the matching official build from the
+[Stockfish download page](https://stockfishchess.org/download/):
 
 - Linux x86-64 universal: `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
 - Windows x86-64 universal: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-universal.exe`
@@ -83,14 +97,6 @@ bash tools/export_windows.sh
 
 This produces `build/windows-x86_64/` with the Windows executable, Stockfish,
 the corresponding source, and license notices.
-
-## Downloads
-
-Every push to `main` produces ready-to-run Linux and Windows packages in the
-repository's **Latest development build** GitHub release. Each package includes
-the correct Stockfish executable, its GPL notice, and corresponding source; no
-first-launch engine download is required. The same files are retained as GitHub
-Actions artifacts for the individual build run.
 
 ## Design principles
 
