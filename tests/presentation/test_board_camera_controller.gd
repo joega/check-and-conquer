@@ -30,8 +30,8 @@ func _run() -> void:
 	camera.snap_to_side(-1, 0.0)
 	assert(camera.focused_side() == -1 and camera.global_position.z > 0.0, "Black's default view must mirror White's from the opposing board end.")
 	var walker := Node3D.new()
-	walker.global_position = Vector3.ZERO
 	root.add_child(walker)
+	walker.global_position = Vector3.ZERO
 	camera.begin_move_follow(walker, Vector3(0.0, 0.0, -4.0))
 	walker.global_position = Vector3(0.0, 0.0, -2.0)
 	await process_frame
