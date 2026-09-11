@@ -17,6 +17,10 @@ const Types = preload("res://scripts/chess/chess_types.gd")
 ## Presentation scale only. The actor root stays in board metres so chess
 ## coordinates, capture destinations, and rebuild checks remain authoritative.
 const CHARACTER_PRESENTATION_SCALE := 2.0
+## Props live below the doubled imported-character root. Keep them deliberately
+## compact so a close board inspection still shows the outfit and face rather
+## than a primitive mesh filling the camera.
+const ROLE_PROP_SCALE := 0.62
 const CLIP_MAP := {
 	&"idle.neutral": &"Idle",
 	&"combat.idle.sword_01": &"Sword_Idle",
@@ -424,7 +428,7 @@ func _create_role_prop() -> void:
 	# Keep blades and mace heads neutral. The board fill light is intentionally
 	# cool for character readability; blue-tinted metal under that light looked
 	# like a team-coloured placeholder weapon at close range.
-	var steel := Color(0.46, 0.46, 0.48)
+	var steel := Color(0.67, 0.68, 0.72)
 	var gold := Color(0.82, 0.62, 0.2)
 	var wood := Color(0.28, 0.14, 0.055)
 	var gem := side_color.lightened(0.22)
@@ -459,11 +463,12 @@ func _add_hand_prop(parent: Node3D, prop_name: String, mesh: Mesh, prop_position
 	var prop := MeshInstance3D.new()
 	prop.name = prop_name
 	prop.mesh = mesh
-	prop.position = prop_position
+	prop.position = prop_position * ROLE_PROP_SCALE
+	prop.scale = Vector3.ONE * ROLE_PROP_SCALE
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.metallic = metallic
-	material.roughness = 0.36 if metallic > 0.5 else 0.62
+	material.roughness = 0.52 if metallic > 0.5 else 0.62
 	prop.material_override = material
 	parent.add_child(prop)
 

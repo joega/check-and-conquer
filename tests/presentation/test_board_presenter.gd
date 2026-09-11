@@ -36,6 +36,7 @@ func _run() -> void:
 	assert(presenter.actors[4].hair_ids.size() == 2, "The king must retain both a hairstyle and beard for a distinct full-character silhouette.")
 	assert(presenter.actors[0].get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/RookMaceHead") != null, "Rook must retain a non-obstructive hand prop.")
 	assert(presenter.actors[8].get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/PawnSwordBlade") != null, "Pawn must carry a distinct sword assembly rather than a team-colored primitive.")
+	assert(presenter.actors[8].get_node("ModelRoot/Armature/Skeleton3D/RightHandProp/PawnSwordBlade").scale.is_equal_approx(Vector3.ONE * 0.62), "Role props must stay compact beneath the enlarged character presentation root.")
 	assert(presenter.actors[1].get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/KnightLanceTip") != null, "Knight must carry a distinct lance assembly.")
 	assert(presenter.actors[2].get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/BishopFocusOrb") != null, "Bishop must carry a distinct staff and focus assembly.")
 	assert(presenter.actors[3].get_node_or_null("ModelRoot/Armature/Skeleton3D/RightHandProp/QueenCrownOrb") != null, "Queen must carry a distinct sceptre assembly.")
