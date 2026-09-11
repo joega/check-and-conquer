@@ -40,6 +40,21 @@ timeout 2s build/linux-x86_64/warchessed.x86_64 --headless
 
 The expected smoke-test exit is `124`: the game remains running for the two-second window. This check passed for `warchessed.x86_64` on 2026-09-10 using Godot 4.7.2 export templates. The exporter stages the executable Stockfish binary beside the game and copies its corresponding source and notices.
 
+## Windows package check
+
+The repository includes a Windows Desktop export preset and a staging script.
+After adding the official Windows x86-64 AVX2 Stockfish archive at
+`third_party/stockfish/windows-x86_64/stockfish/` and installing matching
+Godot export templates, run:
+
+```sh
+bash tools/export_windows.sh
+```
+
+Smoke-test `build/windows-x86_64/warchessed.exe` on a Windows x86-64 machine.
+This check remains pending because the Windows Stockfish binary is not in the
+repository or current development workspace.
+
 ## Manual visual review
 
 Before tagging a public release, run the game from the editor and review:

@@ -2,7 +2,7 @@
 
 **Warchessed** is an original 3D chess game where every legal move plays out on a living battlefield. Chess rules remain authoritative; animated duels give captures their drama.
 
-![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux%20%2B%20Windows-lightgrey)
 
 [![Test](https://github.com/joega/warboard/actions/workflows/test.yml/badge.svg)](https://github.com/joega/warboard/actions/workflows/test.yml)
 
@@ -12,7 +12,7 @@
 - Play versus Stockfish 19, with selectable side and beginner-to-master campaign difficulty that rises gradually by arena, plus a Stockfish-versus-Stockfish spectator mode.
 - A five-stop campaign route: win Mountain Fortress Terrace, Arcane Sky Citadel, Frozen Keep, and Lava Forge to unlock the final Forest Ruins match.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
-- Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
+- Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, and camera framing.
 - A stable player-side board view that remains behind the human player while Stockfish moves across the board. Five themed grand arenas use original generated 360° panoramas, local stone terraces, and arena-specific lighting. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
 - Post-game move review and one-click PGN copy built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
@@ -23,13 +23,17 @@ Warchessed is early in development. The focus is a polished offline Linux protot
 ### Requirements
 
 - [Godot 4.7.2](https://godotengine.org/download/archive/4.7.2-stable/)
-- Linux (the Stockfish integration and export target are Linux-specific)
-- A local Stockfish 19 Linux x86-64 executable at `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
+- Linux or Windows
+- A local Stockfish 19 executable for the platform being run
 
 The Stockfish executable is excluded from Git because of its size. Download the
-Linux x86-64 universal build from the [official Stockfish site](https://stockfishchess.org/download/),
-place it at the path above, and ensure it is executable. The committed source
-tree and GPL notice provide the corresponding-source material used by releases.
+matching official build from the [Stockfish download page](https://stockfishchess.org/download/):
+
+- Linux x86-64 universal: `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
+- Windows x86-64 AVX2: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-avx2.exe`
+
+Keep the extracted `Copying.txt` and corresponding source tree beside each
+binary so exports can stage the required GPL material.
 
 Open the project in Godot or run:
 
@@ -58,6 +62,16 @@ bash tools/export_linux.sh
 ```
 
 The exporter creates `build/linux-x86_64/` and places Stockfish beside the game executable so Godot can launch it as a UCI process.
+
+Create a Windows x86-64 export after placing the Windows Stockfish archive at
+the path above:
+
+```sh
+bash tools/export_windows.sh
+```
+
+This produces `build/windows-x86_64/` with the Windows executable, Stockfish,
+the corresponding source, and license notices.
 
 ## Design principles
 

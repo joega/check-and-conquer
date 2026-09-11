@@ -16,7 +16,8 @@ Run every deterministic headless gate, including the real Stockfish process test
 bash tools/run_headless_tests.sh
 ```
 
-The current binary path is Linux-specific. A distributable build needs platform-specific Stockfish binaries and the GPLv3 source/license material recorded in [THIRD_PARTY_SOFTWARE.md](THIRD_PARTY_SOFTWARE.md).
+Each distributable build needs its matching platform Stockfish executable and
+the GPLv3 source/license material recorded in [THIRD_PARTY_SOFTWARE.md](THIRD_PARTY_SOFTWARE.md).
 
 ## Linux release build
 
@@ -27,3 +28,19 @@ bash tools/export_linux.sh
 ```
 
 The script creates `build/linux-x86_64/warchessed.x86_64`, places the unmodified Stockfish executable plus its GPLv3 notice in the adjacent `stockfish/` directory, copies Stockfish's corresponding source into `stockfish-source/`, and includes Godot's MIT notice in `licenses/`. Development tests, source archives, third-party source, and unused hair assets are excluded from the game PCK; the base-character face resources remain because they are layered over the outfit meshes. Run the exported executable from that directory so the engine remains discoverable. The runtime uses this external copy because executables stored inside a Godot PCK cannot be launched as UCI subprocesses.
+
+## Windows release build
+
+Download and unpack the official Windows x86-64 AVX2 Stockfish archive at
+`third_party/stockfish/windows-x86_64/stockfish/`, retaining its
+`stockfish-windows-x86-64-avx2.exe`, `Copying.txt`, and corresponding source.
+Install the matching Godot 4.7.2 Windows export templates, then run:
+
+```sh
+bash tools/export_windows.sh
+```
+
+The script creates `build/windows-x86_64/warchessed.exe` and stages the
+unmodified engine at `stockfish/stockfish-windows-x86-64-avx2.exe`, its GPL
+notice, corresponding source, and the Godot MIT notice. Run the game from that
+directory so the external UCI process remains discoverable.

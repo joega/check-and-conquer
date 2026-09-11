@@ -51,15 +51,26 @@ func is_ready_for_requests() -> bool:
 	return is_running() and not _awaiting_uciok and not _awaiting_readyok
 
 
-## Development runs use the project copy. Linux exports place the executable
-## beside the game because a file inside a PCK cannot be launched as a process.
+## Development runs use a platform copy. Exports place the executable beside
+## the game because a file inside a PCK cannot be launched as a process.
 func resolved_executable_path() -> String:
-	var bundled_path := OS.get_executable_path().get_base_dir().path_join("stockfish/stockfish-linux-x86-64-universal")
+	var bundled_path := OS.get_executable_path().get_base_dir().path_join("stockfish/%s" % stockfish_filename())
 	if FileAccess.file_exists(bundled_path):
 		return bundled_path
 	if FileAccess.file_exists(executable_path):
 		return ProjectSettings.globalize_path(executable_path)
+	var platform_project_path := ProjectSettings.globalize_path("res://third_party/stockfish/%s/stockfish/%s" % [stockfish_platform_directory(), stockfish_filename()])
+	if FileAccess.file_exists(platform_project_path):
+		return platform_project_path
 	return ""
+
+
+static func stockfish_filename(platform_name: String = OS.get_name()) -> String:
+	return "stockfish-windows-x86-64-avx2.exe" if platform_name == "Windows" else "stockfish-linux-x86-64-universal"
+
+
+static func stockfish_platform_directory(platform_name: String = OS.get_name()) -> String:
+	return "windows-x86_64" if platform_name == "Windows" else "linux-x86_64"
 
 
 func request_move(fen: String, movetime_ms: int) -> bool:
