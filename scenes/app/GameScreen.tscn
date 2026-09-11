@@ -214,6 +214,17 @@ offset_bottom = 82.0
 theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 0.94)
 theme_override_font_sizes/font_size = 16
 text = "I · The First Gate  —  Mountain Fortress Terrace"
+[node name="OutcomeBanner" type="Label" parent="UI"]
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+offset_top = 96.0
+offset_bottom = 144.0
+theme_override_colors/font_color = Color(1, 0.78, 0.26, 1)
+theme_override_font_sizes/font_size = 32
+text = "CHECK!"
+horizontal_alignment = 1
+visible = false
 [node name="CameraDebug" type="Label" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0
@@ -470,6 +481,11 @@ visible = false
 [node name="Content" type="VBoxContainer" parent="UI/GameOverPanel"]
 layout_mode = 2
 theme_override_constants/separation = 14
+[node name="Title" type="Label" parent="UI/GameOverPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.26, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
 [node name="Result" type="Label" parent="UI/GameOverPanel/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24

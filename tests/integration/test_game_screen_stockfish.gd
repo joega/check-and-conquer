@@ -104,6 +104,16 @@ func _run() -> void:
 	assert(board_camera.global_transform.is_equal_approx(board_camera_transform), "Capture presentation must preserve a manually chosen board view without zooming or snapping.")
 	assert(board_camera.focused_side() == screen.player_side, "The preserved board view must remain associated with the human player's side.")
 	assert(not screen.has_node("UI/Skip"), "Players should watch the complete battle; Skip battle must not be present in the game HUD.")
+	var check_result := MoveResult.new()
+	check_result.is_checkmate = true
+	screen.controller.game.state.side_to_move = -screen.player_side
+	var victory_copy: Dictionary = screen._outcome_copy(check_result, false)
+	assert("VICTORY" in victory_copy.title, "Checkmate must clearly distinguish a player victory from a generic game-over state.")
+	screen.controller.game.state.side_to_move = screen.player_side
+	var defeat_copy: Dictionary = screen._outcome_copy(check_result, false)
+	assert("DEFEAT" in defeat_copy.title, "Checkmate must clearly distinguish a player defeat.")
+	screen._show_outcome_banner("CHECK!", Color.WHITE, 0.01)
+	assert(screen.get_node("UI/OutcomeBanner").visible, "Checks and final outcomes need a prominent board-facing callout.")
 	board_camera.reset_view()
 	assert(not screen.get_node("UI/QuickResetView").visible, "Reset view must hide after restoring the default board framing.")
 	assert(is_zero_approx(screen.get_node("ImpactFlash").light_energy), "Impact flash must clean up after a capture.")

@@ -307,10 +307,14 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	controller.presentation_finished()
 	if result.game_result != "ongoing":
 		var campaign_victory := _record_campaign_victory_if_earned(result)
-		$UI/Status.text = "Victory! %s secured." % ArenaCatalog.definition(arena_id).title if campaign_victory else "Game over: %s" % result.game_result.replace("_", " ")
+		var outcome := _outcome_copy(result, campaign_victory)
+		$UI/Status.text = outcome.status
 		$UI/Submit.disabled = true
 		$UI/GameOverPanel.visible = true
-		$UI/GameOverPanel/Content/Result.text = "Victory!\n%s secured\nNext: %s" % [ArenaCatalog.definition(arena_id).title, ArenaCatalog.definition(campaign.current_arena()).title] if campaign_victory and not campaign.campaign_complete() else "Campaign complete!\nThe Final Grove is yours." if campaign_victory else "Game over\n%s" % result.game_result.replace("_", " ").capitalize()
+		$UI/GameOverPanel/Content/Title.text = outcome.title
+		$UI/GameOverPanel/Content/Title.add_theme_color_override("font_color", outcome.color)
+		$UI/GameOverPanel/Content/Result.text = outcome.detail
+		_show_outcome_banner(outcome.title, outcome.color, 3.0)
 		$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
 		$UI/GameOverPanel/Content/Previous.visible = false
 		$UI/GameOverPanel/Content/Next.visible = false
@@ -321,6 +325,8 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
 	if result.gives_check:
 		$BoardPresenter.show_check_on_side(controller.game.state.side_to_move)
+		if result.game_result == "ongoing":
+			_show_outcome_banner("CHECK!", Color(1.0, 0.30, 0.12), 1.55)
 	else:
 		$BoardPresenter.clear_check_indicator()
 	# Keep a player's deliberate framing throughout both quiet moves and captures.
@@ -329,6 +335,32 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$Camera3D.snap_to_side(player_side)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
+
+
+func _outcome_copy(result, campaign_victory: bool) -> Dictionary:
+	if campaign_victory and campaign != null and campaign.campaign_complete():
+		return {"title": "CAMPAIGN CONQUERED!", "detail": "The Final Grove is yours.\nEvery arena has fallen.", "status": "Campaign conquered! The Final Grove is yours.", "color": Color(1.0, 0.78, 0.26)}
+	if campaign_victory:
+		return {"title": "VICTORY!", "detail": "%s secured\nNext: %s" % [ArenaCatalog.definition(arena_id).title, ArenaCatalog.definition(campaign.current_arena()).title], "status": "Victory! %s secured." % ArenaCatalog.definition(arena_id).title, "color": Color(1.0, 0.78, 0.26)}
+	if result.is_checkmate:
+		var human_won: bool = controller.game.state.side_to_move != player_side
+		return {"title": "CHECKMATE — VICTORY!" if human_won else "CHECKMATE — DEFEAT", "detail": "Your army has conquered the board." if human_won else "The opposing king holds the board this time.", "status": "Checkmate — victory!" if human_won else "Checkmate — defeat.", "color": Color(1.0, 0.78, 0.26) if human_won else Color(1.0, 0.36, 0.25)}
+	if result.is_stalemate:
+		return {"title": "STALEMATE", "detail": "Neither army can make a legal move.", "status": "Stalemate.", "color": Color(0.70, 0.82, 1.0)}
+	return {"title": "DRAW", "detail": result.game_result.replace("_", " ").capitalize(), "status": "Game over: %s" % result.game_result.replace("_", " "), "color": Color(0.70, 0.82, 1.0)}
+
+
+func _show_outcome_banner(message: String, color: Color, duration_s: float) -> void:
+	var banner := $UI/OutcomeBanner
+	banner.text = message
+	banner.add_theme_color_override("font_color", color)
+	banner.visible = true
+	banner.modulate.a = 0.0
+	var reveal := create_tween()
+	reveal.tween_property(banner, "modulate:a", 1.0, 0.16)
+	reveal.tween_interval(duration_s)
+	reveal.tween_property(banner, "modulate:a", 0.0, 0.35)
+	reveal.tween_callback(func(): banner.visible = false)
 
 func _request_engine_move() -> void:
 	if not controller.begin_engine_turn():
