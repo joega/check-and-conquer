@@ -421,7 +421,10 @@ func _create_role_prop() -> void:
 	hand_attachment.name = "RightHandProp"
 	hand_attachment.bone_name = &"hand_r"
 	skeleton.add_child(hand_attachment)
-	var steel := Color(0.58, 0.62, 0.7)
+	# Keep blades and mace heads neutral. The board fill light is intentionally
+	# cool for character readability; blue-tinted metal under that light looked
+	# like a team-coloured placeholder weapon at close range.
+	var steel := Color(0.46, 0.46, 0.48)
 	var gold := Color(0.82, 0.62, 0.2)
 	var wood := Color(0.28, 0.14, 0.055)
 	var gem := side_color.lightened(0.22)
@@ -460,7 +463,7 @@ func _add_hand_prop(parent: Node3D, prop_name: String, mesh: Mesh, prop_position
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.metallic = metallic
-	material.roughness = 0.23 if metallic > 0.5 else 0.62
+	material.roughness = 0.36 if metallic > 0.5 else 0.62
 	prop.material_override = material
 	parent.add_child(prop)
 
