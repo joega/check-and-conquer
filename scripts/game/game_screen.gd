@@ -10,9 +10,9 @@ const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
 const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
 	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
-	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog",
+	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Back", "CameraHelp",
 ]
-const CAPTURE_HIDDEN_UI_NODES := ["Move", "Submit", "Restart", "Undo", "Back", "Settings", "CameraHelp"]
+const CAPTURE_HIDDEN_UI_NODES := ["Settings"]
 var controller
 var selected_square := Types.NO_SQUARE
 var engine
@@ -291,11 +291,15 @@ func _set_settings_menu_visible(visible: bool) -> void:
 	$UI/SettingsPanel.visible = visible
 	for node_name in SETTINGS_MENU_NODES:
 		$UI.get_node(node_name).visible = visible
-	$UI/Settings.text = "Close settings" if visible else "Settings"
+	$UI/Settings.text = "Close menu" if visible else "Menu"
 
 
 func _set_capture_ui_visible(visible: bool) -> void:
 	if not visible:
+		_set_settings_menu_visible(false)
+	else:
+		# Returning from a battle should restore the clear board-first view rather
+		# than reopening whichever controls happened to be visible before it.
 		_set_settings_menu_visible(false)
 	for node_name in CAPTURE_HIDDEN_UI_NODES:
 		$UI.get_node(node_name).visible = visible

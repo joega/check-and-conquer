@@ -14,8 +14,8 @@ extends Camera3D
 @export var close_focus_height := 3.0
 @export var close_focus_distance := 14.0
 @export var close_focus_pitch := 0.30
-@export var default_board_distance := 28.0
-@export var default_board_pitch := 0.78
+@export var default_board_distance := 34.0
+@export var default_board_pitch := 0.66
 @export var move_follow_distance := 5.4
 @export var move_follow_height := 3.6
 @export var move_follow_lateral_offset := 2.0

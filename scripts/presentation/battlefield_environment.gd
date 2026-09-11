@@ -4,9 +4,9 @@ extends Node3D
 ## Lightweight procedural setting around the authoritative chessboard. It has no
 ## gameplay collision or chess-state responsibilities and can be rebuilt freely.
 
-@export var terrain_extent := 110.0
+@export var terrain_extent := 150.0
 @export var storm_cycle_s := 18.0
-const VALLEY_HALF_EXTENT := 31.0
+const VALLEY_HALF_EXTENT := 42.0
 
 var _storm_time := 0.0
 var _flash: OmniLight3D
@@ -37,7 +37,7 @@ func _create_mountain_valley() -> void:
 	terrain.name = "MountainValleyTerrain"
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var resolution := 56
+	var resolution := 72
 	var half_extent := terrain_extent * 0.5
 	var step := terrain_extent / float(resolution)
 	for z_index in resolution:
@@ -57,9 +57,13 @@ func _create_mountain_valley() -> void:
 	surface.generate_normals()
 	terrain.mesh = surface.commit()
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.095, 0.12, 0.14)
+	material.albedo_color = Color(0.16, 0.22, 0.29)
+	# The distant height field is a silhouette layer. Keeping it unshaded avoids
+	# black, faceted shadow bands from a single directional light crossing the
+	# sky, while the panorama supplies the detailed mountain texture behind it.
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.roughness = 0.92
-	material.metallic = 0.05
+	material.metallic = 0.08
 	terrain.material_override = material
 	add_child(terrain)
 

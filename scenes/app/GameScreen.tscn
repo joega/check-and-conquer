@@ -157,12 +157,13 @@ offset_bottom = 56.0
 theme_override_font_sizes/font_size = 22
 text = "White to move"
 [node name="CameraHelp" type="Label" parent="UI"]
-offset_left = 24.0
-offset_top = 170.0
-offset_right = 420.0
-offset_bottom = 198.0
+offset_left = 44.0
+offset_top = 602.0
+offset_right = 660.0
+offset_bottom = 630.0
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "Right-drag: rotate  •  Middle-drag: pan  •  Mouse wheel: zoom"
+visible = false
 [node name="Move" type="LineEdit" parent="UI"]
 offset_left = 24.0
 offset_top = 70.0
@@ -178,23 +179,26 @@ offset_bottom = 108.0
 text = "Make move"
 visible = false
 [node name="Restart" type="Button" parent="UI"]
-offset_left = 300.0
-offset_top = 70.0
-offset_right = 400.0
-offset_bottom = 108.0
+offset_left = 44.0
+offset_top = 132.0
+offset_right = 180.0
+offset_bottom = 170.0
 text = "Restart"
+visible = false
 [node name="Undo" type="Button" parent="UI"]
-offset_left = 300.0
-offset_top = 114.0
-offset_right = 400.0
-offset_bottom = 152.0
+offset_left = 194.0
+offset_top = 132.0
+offset_right = 330.0
+offset_bottom = 170.0
 text = "Undo"
+visible = false
 [node name="Back" type="Button" parent="UI"]
-offset_left = 24.0
-offset_top = 114.0
-offset_right = 160.0
-offset_bottom = 152.0
+offset_left = 44.0
+offset_top = 180.0
+offset_right = 330.0
+offset_bottom = 218.0
 text = "Back to menu"
+visible = false
 [node name="Fullscreen" type="Button" parent="UI"]
 offset_left = 44.0
 offset_top = 274.0
@@ -208,15 +212,15 @@ offset_right = 330.0
 offset_bottom = 312.0
 text = "Reset view"
 [node name="Settings" type="Button" parent="UI"]
-offset_left = 170.0
+offset_left = 24.0
 offset_top = 114.0
-offset_right = 290.0
+offset_right = 160.0
 offset_bottom = 152.0
-text = "Settings"
+text = "Menu"
 [node name="SettingsPanel" type="Panel" parent="UI"]
 z_index = -1
 offset_left = 24.0
-offset_top = 206.0
+offset_top = 112.0
 offset_right = 350.0
 offset_bottom = 670.0
 visible = false

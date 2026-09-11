@@ -80,7 +80,7 @@ func _run() -> void:
 	screen.computer_enabled = true
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
 	assert(capture_camera_height < 12.0, "The camera must be in the close overhead action shot at the capture impact beat.")
-	assert(capture_ui_is_clean[0] and screen.get_node("UI/Move").visible, "Only the skip control may remain over the capture cinematic, and the move controls must return afterward.")
+	assert(capture_ui_is_clean[0] and not screen.get_node("UI/Move").visible and screen.get_node("UI/Settings").visible, "Only the skip control may remain over the capture cinematic, then the board-first Menu view must return afterward.")
 	assert(not board_camera.global_transform.is_equal_approx(board_camera_transform), "After presentation, the board camera must snap away from a manually roamed view.")
 	assert(board_camera.focused_side() == screen.controller.game.state.side_to_move, "After every move the default three-quarter board view must face the side deciding next.")
 	assert(not screen.get_node("UI/Skip").visible)

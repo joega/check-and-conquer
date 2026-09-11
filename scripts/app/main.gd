@@ -16,6 +16,9 @@ func _ready() -> void:
 	for button_name: String in DEBUG_SCENES:
 		get_node("Margin/Content/%s" % button_name).pressed.connect(_begin_loading.bind(DEBUG_SCENES[button_name]))
 	$LoadingOverlay.visible = false
+	# Make the first action immediately available from a keyboard/controller.
+	# This also makes a fresh launch feel responsive before a pointer is moved.
+	$Margin/Content/PlayLocal.grab_focus()
 
 
 func _begin_loading(scene_path: String) -> void:

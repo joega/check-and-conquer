@@ -9,10 +9,10 @@
 ## What you can play today
 
 - A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
-- Human versus human or Stockfish 19, with selectable side and difficulty, plus a Stockfish-versus-Stockfish spectator mode.
+- Play versus Stockfish 19, with selectable side and difficulty, plus a Stockfish-versus-Stockfish spectator mode.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
-- A high turn-aware player-side board view from behind the active team, a shoulder follow shot during ordinary movement, and an original generated storm-mountain panorama layered with lightning and four blue-flame beacons. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
+- A high turn-aware player-side board view from behind the active team, a shoulder follow shot during ordinary movement, and an original generated storm-mountain valley layered with lightning, blue-flame beacons, a stone altar, and bronze board rails. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
 - Post-game move review and one-click PGN copy built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
 
 Warchessed is early in development. The focus is a polished offline Linux prototype before any distribution features are considered.
@@ -36,7 +36,7 @@ Open the project in Godot or run:
 godot --path .
 ```
 
-Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds restart, undo, settings, and capture skip; select a piece and legal highlighted square on the board to move. **Settings** contains optional manual UCI entry, local play, player-versus-Stockfish, spectator mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
+Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The board stays clear during play; the **Menu** button contains restart, undo, controls, side, difficulty, spectator mode, promotion, animation speed, audio, fullscreen, and engine diagnostics.
 
 ## Development
 
