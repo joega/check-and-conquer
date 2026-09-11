@@ -7,14 +7,15 @@ const DEBUG_SCENES := {
 }
 const GAME_SCREEN := "res://scenes/app/GameScreen.tscn"
 const CAMPAIGN_MAP := "res://scenes/app/CampaignMap.tscn"
+const SessionSettings = preload("res://scripts/game/session_settings.gd")
 
 var _loading_scene_path := ""
 var _loading_started_at_msec := 0
 
 
 func _ready() -> void:
-	$Margin/Content/PlayLocal.pressed.connect(_begin_loading.bind(GAME_SCREEN))
-	$Margin/Content/Campaign.pressed.connect(_begin_loading.bind(CAMPAIGN_MAP))
+	$Margin/Content/PlayLocal.pressed.connect(_begin_practice)
+	$Margin/Content/Campaign.pressed.connect(_begin_campaign)
 	for button_name: String in DEBUG_SCENES:
 		get_node("Margin/Content/%s" % button_name).pressed.connect(_begin_loading.bind(DEBUG_SCENES[button_name]))
 	$LoadingOverlay.visible = false
@@ -39,6 +40,20 @@ func _begin_loading(scene_path: String) -> void:
 		_loading_scene_path = ""
 		for button_name: String in ["PlayLocal", "Campaign", "CombatLab", "AnimationBrowser", "PositionLoader"]:
 			get_node("Margin/Content/%s" % button_name).disabled = false
+
+
+func _begin_practice() -> void:
+	var settings := SessionSettings.load_values()
+	settings.campaign_enabled = false
+	SessionSettings.save_values(settings)
+	_begin_loading(GAME_SCREEN)
+
+
+func _begin_campaign() -> void:
+	var settings := SessionSettings.load_values()
+	settings.campaign_enabled = true
+	SessionSettings.save_values(settings)
+	_begin_loading(CAMPAIGN_MAP)
 
 
 func _process(_delta: float) -> void:

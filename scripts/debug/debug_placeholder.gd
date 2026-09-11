@@ -11,4 +11,4 @@ func _ready() -> void:
 
 
 func _return_to_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/app/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/app/CampaignMap.tscn")

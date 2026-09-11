@@ -9,6 +9,7 @@ func _init() -> void:
 	assert(defaults.computer_enabled == true)
 	assert(defaults.spectator_enabled == false)
 	assert(defaults.capture_speed_index == 0)
+	assert(defaults.campaign_enabled == true)
 	assert(defaults.selected_arena_id == "mountain_fortress" and defaults.campaign_snapshot.is_empty(), "A fresh session must start at the first campaign arena.")
 	var expected := defaults.duplicate()
 	expected.computer_enabled = false
@@ -20,6 +21,7 @@ func _init() -> void:
 	expected.master_volume_db = -12.5
 	expected.fullscreen = true
 	expected.selected_arena_id = "arcane_sky_citadel"
+	expected.campaign_enabled = false
 	expected.campaign_snapshot = {
 		"current_arena_id": "arcane_sky_citadel",
 		"unlocked_ids": ["mountain_fortress", "arcane_sky_citadel"],

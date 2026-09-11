@@ -5,6 +5,8 @@ const Types = preload("res://scripts/chess/chess_types.gd")
 const Mapper = preload("res://scripts/presentation/board_mapper.gd")
 const ACTOR_SCENE = preload("res://scenes/actors/PieceActor.tscn")
 
+signal piece_landed
+
 var actors: Dictionary = {}
 const WALK_SPEED_MPS := 7.0
 
@@ -42,7 +44,7 @@ func present_quiet_move(result) -> void:
 			actors[rook_to] = rook
 			await _walk_actor_to(rook, Mapper.square_to_world(rook_to))
 	_apply_promotion(result)
-	actor.play_state(&"idle.neutral")
+	actor.start_battle_stance()
 
 func actor_count() -> int:
 	return actors.size()
@@ -121,7 +123,8 @@ func settle_capture(result) -> void:
 	actors[result.to_square] = attacker
 	attacker.global_position = Mapper.square_to_world(result.to_square)
 	_apply_promotion(result)
-	attacker.play_state(&"idle.neutral")
+	attacker.start_battle_stance()
+	piece_landed.emit()
 
 
 func _walk_actor_to(actor, target: Vector3) -> void:
@@ -138,7 +141,8 @@ func _walk_actor_to(actor, target: Vector3) -> void:
 	await actor.move_to_world_position(target, duration).finished
 	actor.set_animation_speed(1.0)
 	actor.restore_board_facing()
-	actor.play_state(&"idle.neutral")
+	actor.start_battle_stance()
+	piece_landed.emit()
 
 
 func _apply_promotion(result) -> void:

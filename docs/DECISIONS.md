@@ -117,3 +117,11 @@ Record after M1 evidence:
 **Decision:** Introduce a sequential five-location campaign with Mountain Fortress Terrace as its first arena, followed by Arcane Sky Citadel, Frozen Keep, Lava Forge, and the final Forest Ruins. Keep campaign progress in a pure game-layer object and keep arena identity in presentation/session state.
 **Reason:** Multiple locations create a strong long-term progression structure without allowing visual scenes to affect authoritative chess. A reusable grand-arena frame also prevents each new location from re-solving camera, board, and combat staging.
 **Consequences:** Wins only unlock the next arena after an authoritative human checkmate. Each arena supplies original panorama art, lighting, a physical local terrace ring, and themed markers through `ArenaCatalog`; chess position, Stockfish, piece coordinates, and capture choreography remain shared.
+
+## ADR-016 — Procedural arena audio and per-character stance variation
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Use original runtime-synthesized looping music profiles for each arena, weapon-family procedural effects for combat, and deterministic actor-specific idle stance selection from the licensed animation library.
+**Reason:** The demo needs a coherent soundtrack and readable weapon feedback now, without acquiring unreviewed audio packs or coupling audio choices to chess logic. Per-character stance phase and gesture variation removes the mechanical synchronized idle that made the board look staged.
+**Consequences:** `ArenaAudioDirector` is presentation-only and derives only from arena ID and BattleDirector events. Board landing, bow, arcane, sword, spear, and hammer/wall effects have distinct triggers. `PieceActor` can be rebuilt from state while retaining a deterministic stance choice based on its projected position and identity.

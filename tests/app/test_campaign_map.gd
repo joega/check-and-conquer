@@ -9,6 +9,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK, "Campaign-map assertions require a fresh saved route.")
 	var map = CAMPAIGN_MAP.instantiate()
 	root.add_child(map)
 	await process_frame
@@ -33,6 +34,9 @@ func _run() -> void:
 	var persisted := SessionSettings.load_values()
 	assert(persisted.get("selected_arena_id") == "arcane_sky_citadel", "Selected arena must persist through SessionSettings.")
 	assert(persisted.get("campaign_snapshot", {}).get("current_arena_id") == "arcane_sky_citadel", "Campaign snapshot must persist through SessionSettings.")
+	assert(map.get_node("PracticeArena") is Button and map.get_node("DebugTools").get_child_count() == 4, "The launch map must expose a practice arena and the current developer-tool group.")
+	map.persist_selection(false)
+	assert(SessionSettings.load_values().campaign_enabled == false, "Practice matches must not advance the campaign route.")
 	map.queue_free()
 	await process_frame
 	print("PASS: campaign map route states and arena selection persistence.")

@@ -69,6 +69,7 @@ offset_right = -48.0
 offset_bottom = 84.0
 text = "←  Back"
 theme_override_font_sizes/font_size = 18
+visible = false
 
 [node name="RouteLine" type="ColorRect" parent="."]
 layout_mode = 0
@@ -151,3 +152,49 @@ offset_bottom = 695.0
 theme_override_colors/font_color = Color(1, 0.85, 0.44, 1)
 theme_override_font_sizes/font_size = 23
 text = "ENTER ARENA"
+
+[node name="DebugTools" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = -235.0
+offset_right = 330.0
+offset_bottom = -42.0
+grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="DebugTools"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.76, 0.86, 0.92)
+text = "DEVELOPER TOOLS"
+
+[node name="CombatLab" type="Button" parent="DebugTools"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "Combat Lab"
+
+[node name="AnimationBrowser" type="Button" parent="DebugTools"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "Animation Browser"
+
+[node name="PositionLoader" type="Button" parent="DebugTools"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "Position Loader"
+
+[node name="PracticeArena" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -365.0
+offset_top = 635.0
+offset_right = -48.0
+offset_bottom = 705.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.76, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "PRACTICE ARENA\nQuick Match vs Stockfish"

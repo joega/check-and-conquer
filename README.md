@@ -9,7 +9,7 @@
 ## What you can play today
 
 - A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
-- Play versus Stockfish 19, with selectable side and difficulty, plus a Stockfish-versus-Stockfish spectator mode.
+- Play versus Stockfish 19, with selectable side and beginner-to-master campaign difficulty that rises gradually by arena, plus a Stockfish-versus-Stockfish spectator mode.
 - A five-stop campaign route: win Mountain Fortress Terrace, Arcane Sky Citadel, Frozen Keep, and Lava Forge to unlock the final Forest Ruins match.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, camera framing, and a skip control.
@@ -37,7 +37,7 @@ Open the project in Godot or run:
 godot --path .
 ```
 
-Choose **Begin Campaign — The Warpath** from the main menu. Win the current arena to unlock the next location, then select it from the campaign route. **Quick Match vs Stockfish** remains available for an immediate standard game. Select a piece and then a highlighted square to move it. The board stays clear during play; the **Menu** button contains restart, undo, controls, side, difficulty, spectator mode, promotion, animation speed, audio, fullscreen, and engine diagnostics.
+The game opens directly on **The Warpath**. Win the current arena to unlock the next location, then select it from the campaign route. **Practice Arena** on the lower right starts a Quick Match versus Stockfish without advancing the route; the current developer tools sit on the lower left. Select a piece and then a highlighted square to move it. The board stays clear during play; the full-width **Menu** contains restart, undo, controls, side, campaign difficulty, spectator mode, promotion, animation speed, audio, fullscreen, and engine diagnostics. Each arena has an original procedural music bed, and board landings plus sword, spear, bow, arcane, hammer, and wall attacks have distinct effects.
 
 ## Development
 

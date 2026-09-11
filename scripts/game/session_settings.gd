@@ -18,6 +18,7 @@ const DEFAULTS := {
 	"fullscreen": false,
 	"campaign_snapshot": {},
 	"selected_arena_id": "mountain_fortress",
+	"campaign_enabled": true,
 }
 
 

@@ -86,6 +86,7 @@ func _run() -> void:
 	screen._after_presentation(capture_result, false)
 	screen.computer_enabled = true
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
+	assert(&"dual_sword_impact" in screen.get_node("ArenaAudioDirector").played_sfx_kinds, "Pawn captures must emit a weapon-specific dual-sword impact sound.")
 	assert(capture_ui_is_clean[0] and not screen.get_node("UI/Move").visible and screen.get_node("UI/Settings").visible, "Only the skip control may remain over the capture cinematic, then the board-first Menu view must return afterward.")
 	assert(board_camera.global_transform.is_equal_approx(board_camera_transform), "Capture presentation must preserve a manually chosen board view without zooming or snapping.")
 	assert(board_camera.focused_side() == screen.player_side, "The preserved board view must remain associated with the human player's side.")

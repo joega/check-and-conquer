@@ -121,7 +121,7 @@ func _finish_capture() -> void:
 
 
 func _back() -> void:
-	get_tree().change_scene_to_file("res://scenes/app/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/app/CampaignMap.tscn")
 
 
 func _exit_tree() -> void:

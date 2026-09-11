@@ -95,4 +95,4 @@ func _toggle_pause() -> void:
 
 
 func _back() -> void:
-	get_tree().change_scene_to_file("res://scenes/app/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/app/CampaignMap.tscn")

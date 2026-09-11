@@ -5,7 +5,7 @@ config_version=5
 [application]
 
 config/name="Warchessed"
-run/main_scene="res://scenes/app/Main.tscn"
+run/main_scene="res://scenes/app/CampaignMap.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]

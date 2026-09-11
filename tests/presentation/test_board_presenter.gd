@@ -9,6 +9,11 @@ func _run() -> void:
 	presenter.rebuild_from_state(BoardState.starting_position())
 	await process_frame
 	assert(presenter.actor_count() == 32)
+	var battle_stances := {}
+	for actor in presenter.actors.values():
+		assert(not actor.battle_stance_state().is_empty(), "Every actor must choose a readable battle stance.")
+		battle_stances[actor.battle_stance_state()] = true
+	assert(battle_stances.size() >= 2, "The opening ranks must use varied battle stances instead of one synchronized idle.")
 	assert(presenter.actors[0].archetype == 4 and presenter.actors[1].archetype == 2)
 	assert(not presenter.actors[8].uses_female_model and not presenter.actors[0].uses_female_model and presenter.actors[1].uses_female_model)
 	var expected_outfits := {

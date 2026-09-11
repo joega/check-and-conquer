@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -6,9 +6,9 @@
 [ext_resource type="Script" path="res://scripts/presentation/battle_director.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/presentation/camera_director.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/presentation/board_camera_controller.gd" id="6"]
-[ext_resource type="Script" path="res://scripts/presentation/procedural_impact_audio.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/presentation/battlefield_environment.gd" id="8"]
 [ext_resource type="Texture2D" path="res://assets/environment/generated/mountain_fortress_panorama_v1.png" id="9"]
+[ext_resource type="Script" path="res://scripts/presentation/arena_audio_director.gd" id="10"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
@@ -61,6 +61,8 @@ script = ExtResource("8")
 script = ExtResource("3")
 [node name="BattleDirector" type="Node" parent="."]
 script = ExtResource("4")
+[node name="ArenaAudioDirector" type="Node" parent="."]
+script = ExtResource("10")
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(24, 28, 28)
 current = true
@@ -93,8 +95,6 @@ randomness = 0.3
 visibility_aabb = AABB(-5, -2, -5, 10, 8, 10)
 process_material = SubResource("SparkProcess")
 draw_pass_1 = SubResource("SparkMesh")
-[node name="ImpactAudio" type="AudioStreamPlayer" parent="."]
-script = ExtResource("7")
 [node name="UI" type="CanvasLayer" parent="."]
 [node name="LoadingOverlay" type="Control" parent="UI"]
 anchors_preset = 15

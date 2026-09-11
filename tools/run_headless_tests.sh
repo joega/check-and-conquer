@@ -27,6 +27,8 @@ tests=(
   tests/presentation/test_battlefield_environment.gd
   tests/presentation/test_camera_director.gd
   tests/presentation/test_procedural_impact_audio.gd
+  tests/presentation/test_arena_audio_director.gd
+  tests/presentation/test_weapon_presentation.gd
   tests/presentation/test_battle_death_completion.gd
   tests/presentation/test_animation_browser.gd
   tests/presentation/test_board_presenter.gd

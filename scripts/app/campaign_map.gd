@@ -7,6 +7,11 @@ extends Control
 const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const GAME_SCREEN := "res://scenes/app/GameScreen.tscn"
+const DEBUG_SCENES := {
+	"CombatLab": "res://scenes/debug/DebugCombatLab.tscn",
+	"AnimationBrowser": "res://scenes/debug/DebugAnimationBrowser.tscn",
+	"PositionLoader": "res://scenes/debug/DebugPositionLoader.tscn",
+}
 
 const ROUTE_NODE_NAMES := [
 	"MountainFortress", "ArcaneSkyCitadel", "FrozenKeep", "LavaForge", "ForestRuins",
@@ -22,8 +27,10 @@ var _session_values: Dictionary = {}
 
 
 func _ready() -> void:
-	$Header/Back.pressed.connect(_return_to_main)
 	$EnterArena.pressed.connect(_enter_selected_arena)
+	$PracticeArena.pressed.connect(_enter_practice_arena)
+	for button_name: String in DEBUG_SCENES:
+		get_node("DebugTools/%s" % button_name).pressed.connect(_open_debug_scene.bind(DEBUG_SCENES[button_name]))
 	for index in ROUTE_NODE_NAMES.size():
 		get_node("Route/%s" % ROUTE_NODE_NAMES[index]).pressed.connect(select_arena.bind(CampaignProgress.ARENA_IDS[index]))
 	load_session_state()
@@ -76,17 +83,23 @@ func select_arena(arena_id: String) -> void:
 ## Persists the exact arena and progress snapshot before a match begins.
 ## Keeping this public makes the hand-off independently testable from scene
 ## navigation.
-func persist_selection() -> void:
+func persist_selection(is_campaign_match := true) -> void:
 	_session_values = SessionSettings.load_values()
 	_session_values["selected_arena_id"] = arena_selected
 	_session_values["campaign_snapshot"] = campaign.to_snapshot()
+	_session_values["campaign_enabled"] = is_campaign_match
 	SessionSettings.save_values(_session_values)
 
 
 func _enter_selected_arena() -> void:
-	persist_selection()
+	persist_selection(true)
 	get_tree().change_scene_to_file(GAME_SCREEN)
 
 
-func _return_to_main() -> void:
-	get_tree().change_scene_to_file("res://scenes/app/Main.tscn")
+func _enter_practice_arena() -> void:
+	persist_selection(false)
+	get_tree().change_scene_to_file(GAME_SCREEN)
+
+
+func _open_debug_scene(scene_path: String) -> void:
+	get_tree().change_scene_to_file(scene_path)

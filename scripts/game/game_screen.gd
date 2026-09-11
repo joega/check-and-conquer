@@ -28,6 +28,7 @@ var replay_index := -1
 var settings: Dictionary = SessionSettings.DEFAULTS.duplicate()
 var campaign: RefCounted
 var arena_id := "mountain_fortress"
+var campaign_enabled := true
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
 	$UI/LoadingOverlay.visible = true
@@ -65,6 +66,8 @@ func _initialize_game() -> void:
 	$UI/Undo.pressed.connect(_undo)
 	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
+	$BattleDirector.weapon_impact.connect($ArenaAudioDirector.play_weapon_impact)
+	$BoardPresenter.piece_landed.connect($ArenaAudioDirector.play_piece_land)
 	for label in ["Beginner", "Adventurer", "Champion", "Master"]:
 		$UI/Difficulty.add_item(label)
 	for label in ["Play White", "Play Black"]:
@@ -76,6 +79,7 @@ func _initialize_game() -> void:
 	$UI/Promotion.select(0)
 	_load_settings()
 	$BattlefieldEnvironment.apply_arena(arena_id)
+	$ArenaAudioDirector.set_arena(arena_id)
 	$UI/ArenaTitle.text = "%s  —  %s" % [ArenaCatalog.definition(arena_id).chapter, ArenaCatalog.definition(arena_id).title]
 	$Camera3D.snap_to_side(player_side, 0.0)
 	_set_settings_menu_visible(false)
@@ -178,7 +182,6 @@ func _show_capture_impact() -> void:
 	$ImpactSparks.emitting = true
 	$ImpactSparks.restart()
 	$ImpactFlash.light_energy = 10.0
-	$ImpactAudio.play_impact()
 	$CameraDirector.shake_on_impact()
 	var tween := create_tween()
 	tween.tween_property($ImpactFlash, "light_energy", 0.0, 0.18)
@@ -197,7 +200,7 @@ func _set_camera_shake(enabled: bool) -> void:
 func _record_campaign_victory_if_earned(result) -> bool:
 	# Checkmate leaves the losing side to move. Only a human player win in the
 	# selected, current campaign arena can unlock the next location.
-	if campaign == null or spectator_enabled or not result.is_checkmate:
+	if not campaign_enabled or campaign == null or spectator_enabled or not result.is_checkmate:
 		return false
 	if controller.game.state.side_to_move == player_side:
 		return false
@@ -368,6 +371,7 @@ func _load_settings() -> void:
 	$UI/MasterVolume.value = volume_db
 	_apply_fullscreen(bool(settings.get("fullscreen", false)))
 	campaign = CampaignProgress.new(settings.get("campaign_snapshot", {}))
+	campaign_enabled = bool(settings.get("campaign_enabled", true))
 	arena_id = str(settings.get("selected_arena_id", campaign.current_arena()))
 	if not campaign.is_unlocked(arena_id):
 		arena_id = campaign.current_arena()
@@ -397,7 +401,8 @@ func _update_difficulty_readout() -> void:
 		return
 	var profile := CampaignProgress.difficulty_profile(difficulty_index, arena_id)
 	var arena_number := CampaignProgress.ARENA_IDS.find(arena_id) + 1
-	$UI/DifficultyReadout.text = "Campaign opponent: %s  ·  %d Elo  ·  Arena %d of %d" % [profile.name, profile.elo, arena_number, CampaignProgress.ARENA_IDS.size()]
+	var mode_label := "Campaign opponent" if campaign_enabled else "Practice opponent"
+	$UI/DifficultyReadout.text = "%s: %s  ·  %d Elo  ·  Arena %d of %d" % [mode_label, profile.name, profile.elo, arena_number, CampaignProgress.ARENA_IDS.size()]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if spectator_enabled:

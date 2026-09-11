@@ -34,6 +34,11 @@ const CLIP_MAP := {
 	&"combat.idle.spell_01": &"Spell_Simple_Idle",
 	&"locomotion.walk.forward": &"Walk",
 	&"attack.sword.slash_01": &"Sword_Attack",
+	&"attack.sword.heavy_combo_01": &"Sword_Heavy_Combo",
+	&"attack.sword.dash_01": &"Sword_Dash",
+	&"stance.guard_01": &"Sword_Block",
+	&"stance.challenge_01": &"Idle_Rail_Call",
+	&"stance.fold_arms_01": &"Idle_FoldArms",
 	&"attack.punch.jab_01": &"Punch_Jab",
 	&"attack.push.guard_01": &"Push",
 	&"attack.spell.shot_01": &"Spell_Simple_Shoot",
@@ -45,6 +50,8 @@ const CLIP_MAP_2 := {
 	&"attack.melee.hook_01": &"Melee_Hook",
 	&"attack.sword.regular_a_01": &"Sword_Regular_A",
 	&"attack.sword.regular_b_01": &"Sword_Regular_B",
+	&"attack.sword.regular_c_01": &"Sword_Regular_C",
+	&"attack.sword.combo_01": &"Sword_Regular_Combo",
 	&"reaction.hit.knockback_01": &"Hit_Knockback",
 	&"death.knockback_01": &"Hit_Knockback",
 }
@@ -62,6 +69,10 @@ var _last_played_state: StringName = &"idle.neutral"
 var _animation_paused := false
 var _animation_speed_multiplier := 1.0
 var _selection_tween: Tween
+var _stance_seed := 0
+var _stance_loop_state: StringName = &"idle.neutral"
+var _stance_timer_s := 0.0
+var _stance_gesture_time_s := 0.0
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
@@ -87,7 +98,7 @@ func _ready() -> void:
 	_create_team_accent()
 	_create_piece_glyph()
 	_home_transform = global_transform
-	play_state(&"idle.neutral")
+	start_battle_stance()
 
 
 func _outfit_scene_for_archetype() -> PackedScene:
@@ -166,8 +177,79 @@ func primary_attack_state() -> StringName:
 			return &"attack.sword.slash_01"
 
 
+func capture_attack_state(fallback: StringName) -> StringName:
+	# Each role prefers a fitting weapon motion while respecting any explicit
+	# signature choreography. Similar units rotate through compatible clips so
+	# their combat beats do not all read as one repeated gesture.
+	var candidates: Array[StringName] = [fallback]
+	match archetype:
+		Types.PAWN:
+			candidates = [&"attack.sword.regular_a_01", &"attack.sword.regular_b_01", &"attack.sword.regular_c_01", fallback]
+		Types.KNIGHT:
+			candidates = [&"attack.sword.dash_01", &"attack.punch.jab_01", fallback]
+		Types.ROOK:
+			candidates = [&"attack.sword.heavy_combo_01", &"attack.melee.hook_01", fallback]
+		Types.KING:
+			candidates = [&"attack.sword.combo_01", &"attack.sword.heavy_combo_01", fallback]
+	for offset in candidates.size():
+		var candidate := candidates[(_stance_seed + offset) % candidates.size()]
+		if supports_state(candidate):
+			return candidate
+	return fallback
+
+
 func combat_idle_state() -> StringName:
 	return &"combat.idle.spell_01" if archetype in [Types.BISHOP, Types.QUEEN] else &"combat.idle.sword_01"
+
+
+func start_battle_stance() -> void:
+	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
+	var candidates: Array[StringName] = [combat_idle_state(), &"stance.guard_01", &"stance.challenge_01", &"stance.fold_arms_01"]
+	if archetype in [Types.BISHOP, Types.QUEEN]:
+		candidates = [combat_idle_state(), &"stance.challenge_01", &"stance.fold_arms_01"]
+	for offset in candidates.size():
+		var candidate := candidates[(_stance_seed + offset) % candidates.size()]
+		if supports_state(candidate):
+			_stance_loop_state = candidate
+			break
+	play_state(_stance_loop_state)
+	_seek_stance_offset()
+	_stance_timer_s = 2.2 + float(posmod(_stance_seed, 9)) * 0.37
+	_stance_gesture_time_s = 0.0
+
+
+func battle_stance_state() -> StringName:
+	return _stance_loop_state
+
+
+func _process(delta: float) -> void:
+	if _stance_gesture_time_s > 0.0:
+		_stance_gesture_time_s -= delta
+		if _stance_gesture_time_s <= 0.0:
+			play_state(_stance_loop_state)
+			_seek_stance_offset()
+		return
+	if _last_played_state != _stance_loop_state:
+		return
+	_stance_timer_s -= delta
+	if _stance_timer_s > 0.0:
+		return
+	var gestures: Array[StringName] = [&"stance.challenge_01", &"stance.guard_01", &"attack.sword.dash_01"]
+	var gesture := gestures[posmod(_stance_seed + int(Time.get_ticks_msec() / 1000), gestures.size())]
+	if supports_state(gesture):
+		play_state(gesture)
+		_stance_gesture_time_s = maxf(state_duration(gesture), 0.65)
+	_stance_timer_s = 4.0 + float(posmod(_stance_seed, 7)) * 0.45
+
+
+func _seek_stance_offset() -> void:
+	var player := _animation_player_2 if CLIP_MAP_2.has(_stance_loop_state) else _animation_player
+	var clip: StringName = CLIP_MAP_2.get(_stance_loop_state, CLIP_MAP.get(_stance_loop_state, &"Idle"))
+	if player == null:
+		return
+	var animation := player.get_animation(clip)
+	if animation != null and animation.length > 0.05:
+		player.seek(fmod(float(_stance_seed) * 0.173, animation.length), true)
 
 
 func state_duration(semantic_id: StringName) -> float:
@@ -280,7 +362,7 @@ func reset_actor() -> void:
 	if _animation_player_2 != null:
 		_animation_player_2.stop()
 	_animation_paused = false
-	play_state(&"idle.neutral")
+	start_battle_stance()
 
 
 func _apply_team_material_variant(node: Node) -> void:
