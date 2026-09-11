@@ -14,7 +14,7 @@ func _init() -> void:
 
 
 func _run() -> void:
-	assert(Adapter.stockfish_filename("Windows") == "stockfish-windows-x86-64-avx2.exe" and Adapter.stockfish_platform_directory("Windows") == "windows-x86_64", "Windows builds must locate the staged Stockfish executable without relying on Linux paths.")
+	assert(Adapter.stockfish_filename("Windows") == "stockfish-windows-x86-64-universal.exe" and Adapter.stockfish_platform_directory("Windows") == "windows-x86_64", "Windows builds must locate the staged Stockfish executable without relying on Linux paths.")
 	assert(Adapter.stockfish_filename("Linux") == "stockfish-linux-x86-64-universal" and Adapter.stockfish_platform_directory("Linux") == "linux-x86_64", "Linux builds must retain the existing Stockfish staging paths.")
 	adapter = Adapter.new()
 	root.add_child(adapter)

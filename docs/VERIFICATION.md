@@ -43,7 +43,7 @@ The expected smoke-test exit is `124`: the game remains running for the two-seco
 ## Windows package check
 
 The repository includes a Windows Desktop export preset and a staging script.
-After adding the official Windows x86-64 AVX2 Stockfish archive at
+After adding the official Windows x86-64 universal Stockfish archive at
 `third_party/stockfish/windows-x86_64/stockfish/` and installing matching
 Godot export templates, run:
 

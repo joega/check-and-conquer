@@ -31,9 +31,11 @@ The script creates `build/linux-x86_64/check-and-conquer.x86_64`, places the unm
 
 ## Windows release build
 
-Download and unpack the official Windows x86-64 AVX2 Stockfish archive at
+Download and unpack the official Windows x86-64 universal Stockfish archive at
 `third_party/stockfish/windows-x86_64/stockfish/`, retaining its
-`stockfish-windows-x86-64-avx2.exe`, `Copying.txt`, and corresponding source.
+`stockfish-windows-x86-64-universal.exe`. The tracked Stockfish 19 source tree
+and `Copying.txt` under `third_party/stockfish/linux-x86_64/stockfish/` supply
+the corresponding GPL material for both platform packages.
 Install the matching Godot 4.7.2 Windows export templates, then run:
 
 ```sh
@@ -41,6 +43,15 @@ bash tools/export_windows.sh
 ```
 
 The script creates `build/windows-x86_64/check-and-conquer.exe` and stages the
-unmodified engine at `stockfish/stockfish-windows-x86-64-avx2.exe`, its GPL
+unmodified engine at `stockfish/stockfish-windows-x86-64-universal.exe`, its GPL
 notice, corresponding source, and the Godot MIT notice. Run the game from that
 directory so the external UCI process remains discoverable.
+
+## Continuous GitHub builds
+
+Every push to `main` runs the **Package desktop builds** workflow. It builds
+the Linux Stockfish executable from the tracked Stockfish 19 source, downloads
+the matching official Windows universal executable, and uploads ready-to-run
+Linux and Windows zip files. The latest pair replaces the assets in the
+repository's **Latest development build** prerelease; the same pair is retained
+for 30 days with the individual Actions run.

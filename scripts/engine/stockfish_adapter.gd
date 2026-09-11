@@ -66,7 +66,7 @@ func resolved_executable_path() -> String:
 
 
 static func stockfish_filename(platform_name: String = OS.get_name()) -> String:
-	return "stockfish-windows-x86-64-avx2.exe" if platform_name == "Windows" else "stockfish-linux-x86-64-universal"
+	return "stockfish-windows-x86-64-universal.exe" if platform_name == "Windows" else "stockfish-linux-x86-64-universal"
 
 
 static func stockfish_platform_directory(platform_name: String = OS.get_name()) -> String:

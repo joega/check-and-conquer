@@ -15,6 +15,7 @@ assets/source-archives/
 # the exporter. Keep its GPL source and notices versioned, but do not put the
 # 103 MB binary in ordinary Git history.
 third_party/stockfish/**/stockfish-linux-x86-64-universal
+third_party/stockfish/**/stockfish-windows-x86-64-universal.exe
 
 # Local and CI Stockfish source builds, including the downloaded NNUE network.
 third_party/stockfish/**/src/*.o

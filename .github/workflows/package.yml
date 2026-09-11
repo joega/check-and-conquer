@@ -1,0 +1,115 @@
+name: Package desktop builds
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: package-main
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Package Linux and Windows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GODOT_VERSION: 4.7.2
+      GODOT_RELEASE: 4.7.2-stable
+      GODOT_TEMPLATE_VERSION: 4.7.2.stable
+      GODOT_BIN: ${{ github.workspace }}/.ci/bin/godot
+      STOCKFISH_RELEASE: sf_19
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Cache Godot editor and export templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            .ci/bin/godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_TEMPLATE_VERSION }}
+          key: godot-${{ runner.os }}-${{ env.GODOT_VERSION }}-export-templates
+
+      - name: Install Godot and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -x "$GODOT_BIN" ]]; then
+            mkdir -p "$(dirname "$GODOT_BIN")"
+            curl --fail --location --retry 3 --output /tmp/godot.zip \
+              "https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}/Godot_v${GODOT_RELEASE}_linux.x86_64.zip"
+            unzip -q /tmp/godot.zip -d "$(dirname "$GODOT_BIN")"
+            mv "$(dirname "$GODOT_BIN")/Godot_v${GODOT_RELEASE}_linux.x86_64" "$GODOT_BIN"
+            chmod +x "$GODOT_BIN"
+          fi
+          template_dir="$HOME/.local/share/godot/export_templates/$GODOT_TEMPLATE_VERSION"
+          if [[ ! -d "$template_dir" ]]; then
+            mkdir -p "$template_dir"
+            curl --fail --location --retry 3 --output /tmp/godot-templates.tpz \
+              "https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}/Godot_v${GODOT_RELEASE}_export_templates.tpz"
+            unzip -q /tmp/godot-templates.tpz -d "$template_dir"
+          fi
+          "$GODOT_BIN" --version
+
+      - name: Build Linux Stockfish 19
+        shell: bash
+        run: |
+          set -euo pipefail
+          stockfish_dir=third_party/stockfish/linux-x86_64/stockfish
+          make -C "$stockfish_dir/src" -j2 build ARCH=x86-64
+          cp "$stockfish_dir/src/stockfish" "$stockfish_dir/stockfish-linux-x86-64-universal"
+          chmod +x "$stockfish_dir/stockfish-linux-x86-64-universal"
+
+      - name: Download official Windows Stockfish 19
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output /tmp/stockfish-windows.zip \
+            "https://github.com/official-stockfish/Stockfish/releases/download/${STOCKFISH_RELEASE}/stockfish-windows-x86-64-universal.zip"
+          rm -rf /tmp/stockfish-windows
+          unzip -q /tmp/stockfish-windows.zip -d /tmp/stockfish-windows
+          windows_binary="$(find /tmp/stockfish-windows -type f -name 'stockfish-windows-x86-64-universal.exe' -print -quit)"
+          test -n "$windows_binary"
+          mkdir -p third_party/stockfish/windows-x86_64/stockfish
+          cp "$windows_binary" third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-universal.exe
+
+      - name: Export desktop packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$(dirname "$GODOT_BIN"):$PATH"
+          bash tools/export_linux.sh
+          bash tools/export_windows.sh
+          mkdir -p dist
+          (cd build/linux-x86_64 && zip -qr ../../dist/check-and-conquer-linux-x86_64.zip .)
+          (cd build/windows-x86_64 && zip -qr ../../dist/check-and-conquer-windows-x86_64.zip .)
+
+      - name: Upload run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-and-conquer-${{ github.sha }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish latest development build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view continuous >/dev/null 2>&1; then
+            gh release create continuous --prerelease --title "Latest development build" \
+              --notes "Automated desktop builds from main. Commit: ${COMMIT}" \
+              --target "$COMMIT"
+          fi
+          gh release upload continuous dist/*.zip --clobber
+          gh release edit continuous --title "Latest development build" --prerelease \
+            --notes "Automated desktop builds from main. Commit: ${COMMIT}"

@@ -40,10 +40,11 @@ The Stockfish executable is excluded from Git because of its size. Download the
 matching official build from the [Stockfish download page](https://stockfishchess.org/download/):
 
 - Linux x86-64 universal: `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`
-- Windows x86-64 AVX2: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-avx2.exe`
+- Windows x86-64 universal: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-universal.exe`
 
-Keep the extracted `Copying.txt` and corresponding source tree beside each
-binary so exports can stage the required GPL material.
+Keep Stockfish's `Copying.txt` and corresponding source tree in
+`third_party/stockfish/linux-x86_64/stockfish/`; both platform exporters stage
+that GPL material beside their platform-specific binary.
 
 Open the project in Godot or run:
 
@@ -82,6 +83,14 @@ bash tools/export_windows.sh
 
 This produces `build/windows-x86_64/` with the Windows executable, Stockfish,
 the corresponding source, and license notices.
+
+## Downloads
+
+Every push to `main` produces ready-to-run Linux and Windows packages in the
+repository's **Latest development build** GitHub release. Each package includes
+the correct Stockfish executable, its GPL notice, and corresponding source; no
+first-launch engine download is required. The same files are retained as GitHub
+Actions artifacts for the individual build run.
 
 ## Design principles
 
