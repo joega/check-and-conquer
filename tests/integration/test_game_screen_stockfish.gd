@@ -1,0 +1,79 @@
+extends SceneTree
+
+const GAME_SCREEN = preload("res://scenes/app/GameScreen.tscn")
+const SessionSettings = preload("res://scripts/game/session_settings.gd")
+
+
+func _init() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
+	var screen = GAME_SCREEN.instantiate()
+	root.add_child(screen)
+	await process_frame
+	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Computer").visible, "Configuration controls must begin condensed in the settings menu.")
+	screen._toggle_settings_menu()
+	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Computer").visible, "Settings must reveal grouped configuration controls on demand.")
+	screen._toggle_settings_menu()
+	assert(screen.computer_enabled, "The playable screen should enable Stockfish by default.")
+	screen.get_node("UI/Move").text = "e2e4"
+	await screen._submit()
+	var deadline := Time.get_ticks_msec() + 12000
+	while (screen.controller.game.move_history.size() < 2 or screen.controller.phase != screen.controller.Phase.PLAYER_INPUT) and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	assert(screen.controller.game.move_history.size() == 2, "A player move must receive one Stockfish response.")
+	assert(screen.controller.phase == screen.controller.Phase.PLAYER_INPUT, "Input must unlock after the engine move is presented.")
+	assert("bestmove" in screen.get_node("UI/EngineLog").get_parsed_text(), "The screen must expose recent Stockfish UCI output for diagnosis.")
+	assert(screen.get_node("BoardPresenter").actor_count() == 32, "The board projection must remain synchronized after engine play.")
+	screen._set_player_side(1)
+	deadline = Time.get_ticks_msec() + 12000
+	while screen.controller.game.move_history.size() < 1 and Time.get_ticks_msec() < deadline:
+		await create_timer(0.02).timeout
+	assert(screen.controller.game.move_history.size() == 1, "Stockfish must make the opening move when the player chooses Black.")
+	assert(screen.controller.game.state.side_to_move == -1, "Black must receive input after Stockfish's White opener.")
+	screen._set_computer_enabled(false)
+	screen._restart()
+	screen.get_node("UI/Move").text = "e2e4"
+	await screen._submit()
+	screen.get_node("UI/Move").text = "e7e5"
+	await screen._submit()
+	assert(screen.controller.game.move_history == ["e2e4", "e7e5"], "Local mode must accept both human sides without an engine turn.")
+	screen._set_player_side(0)
+	screen._restart()
+	for uci in ["f2f3", "e7e5", "g2g4", "d8h4"]:
+		screen.get_node("UI/Move").text = uci
+		await screen._submit()
+	assert(screen.controller.phase == screen.controller.Phase.GAME_OVER)
+	assert(screen.get_node("UI/Submit").disabled and "checkmate" in screen.get_node("UI/Status").text)
+	assert(screen.get_node("UI/GameOverPanel").visible and "Checkmate" in screen.get_node("UI/GameOverPanel/Content/Result").text)
+	screen._restart()
+	var board_camera = screen.get_node("Camera3D")
+	board_camera.zoom_by(1.7)
+	board_camera.orbit_by(0.7, -0.12)
+	var board_camera_transform: Transform3D = board_camera.global_transform
+	for uci in ["e2e4", "d7d5", "e4d5"]:
+		screen.get_node("UI/Move").text = uci
+		await screen._submit()
+	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
+	assert(not board_camera.global_transform.is_equal_approx(board_camera_transform), "After presentation, the board camera must snap away from a manually roamed view.")
+	assert(board_camera.focused_side() == screen.controller.game.state.side_to_move, "After every move the default three-quarter board view must face the side deciding next.")
+	assert(not screen.get_node("UI/Skip").visible)
+	assert(is_zero_approx(screen.get_node("ImpactFlash").light_energy), "Impact flash must clean up after a capture.")
+	screen._set_capture_speed(1)
+	screen._set_camera_shake(false)
+	screen._set_master_volume(-8.0)
+	screen.queue_free()
+	await process_frame
+	var restored_screen = GAME_SCREEN.instantiate()
+	root.add_child(restored_screen)
+	await process_frame
+	assert(not restored_screen.computer_enabled, "Local-play preference must survive a relaunch.")
+	assert(restored_screen.get_node("UI/AnimationSpeed").selected == 1, "Capture-speed preference must survive a relaunch.")
+	assert(not restored_screen.get_node("CameraDirector").shake_enabled, "Camera-shake preference must survive a relaunch.")
+	assert(is_equal_approx(AudioServer.get_bus_volume_db(0), -8.0), "Master-volume preference must survive a relaunch.")
+	restored_screen.queue_free()
+	await process_frame
+	print("PASS: playable screen completes a player move and Stockfish response.")
+	quit(0)

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="$(cd "$(dirname "$0")/.." && pwd)"
+godot_bin="${GODOT_BIN:-godot}"
+data_root="${WARB_TEST_DATA_HOME:-/tmp/warboard-godot-data}"
+cache_root="${WARB_TEST_CACHE_HOME:-/tmp/warboard-godot-cache}"
+config_root="${WARB_TEST_CONFIG_HOME:-/tmp/warboard-godot-config}"
+
+tests=(
+  tests/test_bootstrap.gd
+  tests/chess/test_board_state.gd
+  tests/chess/test_pseudo_move_generator.gd
+  tests/chess/test_legal_moves.gd
+  tests/chess/test_chess_game.gd
+  tests/chess/test_turn_controller.gd
+  tests/game/test_session_settings.gd
+  tests/engine/test_uci_protocol.gd
+  tests/engine/test_stockfish_adapter.gd
+  tests/presentation/test_board_mapper.gd
+  tests/presentation/test_board_camera_controller.gd
+  tests/presentation/test_camera_director.gd
+  tests/presentation/test_procedural_impact_audio.gd
+  tests/presentation/test_battle_death_completion.gd
+  tests/presentation/test_animation_browser.gd
+  tests/presentation/test_board_presenter.gd
+  tests/presentation/test_capture_projection.gd
+  tests/presentation/test_special_move_projection.gd
+  tests/presentation/test_choreography_resolver.gd
+  tests/presentation/test_combat_lab.gd
+  tests/presentation/test_local_game_projection.gd
+  tests/integration/test_game_screen_stockfish.gd
+)
+
+for test_path in "${tests[@]}"; do
+  test_id="${test_path//\//_}"
+  XDG_DATA_HOME="$data_root/$test_id" \
+  XDG_CACHE_HOME="$cache_root/$test_id" \
+  XDG_CONFIG_HOME="$config_root/$test_id" \
+    "$godot_bin" --headless --path "$project_root" --script "$test_path"
+done

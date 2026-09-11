@@ -1,0 +1,7 @@
+[gd_resource type="Resource" format=3]
+
+[resource]
+resource_name = "Master"
+metadata/name = "Master"
+metadata/uci_limit_strength = false
+metadata/move_time_ms = 1200

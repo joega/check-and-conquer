@@ -1,0 +1,8 @@
+[gd_resource type="Resource" format=3]
+
+[resource]
+resource_name = "Novice"
+metadata/name = "Novice"
+metadata/uci_limit_strength = true
+metadata/uci_elo = 1350
+metadata/move_time_ms = 600
