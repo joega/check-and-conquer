@@ -108,7 +108,7 @@ func _reset_lab() -> void:
 
 
 func _show_impact() -> void:
-	_status.text = "Impact — hit reaction / death / placeholder spark"
+	_status.text = "Impact — hit reaction / death / spark burst"
 	_impact_flash.light_energy = 8.0
 	$ImpactAudio.play_impact()
 	var tween := create_tween()

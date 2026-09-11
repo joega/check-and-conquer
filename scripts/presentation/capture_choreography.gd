@@ -14,5 +14,5 @@ extends Resource
 @export var cleanup_time_s := 1.2
 @export var anchor_separation_m := 2.6
 @export var camera_shot: StringName = &"capture_medium"
-@export var impact_sfx: StringName = &"placeholder.impact"
-@export var vfx_profile: StringName = &"placeholder.spark"
+@export var impact_sfx: StringName = &"procedural.impact"
+@export var vfx_profile: StringName = &"impact.spark_burst"
