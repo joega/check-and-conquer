@@ -1,10 +1,10 @@
 ; Engine configuration file.
-; Warchessed is pinned to Godot 4.7.2 for its initial bootstrap.
+; Check & Conquer is pinned to Godot 4.7.2 for its initial bootstrap.
 config_version=5
 
 [application]
 
-config/name="Warchessed"
+config/name="Check & Conquer"
 run/main_scene="res://scenes/app/CampaignMap.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 

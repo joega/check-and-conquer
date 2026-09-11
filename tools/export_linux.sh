@@ -13,7 +13,7 @@ fi
 mkdir -p "$output_dir/stockfish"
 mkdir -p "$output_dir/licenses"
 rm -rf "$output_dir/stockfish-source"
-godot --headless --path "$project_root" --export-release "Linux Desktop" "$output_dir/warchessed.x86_64"
+godot --headless --path "$project_root" --export-release "Linux Desktop" "$output_dir/check-and-conquer.x86_64"
 cp -p "$stockfish_source" "$output_dir/stockfish/stockfish-linux-x86-64-universal"
 cp -p "$project_root/third_party/stockfish/linux-x86_64/stockfish/Copying.txt" "$output_dir/stockfish/COPYING.txt"
 cp -a "$project_root/third_party/stockfish/linux-x86_64/stockfish" "$output_dir/stockfish-source"

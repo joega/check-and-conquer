@@ -4,7 +4,7 @@ Copy/paste this into the first root Codex session after placing this project pac
 
 ---
 
-You are the root implementation agent for **Warchessed**.
+You are the root implementation agent for **Check & Conquer**.
 
 Read these files completely before changing code:
 

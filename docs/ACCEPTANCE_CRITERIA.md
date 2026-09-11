@@ -101,4 +101,4 @@ For each archetype:
 - [x] all third-party audio/VFX logged.
 - [x] Stockfish version/license/source pointer logged.
 - [x] no ripped/copied Battle Chess assets.
-- [ ] `Warchessed` title and art reviewed for originality and trademark suitability. `Warboard` is retired as a shipping title; see ADR-013 and ADR-014.
+- [ ] `Check & Conquer` title and art reviewed for originality and trademark suitability. `Warboard` and `Warchessed` are retired as shipping titles; see ADR-013, ADR-014, and ADR-018.

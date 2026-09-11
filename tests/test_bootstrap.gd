@@ -2,7 +2,7 @@ extends SceneTree
 
 
 func _init() -> void:
-	assert(ProjectSettings.get_setting("application/config/name") == "Warchessed")
+	assert(ProjectSettings.get_setting("application/config/name") == "Check & Conquer")
 	call_deferred("_run")
 
 

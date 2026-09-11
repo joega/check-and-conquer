@@ -1,6 +1,6 @@
 # Asset and Animation Pipeline
 
-This document exists because the 3D asset pipeline is the highest-risk area of Warchessed.
+This document exists because the 3D asset pipeline is the highest-risk area of Check & Conquer.
 
 ## Objective
 

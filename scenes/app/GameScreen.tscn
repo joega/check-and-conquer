@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/presentation/battlefield_environment.gd" id="8"]
 [ext_resource type="Texture2D" path="res://assets/environment/generated/mountain_fortress_panorama_v1.png" id="9"]
 [ext_resource type="Script" path="res://scripts/presentation/arena_audio_director.gd" id="10"]
+[ext_resource type="Texture2D" path="res://assets/ui/check-and-conquer-logo.png" id="11_logo"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
@@ -174,12 +175,12 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="UI/LoadingOverlay/Card"]
+[node name="Title" type="TextureRect" parent="UI/LoadingOverlay/Card"]
+custom_minimum_size = Vector2(260, 150)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 1)
-theme_override_font_sizes/font_size = 30
-text = "Warchessed"
-horizontal_alignment = 1
+texture = ExtResource("11_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Message" type="Label" parent="UI/LoadingOverlay/Card"]
 layout_mode = 2

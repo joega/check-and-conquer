@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/app/main.gd" id="1_main"]
+[ext_resource type="Texture2D" path="res://assets/ui/check-and-conquer-logo.png" id="2_logo"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -38,11 +39,12 @@ grow_vertical = 2
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="Margin/Content"]
+[node name="Title" type="TextureRect" parent="Margin/Content"]
+custom_minimum_size = Vector2(440, 220)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 1)
-theme_override_font_sizes/font_size = 42
-text = "Warchessed"
+texture = ExtResource("2_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Subtitle" type="Label" parent="Margin/Content"]
 layout_mode = 2
@@ -128,7 +130,7 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.94, 0.74, 0.33, 1)
 theme_override_font_sizes/font_size = 30
-text = "Warchessed"
+text = "Check & Conquer"
 horizontal_alignment = 1
 
 [node name="Message" type="Label" parent="LoadingOverlay/Panel"]

@@ -99,7 +99,7 @@ func _position_key() -> String:
 
 func to_pgn(headers: Dictionary = {}) -> String:
 	var fields := {
-		"Event": "Warchessed Game",
+		"Event": "Check & Conquer Game",
 		"Result": _pgn_result(),
 	}
 	for key in headers:

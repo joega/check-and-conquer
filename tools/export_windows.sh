@@ -18,7 +18,7 @@ fi
 
 mkdir -p "$output_dir/stockfish" "$output_dir/licenses"
 rm -rf "$output_dir/stockfish-source"
-godot --headless --path "$project_root" --export-release "Windows Desktop" "$output_dir/warchessed.exe"
+godot --headless --path "$project_root" --export-release "Windows Desktop" "$output_dir/check-and-conquer.exe"
 cp -p "$stockfish_source" "$output_dir/stockfish/stockfish-windows-x86-64-avx2.exe"
 cp -p "$stockfish_root/Copying.txt" "$output_dir/stockfish/COPYING.txt"
 cp -a "$stockfish_root" "$output_dir/stockfish-source"

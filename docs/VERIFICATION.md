@@ -1,6 +1,6 @@
 # Verification Record
 
-This document records the repeatable checks used for the current Warchessed prototype. It distinguishes automated evidence from visual and product review that still requires a person running the game.
+This document records the repeatable checks used for the current Check & Conquer prototype. It distinguishes automated evidence from visual and product review that still requires a person running the game.
 
 ## Automated gates
 
@@ -35,10 +35,10 @@ With Godot 4.7.2 export templates installed:
 
 ```sh
 bash tools/export_linux.sh
-timeout 2s build/linux-x86_64/warchessed.x86_64 --headless
+timeout 2s build/linux-x86_64/check-and-conquer.x86_64 --headless
 ```
 
-The expected smoke-test exit is `124`: the game remains running for the two-second window. This check passed for `warchessed.x86_64` on 2026-09-10 using Godot 4.7.2 export templates. The exporter stages the executable Stockfish binary beside the game and copies its corresponding source and notices.
+The expected smoke-test exit is `124`: the game remains running for the two-second window. This check passed for the Linux export on 2026-09-10 using Godot 4.7.2 export templates. The exporter stages the executable Stockfish binary beside the game and copies its corresponding source and notices.
 
 ## Windows package check
 
@@ -51,7 +51,7 @@ Godot export templates, run:
 bash tools/export_windows.sh
 ```
 
-Smoke-test `build/windows-x86_64/warchessed.exe` on a Windows x86-64 machine.
+Smoke-test `build/windows-x86_64/check-and-conquer.exe` on a Windows x86-64 machine.
 This check remains pending because the Windows Stockfish binary is not in the
 repository or current development workspace.
 

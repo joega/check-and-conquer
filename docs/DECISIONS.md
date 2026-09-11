@@ -104,11 +104,19 @@ Record after M1 evidence:
 
 ## ADR-014 — Provisional public name: Warchessed
 
-**Status:** Accepted
+**Status:** Superseded by ADR-018
 **Date:** 2026-09-10
-**Decision:** Present the game as “Warchessed” in the runtime title, main menu, Linux package name, and public README. Retain `warboard` only in the repository URL, historic records, and legacy settings migration.
+**Decision:** Originally present the game as “Warchessed” in the runtime title, main menu, Linux package name, and public README. Retain `warboard` only in the repository URL, historic records, and legacy settings migration.
 **Reason:** The name immediately communicates animated combat chess and is more distinctive than a generic fantasy title. An exact-term preliminary web search on 2026-09-10 returned no public game or trademark results.
 **Consequences:** Existing `user://warboard_settings.cfg` values load when no `user://warchessed_settings.cfg` exists, and subsequent saves use the new path. This preliminary screen is not trademark clearance; jurisdiction-appropriate review is still required before commercial release.
+
+## ADR-018 — Public name: Check & Conquer
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Present the game as **Check & Conquer** in the runtime title, startup art, menu presentation, PGN event label, desktop package names, and public documentation. Store new user settings at `user://check_and_conquer_settings.cfg` while importing both prior settings paths.
+**Reason:** The name directly communicates the game’s chess-and-campaign premise and gives the public prototype a clear, consistent identity. The supplied logo and campaign artwork establish the visual system for the launch experience.
+**Consequences:** Existing `user://warchessed_settings.cfg` and `user://warboard_settings.cfg` configurations remain supported as migration inputs. Repository history and URL may retain their existing names. This decision does not constitute trademark clearance for a commercial release.
 
 ## ADR-015 — Campaign arenas are presentation skins over standard chess
 

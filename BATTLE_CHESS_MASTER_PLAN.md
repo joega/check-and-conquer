@@ -1,6 +1,6 @@
-# Warchessed — Master Project Plan
+# Check & Conquer — Master Project Plan
 
-> **Working title:** Warchessed
+> **Public title:** Check & Conquer
 > **Product concept:** A modern, original 3D chess game inspired by the *idea* of animated combat chess: normal chess rules, but captures trigger character combat sequences.  
 > **Primary engine:** Godot 4.x (latest stable at project start)  
 > **Chess AI:** Stockfish 19 or latest stable, launched as a separate UCI process  

@@ -3,8 +3,8 @@
 ## back to the defaults without affecting chess or presentation state.
 extends RefCounted
 
-const PATH := "user://warchessed_settings.cfg"
-const LEGACY_PATH := "user://warboard_settings.cfg"
+const PATH := "user://check_and_conquer_settings.cfg"
+const LEGACY_PATHS := ["user://warchessed_settings.cfg", "user://warboard_settings.cfg"]
 const SECTION := "session"
 
 const DEFAULTS := {
@@ -25,7 +25,7 @@ const DEFAULTS := {
 static func load_values() -> Dictionary:
 	var values := DEFAULTS.duplicate()
 	var config := ConfigFile.new()
-	if config.load(PATH) != OK and config.load(LEGACY_PATH) != OK:
+	if config.load(PATH) != OK and not _load_legacy_config(config):
 		return values
 	for key in DEFAULTS:
 		if config.has_section_key(SECTION, key):
@@ -34,6 +34,13 @@ static func load_values() -> Dictionary:
 	# play toggle so opening the game never hands both sides to one player.
 	values.computer_enabled = true
 	return values
+
+
+static func _load_legacy_config(config: ConfigFile) -> bool:
+	for legacy_path in LEGACY_PATHS:
+		if config.load(legacy_path) == OK:
+			return true
+	return false
 
 
 static func save_values(values: Dictionary) -> Error:

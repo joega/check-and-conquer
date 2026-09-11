@@ -38,7 +38,7 @@ func _init() -> void:
 	var legacy := ConfigFile.new()
 	legacy.set_value(SessionSettings.SECTION, "difficulty_index", 1)
 	legacy.set_value(SessionSettings.SECTION, "camera_shake", false)
-	assert(legacy.save(SessionSettings.LEGACY_PATH) == OK)
+	assert(legacy.save(SessionSettings.LEGACY_PATHS[0]) == OK)
 	var migrated := SessionSettings.load_values()
 	assert(migrated.difficulty_index == 1)
 	assert(migrated.camera_shake == false)
