@@ -3,6 +3,7 @@ extends SceneTree
 const ACTOR_SCENE = preload("res://scenes/actors/PieceActor.tscn")
 const BattleDirector = preload("res://scripts/presentation/battle_director.gd")
 const Types = preload("res://scripts/chess/chess_types.gd")
+const PieceActor = preload("res://scripts/actors/piece_actor.gd")
 
 
 func _init() -> void:
@@ -21,6 +22,10 @@ func _run() -> void:
 	battle._spawn_weapon_swing(pawn)
 	assert(battle.get_node_or_null("WeaponSwingArc00") != null and battle.get_node_or_null("WeaponSwingArc01") != null, "Dual-wielding pawns must create two readable weapon afterimages.")
 	assert(battle._melee_sound_for(pawn) == &"dual_sword_impact")
+	for archetype in [Types.PAWN, Types.KNIGHT, Types.BISHOP, Types.ROOK, Types.QUEEN, Types.KING]:
+		pawn.archetype = archetype
+		assert(not PieceActor.WEAPON_GRIPS.get(archetype, []).is_empty(), "Every role needs explicit role-owned weapon grip data.")
+	pawn.archetype = Types.PAWN
 	battle._spawn_role_impact(pawn, Vector3(0.0, 1.0, -2.0))
 	assert(battle.get_node_or_null("RoleImpact_Pawn") != null and battle.get_node("RoleImpact_Pawn").get_child_count() >= 8, "Pawn strikes must produce a distinct dual-blade impact stamp with visible shards.")
 	pawn.archetype = Types.KNIGHT

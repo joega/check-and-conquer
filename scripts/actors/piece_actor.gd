@@ -28,6 +28,19 @@ const CHARACTER_PRESENTATION_SCALE := 2.0
 ## compact so a close board inspection still shows the outfit and face rather
 ## than a primitive mesh filling the camera.
 const WEAPON_DISPLAY_SCALE := 9.0
+## Source weapon axes differ substantially. These role-owned grip profiles keep
+## the handle in the named palm instead of relying on a shared zero transform.
+const WEAPON_GRIPS := {
+	Types.PAWN: [
+		[&"hand_r", "PawnRightDagger", DAGGER_SCENE, 0.075, Vector3(0.018, -0.015, 0.045), Vector3(82, 8, 92)],
+		[&"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 0.075, Vector3(-0.018, -0.015, 0.045), Vector3(82, -8, -92)],
+	],
+	Types.KNIGHT: [[&"hand_r", "KnightSpear", SPEAR_SCENE, 0.105, Vector3(0.015, -0.02, 0.06), Vector3(88, 0, 92)]],
+	Types.BISHOP: [[&"hand_l", "BishopGoldenBow", BOW_SCENE, 0.088, Vector3(-0.025, 0.005, 0.035), Vector3(88, 0, -88)]],
+	Types.ROOK: [[&"hand_r", "RookWarHammer", HAMMER_SCENE, 0.094, Vector3(0.02, -0.03, 0.055), Vector3(88, 4, 92)]],
+	Types.QUEEN: [[&"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 0.092, Vector3(0.018, -0.02, 0.052), Vector3(88, 0, 92)]],
+	Types.KING: [[&"hand_r", "KingClaymore", CLAYMORE_SCENE, 0.098, Vector3(0.022, -0.025, 0.058), Vector3(88, 0, 92)]],
+}
 const CLIP_MAP := {
 	&"idle.neutral": &"Idle",
 	&"idle.watch_01": &"Idle_Rail",
@@ -86,6 +99,7 @@ var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
 var appearance_seed := 0
+var silhouette_profile := ""
 
 
 func _ready() -> void:
@@ -115,21 +129,27 @@ func _outfit_scene_for_archetype() -> PackedScene:
 	match archetype:
 		Types.PAWN:
 			outfit_id = "male_peasant"
+			silhouette_profile = "low_dual_blade_infantry"
 			return MALE_PEASANT_SCENE
 		Types.KNIGHT:
 			outfit_id = "female_ranger"
+			silhouette_profile = "tall_spear_ranger"
 			return FEMALE_RANGER_SCENE
 		Types.BISHOP:
 			outfit_id = "female_peasant"
+			silhouette_profile = "long_hair_bow_caster"
 			return FEMALE_PEASANT_SCENE
 		Types.ROOK:
 			outfit_id = "male_ranger"
+			silhouette_profile = "broad_hammer_guard"
 			return MALE_RANGER_SCENE
 		Types.QUEEN:
 			outfit_id = "female_ranger"
+			silhouette_profile = "golden_blade_commander"
 			return FEMALE_RANGER_SCENE
 		_:
 			outfit_id = "male_ranger"
+			silhouette_profile = "royal_claymore_guard"
 			return MALE_RANGER_SCENE
 
 
@@ -624,20 +644,8 @@ func _create_role_prop() -> void:
 	var skeleton := _model_root.get_node_or_null("Armature/Skeleton3D") as Skeleton3D
 	if skeleton == null:
 		return
-	match archetype:
-		Types.PAWN:
-			_add_weapon(skeleton, &"hand_r", "PawnRightDagger", DAGGER_SCENE, 0.08, Vector3(0, 0, 0.01), Vector3.ZERO)
-			_add_weapon(skeleton, &"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 0.08, Vector3(0, 0, 0.01), Vector3.ZERO)
-		Types.KNIGHT:
-			_add_weapon(skeleton, &"hand_r", "KnightSpear", SPEAR_SCENE, 0.12, Vector3(0, 0, 0.015), Vector3.ZERO)
-		Types.BISHOP:
-			_add_weapon(skeleton, &"hand_l", "BishopGoldenBow", BOW_SCENE, 0.10, Vector3(0, 0, 0.015), Vector3.ZERO)
-		Types.ROOK:
-			_add_weapon(skeleton, &"hand_r", "RookWarHammer", HAMMER_SCENE, 0.10, Vector3(0, 0, 0.01), Vector3.ZERO)
-		Types.QUEEN:
-			_add_weapon(skeleton, &"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 0.10, Vector3(0, 0, 0.01), Vector3.ZERO)
-		Types.KING:
-			_add_weapon(skeleton, &"hand_r", "KingClaymore", CLAYMORE_SCENE, 0.11, Vector3(0, 0, 0.01), Vector3.ZERO)
+	for grip: Array in WEAPON_GRIPS.get(archetype, []):
+		_add_weapon(skeleton, grip[0], grip[1], grip[2], grip[3], grip[4], grip[5])
 
 
 func _add_weapon(skeleton: Skeleton3D, bone_name: StringName, weapon_name: String, weapon_scene: PackedScene, display_scale: float, grip_offset: Vector3, rotation_degrees_value: Vector3) -> void:

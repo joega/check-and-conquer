@@ -34,6 +34,7 @@ func _ready() -> void:
 	_victim.set_home_transform(_victim.global_transform)
 	$BattleDirector.choreography = ChoreographyResolver.resolve(Types.PAWN)
 	$BattleDirector.impact_landed.connect(_show_impact)
+	$BattleDirector.weapon_impact.connect($ArenaAudioDirector.play_weapon_impact)
 	$BattleDirector.presentation_finished.connect(_finish_capture)
 	_play_button.pressed.connect(_play_capture)
 	_reset_button.pressed.connect(_reset_lab)
@@ -98,7 +99,7 @@ func _reset_lab() -> void:
 	_attacker.reset_actor()
 	_victim.reset_actor()
 	_impact_flash.light_energy = 0.0
-	$ImpactAudio.stop()
+	$ArenaAudioDirector.stop_all()
 	_play_button.disabled = false
 	_reset_button.disabled = false
 	$UI/Margin/Controls/AttackerArchetype.disabled = false
@@ -109,8 +110,10 @@ func _reset_lab() -> void:
 
 func _show_impact() -> void:
 	_status.text = "Impact — hit reaction / death / spark burst"
-	_impact_flash.light_energy = 8.0
-	$ImpactAudio.play_impact()
+	# The same BattleDirector event that selects gameplay's recorded weapon cue
+	# drives this restrained flash at the actual victim contact point.
+	_impact_flash.global_position = _victim.global_position + Vector3.UP * 1.12
+	_impact_flash.light_energy = 2.4
 	var tween := create_tween()
 	tween.tween_property(_impact_flash, "light_energy", 0.0, 0.12)
 
@@ -125,5 +128,5 @@ func _back() -> void:
 
 
 func _exit_tree() -> void:
-	if has_node("ImpactAudio"):
-		$ImpactAudio.stop()
+	if has_node("ArenaAudioDirector"):
+		$ArenaAudioDirector.stop_all()

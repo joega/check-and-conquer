@@ -141,3 +141,21 @@ Record after M1 evidence:
 **Decision:** Keep board lighting neutral with a dominant shadowed key and restrained fill/ambient. Use unshaded perimeter cues for selection, hints and last move; last move persists until replacement, restart, undo or review. Camera telemetry is visible with Match Settings. Supported choreography attack clips take precedence over stance-seeded alternatives, and melee anchors follow the attacker's direction relative to the victim.
 **Reason:** Rendered audit showed clipped tile colors, saturated cues and competing settings copy. Arbitrary attack variants invalidated authored hit timing; fixed-world staging could cross through a victim.
 **Consequences:** Idle variety remains, but adding attack variants requires corresponding timing data. Choreography still owns contact time, domain state still owns final destination, and no rules or engine behavior changes. See `ASTRA_VISUAL_DIRECTION.md` for the ranked follow-up plan and reproducible visual route.
+
+## ADR-020 — Distance-sampled spell trails and unified combat auditioning
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Emit ranged trail particles at bounded travelled-distance intervals,
+share their mesh/material resources, and register all temporary combat effects
+with `BattleDirector` cleanup. Combat Lab routes the same `weapon_impact` event
+through `ArenaAudioDirector` as gameplay. Weapon attachment uses role-owned
+grip data rather than a shared transform.
+**Reason:** Frame-sampled effects varied density and allocation rate by renderer
+speed, opaque spell cores hid the reaction, and the debug lab could not verify
+the actual gameplay audio event selection. Imported weapon axes are role- and
+mesh-specific.
+**Consequences:** Trails remain presentation-only and capped at 24 emissions;
+skip, reset, settlement, and scene exit clear outstanding VFX/audio. The lab
+continues to distinguish routing verification from acoustic listening. Actor
+roots, combat anchors, clips, and chess settlement are unchanged.

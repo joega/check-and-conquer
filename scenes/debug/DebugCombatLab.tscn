@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/debug/debug_combat_lab.gd" id="1_lab"]
 [ext_resource type="Script" path="res://scripts/presentation/battle_director.gd" id="2_battle"]
-[ext_resource type="Script" path="res://scripts/presentation/procedural_impact_audio.gd" id="3_impact_audio"]
+[ext_resource type="Script" path="res://scripts/presentation/arena_audio_director.gd" id="3_arena_audio"]
 
 [node name="DebugCombatLab" type="Node3D"]
 script = ExtResource("1_lab")
@@ -25,8 +25,8 @@ position = Vector3(0, 2, -3)
 light_color = Color(1, 0.68, 0.18, 1)
 light_energy = 0.0
 omni_range = 8.0
-[node name="ImpactAudio" type="AudioStreamPlayer" parent="."]
-script = ExtResource("3_impact_audio")
+[node name="ArenaAudioDirector" type="Node" parent="."]
+script = ExtResource("3_arena_audio")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(8.5, 5, 10.5)

@@ -17,7 +17,7 @@ func _run() -> void:
 	var attacker = lab.get_node("Attacker")
 	var victim = lab.get_node("Victim")
 	var battle_director = lab.get_node("BattleDirector")
-	lab.get_node("ImpactAudio").sound_enabled = false
+	var lab_audio = lab.get_node("ArenaAudioDirector")
 	lab._set_playback_speed(1)
 	assert(is_equal_approx(battle_director.playback_speed, 0.5), "Combat Lab must expose replay speed controls.")
 	lab._set_playback_speed(2)
@@ -39,6 +39,7 @@ func _run() -> void:
 	for cycle in CYCLE_COUNT:
 		lab._play_capture()
 		await battle_director.presentation_finished
+		assert(lab_audio.played_sfx_kinds.has(&"dual_sword_impact"), "Combat Lab must route the same weapon event through ArenaAudioDirector as gameplay.")
 		assert(not victim.visible, "Victim remained visible after cycle %d." % (cycle + 1))
 		assert(attacker.global_position.distance_to(victim_home.origin) < EPSILON, "Attacker missed destination on cycle %d." % (cycle + 1))
 		assert(is_zero_approx(attacker.rotation.y), "White attacker must restore board-facing orientation on cycle %d." % (cycle + 1))

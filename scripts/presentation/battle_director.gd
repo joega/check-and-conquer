@@ -4,6 +4,9 @@ extends Node
 const Types = preload("res://scripts/chess/chess_types.gd")
 const ARROW_SCENE = preload("res://assets/weapons/quaternius/Arrow.fbx")
 const RANGED_PROJECTILE_SCALE := 0.42
+const TRAIL_SPACING_M := 0.18
+const TRAIL_MAX_PER_PROJECTILE := 24
+const TRAIL_LIFETIME_S := 0.16
 
 signal presentation_finished
 signal impact_landed
@@ -19,6 +22,9 @@ var _active_attacker
 var _active_victim
 var _active_destination := Vector3.ZERO
 var last_victim_death_clip: StringName = &""
+var _temporary_effects: Array[Node] = []
+var _trail_mesh: SphereMesh
+var _trail_materials: Dictionary = {}
 
 
 func play_capture(attacker, victim, destination: Vector3) -> void:
@@ -167,9 +173,10 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	flight.tween_property(bolt, "global_position", impact, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	flight.parallel().tween_property(bolt, "scale", Vector3.ONE * 1.8, 0.30 / playback_speed)
 	flight.parallel().tween_property(halo, "rotation:y", TAU * 3.0, 0.30 / playback_speed)
+	var trail_state := {"last_position": launch, "emitted": 0}
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
-		_spawn_projectile_trail(bolt.global_position, Color(1.0, 0.18, 0.04))
+		_emit_projectile_trail(trail_state, bolt.global_position, Color(1.0, 0.18, 0.04))
 	bolt.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
@@ -288,9 +295,10 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	arrow.add_child(frost_light)
 	var flight := create_tween()
 	flight.tween_property(arrow, "global_position", impact, 0.34 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	var trail_state := {"last_position": launch, "emitted": 0}
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
-		_spawn_projectile_trail(arrow.global_position, Color(0.32, 0.80, 1.0))
+		_emit_projectile_trail(trail_state, arrow.global_position, Color(0.32, 0.80, 1.0))
 	arrow.queue_free()
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
@@ -318,6 +326,22 @@ func request_skip() -> void:
 		_skip_requested = true
 
 
+func active_temporary_effect_count() -> int:
+	_temporary_effects = _temporary_effects.filter(func(effect): return is_instance_valid(effect) and not effect.is_queued_for_deletion())
+	return _temporary_effects.size()
+
+
+func _register_temporary_effect(effect: Node) -> void:
+	_temporary_effects.append(effect)
+
+
+func _clear_temporary_effects() -> void:
+	for effect in _temporary_effects:
+		if is_instance_valid(effect):
+			effect.queue_free()
+	_temporary_effects.clear()
+
+
 func _play_delivery_followup(attacker, victim, impact_position: Vector3) -> void:
 	# Special delivery paths (arrow, wall, arcane) return early from the generic
 	# choreography flow, so they explicitly honor the same optional second beat.
@@ -338,28 +362,46 @@ func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: 
 	var burst := Node3D.new()
 	burst.name = "ElementalImpact"
 	add_child(burst)
+	_register_temporary_effect(burst)
 	burst.global_position = position
 	var material := StandardMaterial3D.new()
 	material.albedo_color = core_color
 	material.emission_enabled = true
 	material.emission = spark_color
 	material.emission_energy_multiplier = 5.0
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var flash := MeshInstance3D.new()
 	var flash_mesh := SphereMesh.new()
-	flash_mesh.radius = 0.32
-	flash_mesh.height = 0.64
+	flash_mesh.radius = 0.18
+	flash_mesh.height = 0.36
 	flash.mesh = flash_mesh
 	flash.material_override = material
 	burst.add_child(flash)
 	var light := OmniLight3D.new()
 	light.light_color = spark_color
-	light.light_energy = 5.0
-	light.omni_range = 5.5
+	light.light_energy = 2.2
+	light.omni_range = 3.0
 	burst.add_child(light)
 	var burst_tween := create_tween()
-	burst_tween.tween_property(flash, "scale", Vector3.ONE * 4.2, 0.22 / playback_speed)
-	burst_tween.parallel().tween_property(light, "light_energy", 0.0, 0.22 / playback_speed)
+	# Keep the contact core smaller than a torso and fade it immediately; the
+	# surrounding role shards provide the wider read without replacing a victim.
+	burst_tween.tween_property(flash, "scale", Vector3.ONE * 2.4, 0.16 / playback_speed)
+	burst_tween.parallel().tween_property(flash, "transparency", 1.0, 0.16 / playback_speed)
+	burst_tween.parallel().tween_property(light, "light_energy", 0.0, 0.16 / playback_speed)
 	burst_tween.tween_callback(burst.queue_free)
+
+
+func _emit_projectile_trail(state: Dictionary, position: Vector3, color: Color) -> void:
+	# Sampling travelled distance, rather than frames, makes trail density stable
+	# at 0.25x/1x/2x and across rendering frame rates.
+	var previous: Vector3 = state.last_position
+	var distance := previous.distance_to(position)
+	while distance >= TRAIL_SPACING_M and int(state.emitted) < TRAIL_MAX_PER_PROJECTILE:
+		previous = previous.lerp(position, TRAIL_SPACING_M / distance)
+		_spawn_projectile_trail(previous, color)
+		state.emitted = int(state.emitted) + 1
+		distance = previous.distance_to(position)
+	state.last_position = previous
 
 
 func _spawn_projectile_trail(position: Vector3, color: Color) -> void:
@@ -367,23 +409,29 @@ func _spawn_projectile_trail(position: Vector3, color: Color) -> void:
 	# square with repeated explosions before the shot has actually arrived.
 	var trail := MeshInstance3D.new()
 	trail.name = "ProjectileTrail"
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.055
-	mesh.height = 0.11
-	mesh.radial_segments = 8
-	mesh.rings = 4
-	trail.mesh = mesh
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.emission_enabled = true
-	material.emission = color
-	material.emission_energy_multiplier = 4.0
+	if _trail_mesh == null:
+		_trail_mesh = SphereMesh.new()
+		_trail_mesh.radius = 0.055
+		_trail_mesh.height = 0.11
+		_trail_mesh.radial_segments = 8
+		_trail_mesh.rings = 4
+	trail.mesh = _trail_mesh
+	var material: StandardMaterial3D = _trail_materials.get(color, null)
+	if material == null:
+		material = StandardMaterial3D.new()
+		material.albedo_color = color
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.emission_enabled = true
+		material.emission = color
+		material.emission_energy_multiplier = 4.0
+		_trail_materials[color] = material
 	trail.material_override = material
 	add_child(trail)
+	_register_temporary_effect(trail)
 	trail.global_position = position
 	var tween := create_tween()
-	tween.tween_property(trail, "scale", Vector3.ONE * 2.6, 0.16 / playback_speed)
-	tween.parallel().tween_property(trail, "transparency", 1.0, 0.16 / playback_speed)
+	tween.tween_property(trail, "scale", Vector3.ONE * 2.2, TRAIL_LIFETIME_S / playback_speed)
+	tween.parallel().tween_property(trail, "transparency", 1.0, TRAIL_LIFETIME_S / playback_speed)
 	tween.tween_callback(trail.queue_free)
 
 
@@ -415,6 +463,7 @@ func _spawn_role_impact(attacker, position: Vector3) -> void:
 	var impact := Node3D.new()
 	impact.name = "RoleImpact_%s" % _archetype_name(attacker.archetype)
 	add_child(impact)
+	_register_temporary_effect(impact)
 	impact.global_position = position
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
@@ -488,6 +537,7 @@ func _spawn_weapon_swing(attacker) -> void:
 		material.emission_energy_multiplier = 4.2
 		arc.material_override = material
 		add_child(arc)
+		_register_temporary_effect(arc)
 		arc.global_position = attacker.global_position + Vector3.UP * (1.25 + index * 0.18) - attacker.global_transform.basis.z * 0.52
 		arc.global_rotation = Vector3(PI * 0.5, attacker.global_rotation.y + index * 0.35, 0.0)
 		arc.scale = Vector3.ONE * 0.35
@@ -566,6 +616,7 @@ func _wait_or_skip(duration: float) -> void:
 
 
 func _finish_capture(attacker, victim, destination: Vector3) -> void:
+	_clear_temporary_effects()
 	victim.visible = false
 	attacker.global_position = destination
 	attacker.restore_board_facing()
@@ -576,3 +627,7 @@ func _finish_capture(attacker, victim, destination: Vector3) -> void:
 	_active_attacker = null
 	_active_victim = null
 	presentation_finished.emit()
+
+
+func _exit_tree() -> void:
+	_clear_temporary_effects()

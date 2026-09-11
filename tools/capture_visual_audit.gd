@@ -52,9 +52,23 @@ func _run() -> void:
 	loader.load_fen(loader.PRESETS["Capture framing"])
 	await _shot("06-position-loader")
 	var browser = await _scene("res://scenes/debug/DebugAnimationBrowser.tscn")
-	browser._play_primary_attack()
-	await create_timer(0.4).timeout
-	await _shot("07-animation-browser")
+	for index in range(6):
+		browser._select_archetype(index)
+		browser.get_node("UI/Margin/Controls/Archetype").select(index)
+		await process_frame
+		browser._reset()
+		await _shot("07-role-%d-idle" % index)
+		browser._play(&"locomotion.walk.forward", "Walk")
+		await create_timer(0.25).timeout
+		await _shot("07-role-%d-walk" % index)
+		browser._play_primary_attack()
+		await create_timer(0.35).timeout
+		await _shot("07-role-%d-contact" % index)
+		browser._actor.side = -1
+		browser._actor.restore_board_facing()
+		await _shot("07-role-%d-black-view" % index)
+		browser._actor.side = 1
+		browser._actor.restore_board_facing()
 	var lab = await _scene("res://scenes/debug/DebugCombatLab.tscn")
 	await _shot("08-combat-ready")
 	lab._play_capture()
@@ -64,4 +78,18 @@ func _run() -> void:
 	await _shot("10-combat-settled")
 	lab._reset_lab()
 	await _shot("11-combat-reset")
+	# Explicit spell captures exercise the visual changes rather than relying on
+	# the default melee lab pairing.
+	for spell_role in [2, 4]:
+		lab._select_attacker(spell_role)
+		lab._select_victim(0)
+		lab.get_node("UI/Margin/Controls/AttackerArchetype").select(spell_role)
+		lab.get_node("UI/Margin/Controls/VictimArchetype").select(0)
+		await process_frame
+		lab._play_capture()
+		await lab.get_node("BattleDirector").impact_landed
+		await _shot("12-spell-%d-impact" % spell_role)
+		await lab.get_node("BattleDirector").presentation_finished
+		lab._reset_lab()
+		await process_frame
 	quit()

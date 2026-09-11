@@ -125,3 +125,12 @@ Inspection: launch `godot --path .`, Enter Arena, select e2 and play e4; wait mo
 Remaining limitations: hand-to-weapon and anatomical hit contact still need role-specific authoring; far-rank class silhouettes remain similar; debug-room lighting retains its pre-existing bright calibration; spell cores, peripheral landmark emission and campaign footer still need polish. Current work adds no assets and requires no provenance changes. README, roadmap and ADR-019 record the behavior changes.
 
 Terra's next three investments: (1) translucent, bounded spell impacts/trails (item 5), (2) game/lab audio parity (item 6), (3) a combined six-role silhouette and weapon-grip pass (items 7–8), with screenshots of idle, walk and contact before acquiring more content.
+
+## Terra tranche 02 — 2026-09-11
+
+Items 5–8 are implemented in `docs/TERRA_VISUAL_TRANCHE_02.md`: spell cores
+are restrained alpha-faded contacts; projectile trails use bounded distance
+sampling and shared resources; Combat Lab now routes `weapon_impact` to the
+same `ArenaAudioDirector` as gameplay; and role-owned weapon-grip profiles
+replace the prior shared zero-transform attachment. The visual audit now emits
+idle, walk, contact, and opposite-side views for every role.
