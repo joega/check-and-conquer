@@ -12,8 +12,7 @@ var _flash: OmniLight3D
 var _beacon_lights: Array[OmniLight3D] = []
 
 func _ready() -> void:
-	_create_plateau()
-	_create_mountains()
+	_create_mountain_valley()
 	_create_storm_beacons()
 	_flash = OmniLight3D.new()
 	_flash.name = "StormFlash"
@@ -22,7 +21,6 @@ func _ready() -> void:
 	_flash.light_energy = 0.0
 	_flash.omni_range = 68.0
 	add_child(_flash)
-	_create_rain()
 
 func _process(delta: float) -> void:
 	_storm_time += delta
@@ -33,70 +31,49 @@ func _process(delta: float) -> void:
 	# without introducing random visual test failures or gameplay coupling.
 	_flash.light_energy = 4.0 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
 
-func _create_plateau() -> void:
-	var ground := MeshInstance3D.new()
-	ground.name = "MountainPlateau"
-	var mesh := PlaneMesh.new()
-	mesh.size = Vector2(terrain_extent, terrain_extent)
-	ground.mesh = mesh
-	ground.position.y = -0.1
+func _create_mountain_valley() -> void:
+	var terrain := MeshInstance3D.new()
+	terrain.name = "MountainValleyTerrain"
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var resolution := 56
+	var half_extent := terrain_extent * 0.5
+	var step := terrain_extent / float(resolution)
+	for z_index in resolution:
+		for x_index in resolution:
+			var x0 := -half_extent + float(x_index) * step
+			var z0 := -half_extent + float(z_index) * step
+			var a := _valley_vertex(x0, z0)
+			var b := _valley_vertex(x0 + step, z0)
+			var c := _valley_vertex(x0, z0 + step)
+			var d := _valley_vertex(x0 + step, z0 + step)
+			surface.add_vertex(a)
+			surface.add_vertex(c)
+			surface.add_vertex(b)
+			surface.add_vertex(b)
+			surface.add_vertex(c)
+			surface.add_vertex(d)
+	surface.generate_normals()
+	terrain.mesh = surface.commit()
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.075, 0.09, 0.11)
-	material.roughness = 0.94
-	ground.material_override = material
-	add_child(ground)
+	material.albedo_color = Color(0.095, 0.12, 0.14)
+	material.roughness = 0.92
+	material.metallic = 0.05
+	terrain.material_override = material
+	add_child(terrain)
 
-func _create_mountains() -> void:
-	var positions := [
-		Vector3(-36, 5, -30), Vector3(-18, 7, -42), Vector3(4, 8, -39),
-		Vector3(27, 6, -35), Vector3(44, 9, -22), Vector3(-46, 8, 8),
-		Vector3(42, 7, 14), Vector3(-30, 6, 36), Vector3(2, 8, 42), Vector3(31, 7, 34),
-	]
-	for index in positions.size():
-		var mountain := MeshInstance3D.new()
-		mountain.name = "Mountain%02d" % index
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.0
-		mesh.bottom_radius = 1.0
-		mesh.height = 1.0
-		mesh.radial_segments = 7
-		mountain.mesh = mesh
-		mountain.position = positions[index]
-		var size := 8.0 + float(index % 3) * 2.5
-		mountain.scale = Vector3(size, size * 2.3, size)
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.12, 0.15, 0.18) if index % 2 == 0 else Color(0.09, 0.12, 0.15)
-		material.roughness = 0.98
-		mountain.material_override = material
-		add_child(mountain)
 
-func _create_rain() -> void:
-	var rain := GPUParticles3D.new()
-	rain.name = "StormRain"
-	rain.amount = 500
-	rain.lifetime = 2.2
-	rain.visibility_aabb = AABB(Vector3(-34, 0, -34), Vector3(68, 28, 68))
-	var process := ParticleProcessMaterial.new()
-	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	process.emission_box_extents = Vector3(31, 0.2, 31)
-	process.direction = Vector3(0, -1, 0)
-	process.spread = 5.0
-	process.gravity = Vector3(0, -13, 0)
-	process.initial_velocity_min = 6.0
-	process.initial_velocity_max = 9.0
-	process.color = Color(0.58, 0.72, 1.0, 0.42)
-	rain.process_material = process
-	var streak := QuadMesh.new()
-	streak.size = Vector2(0.025, 0.72)
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.albedo_color = Color(0.63, 0.78, 1.0, 0.38)
-	streak.material = material
-	rain.draw_pass_1 = streak
-	rain.position = Vector3(0, 21, 0)
-	add_child(rain)
-
+func _valley_vertex(x: float, z: float) -> Vector3:
+	# Preserve a calm, flat valley around the board. Beyond it, layered ridges
+	# rise in every direction with deterministic variation instead of primitive
+	# cone silhouettes.
+	var valley_distance := maxf(absf(x), absf(z))
+	if valley_distance <= 20.0:
+		return Vector3(x, -0.32, z)
+	var ridge_weight := smoothstep(20.0, terrain_extent * 0.5, valley_distance)
+	var broad_ridge := 5.0 + sin(x * 0.105 + z * 0.075) * 2.8 + cos(z * 0.14 - x * 0.055) * 2.1
+	var crags := absf(sin(x * 0.33 + z * 0.23)) * 2.4 + absf(cos(x * 0.21 - z * 0.31)) * 1.6
+	return Vector3(x, -0.32 + ridge_weight * (broad_ridge + crags), z)
 
 func _create_storm_beacons() -> void:
 	var positions := [Vector3(-21, 0, -21), Vector3(21, 0, -21), Vector3(-21, 0, 21), Vector3(21, 0, 21)]
