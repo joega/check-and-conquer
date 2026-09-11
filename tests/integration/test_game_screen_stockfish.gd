@@ -14,6 +14,10 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	assert(not screen.get_node("UI/SettingsPanel").visible and not screen.get_node("UI/Computer").visible, "Configuration controls must begin condensed in the settings menu.")
+	screen.capture_impact_position = Vector3(2.0, 1.0, -3.0)
+	screen._show_capture_impact()
+	var impact_sparks: GPUParticles3D = screen.get_node("ImpactSparks")
+	assert(impact_sparks.emitting and impact_sparks.global_position.is_equal_approx(screen.capture_impact_position), "Capture impacts must restart a visible spark burst at the committed contact point.")
 	screen._toggle_settings_menu()
 	assert(screen.get_node("UI/SettingsPanel").visible and screen.get_node("UI/Computer").visible, "Settings must reveal grouped configuration controls on demand.")
 	screen._toggle_settings_menu()

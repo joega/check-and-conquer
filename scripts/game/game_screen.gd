@@ -137,6 +137,9 @@ func _present_result(result) -> void:
 
 func _show_capture_impact() -> void:
 	$ImpactFlash.global_position = capture_impact_position
+	$ImpactSparks.global_position = capture_impact_position
+	$ImpactSparks.emitting = true
+	$ImpactSparks.restart()
 	$ImpactFlash.light_energy = 10.0
 	$ImpactAudio.play_impact()
 	$CameraDirector.shake_on_impact()

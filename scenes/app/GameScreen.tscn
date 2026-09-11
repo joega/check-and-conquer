@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -14,6 +14,32 @@ background_color = Color(0.08, 0.1, 0.14, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.62, 0.7, 0.86, 1)
 ambient_light_energy = 0.92
+
+[sub_resource type="StandardMaterial3D" id="SparkMaterial"]
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.64, 0.16, 1)
+emission_enabled = true
+emission = Color(1, 0.28, 0.02, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="SphereMesh" id="SparkMesh"]
+radius = 0.045
+height = 0.09
+radial_segments = 8
+rings = 4
+material = SubResource("SparkMaterial")
+
+[sub_resource type="ParticleProcessMaterial" id="SparkProcess"]
+emission_shape = 1
+direction = Vector3(0, 1, 0)
+spread = 68.0
+gravity = Vector3(0, -11, 0)
+initial_velocity_min = 3.4
+initial_velocity_max = 6.0
+scale_min = 0.65
+scale_max = 1.35
+color = Color(1, 0.75, 0.28, 1)
 
 [node name="GameScreen" type="Node3D"]
 script = ExtResource("2")
@@ -45,6 +71,16 @@ shadow_enabled = false
 light_color = Color(1, 0.68, 0.2, 1)
 light_energy = 0.0
 omni_range = 3.5
+[node name="ImpactSparks" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 36
+lifetime = 0.52
+one_shot = true
+explosiveness = 1.0
+randomness = 0.3
+visibility_aabb = AABB(-5, -2, -5, 10, 8, 10)
+process_material = SubResource("SparkProcess")
+draw_pass_1 = SubResource("SparkMesh")
 [node name="ImpactAudio" type="AudioStreamPlayer" parent="."]
 script = ExtResource("7")
 [node name="UI" type="CanvasLayer" parent="."]

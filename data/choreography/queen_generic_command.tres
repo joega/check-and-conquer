@@ -15,5 +15,5 @@ impact_time_s = 0.36
 cleanup_time_s = 1.04
 anchor_separation_m = 2.6
 camera_shot = &"capture_medium"
-impact_sfx = &"placeholder.impact"
-vfx_profile = &"placeholder.spark"
+impact_sfx = &"procedural.impact"
+vfx_profile = &"impact.spark_burst"

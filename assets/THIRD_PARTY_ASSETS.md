@@ -68,6 +68,10 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; source archive is retained locally in ignored `assets/source-archives/` and is not committed.
 - Verification notes: all four outfit skeletons have the matching 65-joint humanoid order and `Armature/Skeleton3D` / `hand_r` names used by `PieceActor`. The pack contains no shield or weapon assets; the old project-created rook shield was removed to preserve visibility.
-## Runtime-generated capture sound
+## Runtime-generated capture audio and VFX
 
 `scripts/presentation/procedural_impact_audio.gd` synthesizes the V1 capture-impact tone at runtime from sine waves. It uses no third-party audio asset or sample.
+
+`GameScreen.tscn` uses a short one-shot `GPUParticles3D` burst of small emissive
+procedural meshes at the committed capture contact point. It uses no texture,
+model, VFX pack, or other third-party visual asset.
