@@ -47,6 +47,7 @@ func _ready() -> void:
 	$UI/Undo.pressed.connect(_undo)
 	$UI/Skip.pressed.connect($BattleDirector.request_skip)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
+	$BoardPresenter.quiet_move_started.connect(_begin_move_follow)
 	for label in ["Novice", "Master"]:
 		$UI/Difficulty.add_item(label)
 	for label in ["Play White", "Play Black"]:
@@ -188,6 +189,7 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		$UI/Status.text = "%s to move%s" % [side_name, " — Check!" if result.gives_check else ""]
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
 	if result.game_result == "ongoing":
+		$Camera3D.end_move_follow()
 		$Camera3D.snap_to_side(controller.game.state.side_to_move)
 	if computer_enabled and (spectator_enabled or not was_engine_move) and result.game_result == "ongoing":
 		_request_engine_move()
@@ -418,3 +420,7 @@ func _return_to_final_position() -> void:
 	$UI/GameOverPanel/Content/ReturnFinal.visible = false
 	$UI/Status.text = "Game over: %s" % controller.game.game_result().replace("_", " ")
 	$Camera3D.snap_to_side(controller.game.state.side_to_move)
+
+
+func _begin_move_follow(actor: Node3D, destination: Vector3, _duration_s: float) -> void:
+	$Camera3D.begin_move_follow(actor, destination)

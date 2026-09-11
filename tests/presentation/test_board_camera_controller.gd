@@ -29,6 +29,17 @@ func _run() -> void:
 	assert(camera.focused_side() == 1 and camera.target.is_equal_approx(Vector3.ZERO) and camera.global_position.distance_to(Vector3.ZERO) > 40.0, "Reset view must restore the centered default player-side board framing after close inspection.")
 	camera.snap_to_side(-1, 0.0)
 	assert(camera.focused_side() == -1 and camera.global_position.z > 0.0, "Black's default view must mirror White's from the opposing board end.")
+	var walker := Node3D.new()
+	walker.global_position = Vector3.ZERO
+	root.add_child(walker)
+	camera.begin_move_follow(walker, Vector3(0.0, 0.0, -4.0))
+	walker.global_position = Vector3(0.0, 0.0, -2.0)
+	await process_frame
+	assert(not camera.controls_enabled(), "Move follow must lock manual orbit while the actor is walking.")
+	assert(camera.global_position.z > walker.global_position.z, "Move follow must stay behind the actor relative to its destination.")
+	camera.end_move_follow()
+	assert(camera.controls_enabled(), "Move follow must restore manual inspection after the walk.")
+	walker.queue_free()
 	camera.snap_to_side(1, 0.5)
 	await process_frame
 	var interrupted_transform: Transform3D = camera.global_transform
