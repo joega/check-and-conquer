@@ -41,6 +41,7 @@ func _run() -> void:
 	for path in [skeleton_path + "PawnRightDaggerAttachment/PawnRightDagger", skeleton_path + "KnightSpearAttachment/KnightSpear", skeleton_path + "BishopGoldenBowAttachment/BishopGoldenBow", skeleton_path + "RookWarHammerAttachment/RookWarHammer", skeleton_path + "QueenGoldenSwordAttachment/QueenGoldenSword", skeleton_path + "KingClaymoreAttachment/KingClaymore"]:
 		var weapon := presenter.actors[8 if "Pawn" in path else 1 if "Knight" in path else 2 if "Bishop" in path else 0 if "Rook" in path else 3 if "Queen" in path else 4].get_node(path) as Node3D
 		assert(weapon.scale.length() < 0.22, "Weapon roots must normalize imported FBX scale instead of enlarging the board.")
+		assert(_largest_weapon_mesh_extent(weapon) < 2.5, "Imported weapon geometry must remain character-scale instead of filling the board.")
 	for square in [8, 1, 2, 3, 4, 0]:
 		assert(presenter.actors[square].get_node_or_null("VisualAccents/RookBattlement") == null, "Large overhead primitive type markers must not obstruct character or capture views.")
 	assert(presenter.actors[4].get_node_or_null("VisualAccents/PieceGlyph") != null, "Each character must retain a compact class glyph on its base.")
@@ -63,3 +64,13 @@ func _run() -> void:
 	presenter.queue_free()
 	print("PASS: board presenter rebuilds from FEN state.")
 	quit()
+
+
+func _largest_weapon_mesh_extent(node: Node) -> float:
+	var largest := 0.0
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		largest = mesh_instance.get_aabb().size.length() * mesh_instance.global_transform.basis.get_scale().length() / sqrt(3.0)
+	for child in node.get_children():
+		largest = maxf(largest, _largest_weapon_mesh_extent(child))
+	return largest
