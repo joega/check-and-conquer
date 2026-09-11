@@ -6,6 +6,7 @@ extends Node3D
 
 @export var terrain_extent := 110.0
 @export var storm_cycle_s := 18.0
+const VALLEY_HALF_EXTENT := 31.0
 
 var _storm_time := 0.0
 var _flash: OmniLight3D
@@ -68,9 +69,9 @@ func _valley_vertex(x: float, z: float) -> Vector3:
 	# rise in every direction with deterministic variation instead of primitive
 	# cone silhouettes.
 	var valley_distance := maxf(absf(x), absf(z))
-	if valley_distance <= 20.0:
+	if valley_distance <= VALLEY_HALF_EXTENT:
 		return Vector3(x, -0.32, z)
-	var ridge_weight := smoothstep(20.0, terrain_extent * 0.5, valley_distance)
+	var ridge_weight := smoothstep(VALLEY_HALF_EXTENT, terrain_extent * 0.5, valley_distance)
 	var broad_ridge := 5.0 + sin(x * 0.105 + z * 0.075) * 2.8 + cos(z * 0.14 - x * 0.055) * 2.1
 	var crags := absf(sin(x * 0.33 + z * 0.23)) * 2.4 + absf(cos(x * 0.21 - z * 0.31)) * 1.6
 	return Vector3(x, -0.32 + ridge_weight * (broad_ridge + crags), z)

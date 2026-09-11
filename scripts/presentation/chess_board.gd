@@ -7,6 +7,7 @@ var tiles: Dictionary = {}
 var coordinate_labels: Array[Label3D] = []
 
 func _ready() -> void:
+	_create_board_altar()
 	for rank in 8:
 		for file in 8:
 			var square := rank * 8 + file
@@ -21,6 +22,61 @@ func _ready() -> void:
 			add_child(tile)
 			tiles[square] = tile
 	_create_coordinate_labels()
+
+
+func _create_board_altar() -> void:
+	var board_extent := Mapper.BOARD_SIZE_M
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = Color(0.055, 0.075, 0.10)
+	stone.metallic = 0.18
+	stone.roughness = 0.74
+	var pedestal := MeshInstance3D.new()
+	pedestal.name = "BoardPedestal"
+	var pedestal_mesh := BoxMesh.new()
+	pedestal_mesh.size = Vector3(board_extent + 2.4, 0.7, board_extent + 2.4)
+	pedestal.mesh = pedestal_mesh
+	pedestal.position.y = -0.43
+	pedestal.material_override = stone
+	add_child(pedestal)
+	var bronze := StandardMaterial3D.new()
+	bronze.albedo_color = Color(0.55, 0.34, 0.12)
+	bronze.metallic = 0.72
+	bronze.roughness = 0.32
+	var rail_index := 0
+	for rail_data in [
+		[Vector3(0, -0.03, -(board_extent * 0.5 + 0.48)), Vector3(board_extent + 1.45, 0.24, 0.42)],
+		[Vector3(0, -0.03, board_extent * 0.5 + 0.48), Vector3(board_extent + 1.45, 0.24, 0.42)],
+		[Vector3(-(board_extent * 0.5 + 0.48), -0.03, 0), Vector3(0.42, 0.24, board_extent + 1.45)],
+		[Vector3(board_extent * 0.5 + 0.48, -0.03, 0), Vector3(0.42, 0.24, board_extent + 1.45)],
+	]:
+		var rail := MeshInstance3D.new()
+		rail.name = "BoardBronzeRail%02d" % rail_index
+		rail_index += 1
+		var rail_mesh := BoxMesh.new()
+		rail_mesh.size = rail_data[1]
+		rail.mesh = rail_mesh
+		rail.position = rail_data[0]
+		rail.material_override = bronze
+		add_child(rail)
+	var rune_material := StandardMaterial3D.new()
+	rune_material.albedo_color = Color(0.20, 0.70, 1.0)
+	rune_material.emission_enabled = true
+	rune_material.emission = Color(0.06, 0.35, 1.0)
+	rune_material.emission_energy_multiplier = 2.4
+	var rune_index := 0
+	for corner in [Vector3(-17.1, 0.13, -17.1), Vector3(17.1, 0.13, -17.1), Vector3(-17.1, 0.13, 17.1), Vector3(17.1, 0.13, 17.1)]:
+		var rune := MeshInstance3D.new()
+		rune.name = "BoardCornerRune%02d" % rune_index
+		rune_index += 1
+		var rune_mesh := CylinderMesh.new()
+		rune_mesh.top_radius = 0.28
+		rune_mesh.bottom_radius = 0.36
+		rune_mesh.height = 0.12
+		rune_mesh.radial_segments = 8
+		rune.mesh = rune_mesh
+		rune.position = corner
+		rune.material_override = rune_material
+		add_child(rune)
 
 func set_highlights(selected_square: int, destinations: Array) -> void:
 	for square in tiles:
