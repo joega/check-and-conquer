@@ -4,6 +4,8 @@
 
 ![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
+[![Test](https://github.com/joega/warboard/actions/workflows/test.yml/badge.svg)](https://github.com/joega/warboard/actions/workflows/test.yml)
+
 ## What you can play today
 
 - A complete local chess rules engine: legal move validation, castling, en passant, promotion, checkmate, draws, FEN, and UCI moves.
@@ -43,6 +45,10 @@ Run the deterministic test suite, including chess perft and the real Stockfish s
 ```sh
 bash tools/run_headless_tests.sh
 ```
+
+GitHub Actions runs the same suite on pushes and pull requests. It compiles the
+committed Stockfish source into a temporary CI executable, so the real engine
+integration remains covered without committing the large platform binary.
 
 Create a Linux export with Godot's matching export templates installed:
 

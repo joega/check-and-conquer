@@ -1,0 +1,59 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  headless:
+    name: Godot headless suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: 4.7.2
+      GODOT_BIN: ${{ github.workspace }}/.ci/bin/godot
+      WARB_TEST_DATA_HOME: ${{ runner.temp }}/warboard-data
+      WARB_TEST_CACHE_HOME: ${{ runner.temp }}/warboard-cache
+      WARB_TEST_CONFIG_HOME: ${{ runner.temp }}/warboard-config
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Cache Godot editor
+        uses: actions/cache@v4
+        with:
+          path: .ci/bin/godot
+          key: godot-linux-${{ env.GODOT_VERSION }}
+
+      - name: Install Godot headless editor
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -x "$GODOT_BIN" ]]; then
+            mkdir -p "$(dirname "$GODOT_BIN")"
+            curl --fail --location --retry 3 --output /tmp/godot.zip \
+              "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+            unzip -q /tmp/godot.zip -d "$(dirname "$GODOT_BIN")"
+            mv "$(dirname "$GODOT_BIN")/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$GODOT_BIN"
+            chmod +x "$GODOT_BIN"
+          fi
+          "$GODOT_BIN" --version
+
+      - name: Build Stockfish test executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          stockfish_dir=third_party/stockfish/linux-x86_64/stockfish
+          make -C "$stockfish_dir/src" -j2 build ARCH=x86-64
+          cp "$stockfish_dir/src/stockfish" "$stockfish_dir/stockfish-linux-x86-64-universal"
+          chmod +x "$stockfish_dir/stockfish-linux-x86-64-universal"
+          "$stockfish_dir/stockfish-linux-x86-64-universal" bench 1 1 1 default depth 1 >/dev/null
+
+      - name: Run deterministic game suite
+        shell: bash
+        run: bash tools/run_headless_tests.sh

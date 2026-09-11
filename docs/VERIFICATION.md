@@ -23,6 +23,11 @@ The suite covers:
 
 The FEN Position Loader test is part of this command. It verifies valid FEN reconstruction in the scene's actual `BoardPresenter` and confirms invalid input preserves the last valid visual board.
 
+The public repository's [GitHub Actions workflow](../.github/workflows/test.yml)
+runs this same command on pushes to `main` and pull requests. It downloads the
+pinned Godot editor and compiles the committed Stockfish source into the ignored
+test-binary path before the suite starts.
+
 ## Linux package check
 
 With Godot 4.7.2 export templates installed:
