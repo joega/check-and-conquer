@@ -114,12 +114,14 @@ offset_top = 70.0
 offset_right = 160.0
 offset_bottom = 108.0
 placeholder_text = "e2e4"
+visible = false
 [node name="Submit" type="Button" parent="UI"]
 offset_left = 170.0
 offset_top = 70.0
 offset_right = 290.0
 offset_bottom = 108.0
 text = "Make move"
+visible = false
 [node name="Restart" type="Button" parent="UI"]
 offset_left = 300.0
 offset_top = 70.0

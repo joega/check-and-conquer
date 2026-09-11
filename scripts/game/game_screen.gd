@@ -9,7 +9,7 @@ const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const NOVICE_DIFFICULTY = preload("res://data/difficulty/novice.tres")
 const MASTER_DIFFICULTY = preload("res://data/difficulty/master.tres")
 const SETTINGS_MENU_NODES := [
-	"Computer", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
+	"Move", "Submit", "Computer", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Move", "Submit", "Restart", "Undo", "Back", "Settings", "CameraHelp"]

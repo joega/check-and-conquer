@@ -153,7 +153,7 @@ Prove the 3D character/rig/animation problem before investing in the rest of the
 
 ## M7 — V1 UX and polish
 
-**Progress:** Implemented for the current Linux target. The playable screen has a computer/local toggle, side and Novice/Master selectors, selectable promotion piece, restart, domain-backed undo, a game-over panel, capture skip and speed controls, right-drag orbit/middle-drag pan/mouse-wheel zoom, a high mirrored turn-view plus a behind-the-piece walking follow shot, fullscreen toggle, master volume, optional camera shake, and a bounded Stockfish diagnostic log. These player settings, including fullscreen, persist in `user://warchessed_settings.cfg`. The Linux export stages Stockfish externally, includes the required notices/source, and has been smoke-launched headlessly as `warchessed.x86_64`.
+**Progress:** Implemented for the current Linux target. The playable screen has a compact board-first toolbar with optional manual UCI entry in Settings, a computer/local toggle, side and Novice/Master selectors, selectable promotion piece, restart, domain-backed undo, a game-over panel, capture skip and speed controls, right-drag orbit/middle-drag pan/mouse-wheel zoom, a high mirrored turn-view plus a behind-the-piece walking follow shot, fullscreen toggle, master volume, optional camera shake, and a bounded Stockfish diagnostic log. These player settings, including fullscreen, persist in `user://warchessed_settings.cfg`. The Linux export stages Stockfish externally, includes the required notices/source, and has been smoke-launched headlessly as `warchessed.x86_64`.
 
 ### Deliverables
 - Main menu.

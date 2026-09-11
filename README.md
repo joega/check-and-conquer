@@ -36,7 +36,7 @@ Open the project in Godot or run:
 godot --path .
 ```
 
-Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds move entry, restart, undo, and capture skip; **Settings** contains local play, player-versus-Stockfish, spectator mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
+Choose **Play vs Stockfish** from the main menu. Select a piece and then a highlighted square to move it. The compact toolbar holds restart, undo, settings, and capture skip; select a piece and legal highlighted square on the board to move. **Settings** contains optional manual UCI entry, local play, player-versus-Stockfish, spectator mode, side, difficulty, promotion, animation speed, audio, camera shake, fullscreen, and engine diagnostics.
 
 ## Development
 
