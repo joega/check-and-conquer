@@ -33,6 +33,13 @@ func _run() -> void:
 	var default_left := camera.unproject_position(Vector3(-16, 0, -16)).x
 	var default_right := camera.unproject_position(Vector3(16, 0, -16)).x
 	assert(default_left > get_root().get_visible_rect().size.x * 0.10 and default_right < get_root().get_visible_rect().size.x * 0.90, "Default framing must reserve only a narrow background margin around the board.")
+	var default_top := INF
+	var default_bottom := -INF
+	for corner in [Vector3(-16, 0, -16), Vector3(-16, 0, 16), Vector3(16, 0, -16), Vector3(16, 0, 16)]:
+		var screen_corner := camera.unproject_position(corner)
+		default_top = minf(default_top, screen_corner.y)
+		default_bottom = maxf(default_bottom, screen_corner.y)
+	assert(default_top > get_root().get_visible_rect().size.y * 0.05 and default_bottom < get_root().get_visible_rect().size.y * 0.95, "Default framing must leave visible sky and valley padding above and below the board.")
 	camera.snap_to_side(-1, 0.0)
 	assert(camera.focused_side() == -1 and camera.global_position.z > 0.0, "Black's default view must mirror White's from the opposing board end.")
 	assert(absf(camera.global_position.x) < 0.1, "Black's turn framing must sit directly behind Black's rank-eight team.")
