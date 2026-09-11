@@ -76,6 +76,7 @@ var _stance_gesture_time_s := 0.0
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
+var appearance_seed := 0
 
 
 func _ready() -> void:
@@ -216,6 +217,22 @@ func start_battle_stance() -> void:
 	_seek_stance_offset()
 	_stance_timer_s = 2.2 + float(posmod(_stance_seed, 9)) * 0.37
 	_stance_gesture_time_s = 0.0
+
+
+func celebrate_victory(style_index: int) -> void:
+	# Nearby allies acknowledge a capture with distinct, deliberately brief
+	# gestures. This is presentation-only and always restores the regular stance.
+	var gestures: Array[StringName] = [&"stance.challenge_01", &"attack.punch.jab_01", &"stance.guard_01"]
+	var gesture := gestures[posmod(style_index + _stance_seed, gestures.size())]
+	if supports_state(gesture):
+		play_state(gesture)
+		_stance_gesture_time_s = maxf(state_duration(gesture), 0.8)
+	var celebration_root := _model_root
+	if celebration_root != null:
+		var baseline_y := celebration_root.position.y
+		var cheer := create_tween()
+		cheer.tween_property(celebration_root, "position:y", baseline_y + 0.12, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		cheer.tween_property(celebration_root, "position:y", baseline_y, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 
 func battle_stance_state() -> StringName:
@@ -397,8 +414,8 @@ func _create_piece_glyph() -> void:
 	glyph.text = _piece_glyph_text()
 	glyph.position = Vector3(0, 0.041, 0)
 	glyph.rotation_degrees = Vector3(-90, 0, 0)
-	glyph.font_size = 38
-	glyph.pixel_size = 0.0035
+	glyph.font_size = 58
+	glyph.pixel_size = 0.0042
 	glyph.outline_size = 5
 	glyph.modulate = Color(1.0, 0.84, 0.4)
 	_visual_accents.add_child(glyph)
@@ -407,16 +424,16 @@ func _create_piece_glyph() -> void:
 func _piece_glyph_text() -> String:
 	match archetype:
 		Types.KNIGHT:
-			return "N"
+			return "♞"
 		Types.BISHOP:
-			return "B"
+			return "♝"
 		Types.ROOK:
-			return "R"
+			return "♜"
 		Types.QUEEN:
-			return "Q"
+			return "♛"
 		Types.KING:
-			return "K"
-	return "P"
+			return "♚"
+	return "♟"
 
 
 func _create_head() -> void:
@@ -447,6 +464,8 @@ func _create_head() -> void:
 		var feature := source_feature.duplicate() as MeshInstance3D
 		feature.name = feature_name
 		feature.skeleton = NodePath("..")
+		if feature_name == &"Eyebrows":
+			_tint_mesh(feature, _hair_color())
 		target_skeleton.add_child(feature)
 	base_root.free()
 
@@ -465,6 +484,7 @@ func _create_hair() -> void:
 		if source_hair != null:
 			var hair := source_hair.duplicate() as MeshInstance3D
 			hair.skeleton = NodePath("..")
+			_tint_mesh(hair, _hair_color())
 			target_skeleton.add_child(hair)
 			hair_ids.append(hair.name)
 		hair_root.free()
@@ -485,6 +505,29 @@ func _hair_scenes_for_archetype() -> Array[PackedScene]:
 		Types.KING:
 			return [HAIR_SIMPLE_PARTED_SCENE, HAIR_BEARD_SCENE]
 	return []
+
+
+func _hair_color() -> Color:
+	# Square-derived identity keeps a character's look stable across any rebuild
+	# while breaking up the old uniform white hair and brow appearance.
+	var palette := [
+		Color(0.09, 0.055, 0.035), Color(0.20, 0.10, 0.045),
+		Color(0.38, 0.16, 0.055), Color(0.60, 0.35, 0.11),
+		Color(0.72, 0.64, 0.42), Color(0.38, 0.40, 0.45),
+	]
+	return palette[posmod(appearance_seed + archetype * 3 + (2 if side < 0 else 0), palette.size())]
+
+
+func _tint_mesh(mesh_node: MeshInstance3D, color: Color) -> void:
+	if mesh_node.mesh == null:
+		return
+	for surface in mesh_node.mesh.get_surface_count():
+		var source := mesh_node.get_active_material(surface) as StandardMaterial3D
+		if source == null:
+			continue
+		var material := source.duplicate() as StandardMaterial3D
+		material.albedo_color = color
+		mesh_node.set_surface_override_material(surface, material)
 
 
 func _extract_head_mesh(source_mesh: Mesh, source_skeleton: Skeleton3D) -> ArrayMesh:

@@ -203,3 +203,16 @@ grow_horizontal = 0
 theme_override_colors/font_color = Color(0.76, 0.88, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "PRACTICE ARENA\nQuick Match vs Stockfish"
+
+[node name="PracticeArenaPicker" type="OptionButton" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -365.0
+offset_top = 580.0
+offset_right = -48.0
+offset_bottom = 625.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.92, 0.85, 0.58, 1)
+tooltip_text = "Choose any arena for a non-campaign practice match"

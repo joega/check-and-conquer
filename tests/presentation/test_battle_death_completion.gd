@@ -13,11 +13,14 @@ func _run() -> void:
 	await process_frame
 	var battle = lab.get_node("BattleDirector")
 	var victim = lab.get_node("Victim")
+	var destination: Vector3 = victim.global_position
 	lab._play_capture()
 	await battle.victim_death_finished
 	assert(victim.animation_playback_position() >= victim.state_duration(battle.last_victim_death_clip) - 0.05, "Victim must finish the full death animation before cleanup.")
+	assert(lab.get_node("Attacker").global_position.distance_to(destination) > 0.1, "The winner must still be approaching the claimed square after the death beat.")
 	await battle.presentation_finished
 	assert(not victim.visible)
+	assert(lab.get_node("Attacker").global_position.is_equal_approx(destination), "Capture completion must settle at the destination after its winner walk.")
 	lab._reset_lab()
 	battle.playback_speed = 2.0
 	lab._play_capture()

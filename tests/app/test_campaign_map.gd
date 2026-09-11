@@ -18,6 +18,9 @@ func _run() -> void:
 	assert(map.get_node("Route").get_child_count() == 5, "The campaign route must expose five arena nodes.")
 	assert(map.get_node("Route/MountainFortress").disabled == false, "The first arena must begin available.")
 	assert(map.get_node("Route/ArcaneSkyCitadel").disabled, "Future arenas must begin locked.")
+	var locked_arena := map.get_node("Route/ArcaneSkyCitadel") as Button
+	assert(locked_arena.modulate.r > 0.8 and locked_arena.modulate.g > 0.6 and locked_arena.get_theme_color("font_disabled_color").g > 0.6, "Locked arena names must retain the readable campaign-gold treatment alongside their lock indicator.")
+	assert(map.get_node("PracticeArenaPicker").item_count == 5, "Practice must offer every arena without campaign-unlock requirements.")
 
 	map.set_campaign_snapshot({
 		"current_arena_id": "arcane_sky_citadel",
@@ -36,8 +39,9 @@ func _run() -> void:
 	assert(persisted.get("selected_arena_id") == "arcane_sky_citadel", "Selected arena must persist through SessionSettings.")
 	assert(persisted.get("campaign_snapshot", {}).get("current_arena_id") == "arcane_sky_citadel", "Campaign snapshot must persist through SessionSettings.")
 	assert(map.get_node("PracticeArena") is Button and map.get_node("DebugTools").get_child_count() == 4, "The launch map must expose a practice arena and the current developer-tool group.")
-	map.persist_selection(false)
-	assert(SessionSettings.load_values().campaign_enabled == false, "Practice matches must not advance the campaign route.")
+	map._select_practice_arena(3)
+	map.persist_selection(false, map.practice_arena_id)
+	assert(SessionSettings.load_values().campaign_enabled == false and SessionSettings.load_values().selected_arena_id == "lava_forge", "Practice must persist a freely selected arena while disabling campaign progression.")
 	map.queue_free()
 	await process_frame
 	print("PASS: campaign map route states and arena selection persistence.")

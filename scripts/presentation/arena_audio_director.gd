@@ -14,8 +14,8 @@ const SFX_STREAMS := {
 	&"spear_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
 	&"arrow_release": [preload("res://assets/audio/cc0_fantasy/arrow-feathers-01.wav"), preload("res://assets/audio/cc0_fantasy/arrow-grab-from-quiver-01.wav")],
 	&"arrow_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
-	&"arcane_cast": [preload("res://assets/audio/cc0_fantasy/paralyzer-discharge-02.wav")],
-	&"arcane_impact": [preload("res://assets/audio/cc0_fantasy/paralyzer-discharge-02.wav")],
+	&"arcane_cast": [preload("res://assets/audio/cc0_fantasy/fireball-01.wav")],
+	&"arcane_impact": [preload("res://assets/audio/cc0_fantasy/fireball-01.wav")],
 	&"wall_slam": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
 	&"hammer_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
 }
@@ -79,6 +79,9 @@ func _play_sfx(kind: StringName) -> void:
 		if not candidate.playing:
 			player = candidate
 			break
+	# Footfalls should support the walk, never dominate it. Combat impact cues
+	# retain their punch while a square landing is deliberately subdued.
+	player.volume_db = -18.0 if kind == &"piece_land" else -8.0
 	player.stream = _sfx_stream_for(kind)
 	player.play()
 

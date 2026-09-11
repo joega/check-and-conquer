@@ -20,6 +20,7 @@ func rebuild_from_state(state) -> void:
 		actor.side_color = Color(0.2, 0.48, 0.95) if state.get_piece(square) > 0 else Color(0.83, 0.24, 0.22)
 		actor.side = Types.piece_side(state.get_piece(square))
 		actor.archetype = Types.piece_type(state.get_piece(square))
+		actor.appearance_seed = square
 		add_child(actor)
 		actors[square] = actor
 
@@ -124,7 +125,19 @@ func settle_capture(result) -> void:
 	attacker.global_position = Mapper.square_to_world(result.to_square)
 	_apply_promotion(result)
 	attacker.start_battle_stance()
+	_celebrate_capture(attacker)
 	piece_landed.emit()
+
+
+func _celebrate_capture(winner) -> void:
+	var allies: Array = []
+	for candidate in actors.values():
+		if candidate != null and is_instance_valid(candidate) and candidate != winner and candidate.side == winner.side:
+			allies.append(candidate)
+	allies.sort_custom(func(a, b): return a.global_position.distance_squared_to(winner.global_position) < b.global_position.distance_squared_to(winner.global_position))
+	winner.celebrate_victory(0)
+	for index in mini(allies.size(), 3):
+		allies[index].celebrate_victory(index + 1)
 
 
 func _walk_actor_to(actor, target: Vector3) -> void:
@@ -156,6 +169,7 @@ func _apply_promotion(result) -> void:
 	replacement.side_color = Color(0.2, 0.48, 0.95) if result.moving_piece > 0 else Color(0.83, 0.24, 0.22)
 	replacement.side = Types.piece_side(result.moving_piece)
 	replacement.archetype = result.promotion_piece_type
+	replacement.appearance_seed = result.to_square
 	add_child(replacement)
 	actors[result.to_square] = replacement
 	old_actor.queue_free()

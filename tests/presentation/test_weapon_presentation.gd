@@ -25,6 +25,10 @@ func _run() -> void:
 	assert(battle._melee_sound_for(pawn) == &"spear_impact")
 	pawn.archetype = Types.ROOK
 	assert(battle._melee_sound_for(pawn) == &"hammer_impact")
+	var fortress_wall := Node3D.new()
+	battle._build_rook_wall(fortress_wall)
+	assert(fortress_wall.get_node_or_null("FortressBrick_0_0") != null and fortress_wall.get_node_or_null("Crenellation_1") != null, "Rook attacks must build a crenellated fortress wall rather than a flat gray slab.")
+	fortress_wall.free()
 	battle.queue_free()
 	pawn.queue_free()
 	await process_frame

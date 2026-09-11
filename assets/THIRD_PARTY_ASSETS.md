@@ -115,3 +115,16 @@ model, VFX pack, or other third-party visual asset.
 - Attribution required: unknown pending source/license confirmation
 - Redistribution notes: Do not distribute independently until provenance is confirmed.
 - Verification notes: Assigned to the campaign map `OpeningHorn` player and played once per app session when the opening map appears.
+
+### Fireball
+
+- Creator: Julien Matthey (uploaded by diligentcircle)
+- Source URL: https://opengameart.org/content/fireball-1
+- License: CC0 1.0 Universal
+- Date acquired: 2026-09-11
+- Original archive/file: `105016__julien-matthey__jm-fx-fireball-01.wav` (SHA-256 `3992598c814de25c318780e506aeda673a7e410b7b3c4f0793883483ff9766b8`)
+- Files used in project: `assets/audio/cc0_fantasy/fireball-01.wav`
+- Modifications: none
+- Attribution required: no
+- Redistribution notes: CC0 public-domain dedication.
+- Verification notes: Assigned to the Queen arcane cast and impact cues, replacing the lightning-like prototype discharge.

@@ -51,6 +51,7 @@ func _run() -> void:
 	for square in [8, 1, 2, 3, 4, 0]:
 		assert(presenter.actors[square].get_node_or_null("VisualAccents/RookBattlement") == null, "Large overhead primitive type markers must not obstruct character or capture views.")
 	assert(presenter.actors[4].get_node_or_null("VisualAccents/PieceGlyph") != null, "Each character must retain a compact class glyph on its base.")
+	assert((presenter.actors[0].get_node("VisualAccents/PieceGlyph") as Label3D).text == "♜", "Base glyphs must use recognizable chess crests instead of single-letter abbreviations.")
 	assert(presenter.actors[4].get_node_or_null("VisualAccents/TeamRing") != null and presenter.actors[4].get_node_or_null("VisualAccents/TeamBase") == null, "Side identity must use a compact ring rather than a full colored disk.")
 	assert(presenter.actors[4].hair_ids.size() == 2, "The king must retain both a hairstyle and beard for a distinct full-character silhouette.")
 	assert(is_zero_approx(presenter.actors[8].rotation.y), "White actors must use the board-forward orientation.")
@@ -58,6 +59,11 @@ func _run() -> void:
 	var white_material := (presenter.actors[8].get_node("ModelRoot/Armature/Skeleton3D").get_child(0) as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
 	var black_material := (presenter.actors[48].get_node("ModelRoot/Armature/Skeleton3D").get_child(0) as MeshInstance3D).get_surface_override_material(0) as StandardMaterial3D
 	assert(white_material != null and black_material != null and not white_material.albedo_color.is_equal_approx(black_material.albedo_color), "Sides must receive distinct textured material tints.")
+	var first_pawn_hair := presenter.actors[8].get_node("ModelRoot/Armature/Skeleton3D/%s" % presenter.actors[8].hair_ids[0]) as MeshInstance3D
+	var second_pawn_hair := presenter.actors[9].get_node("ModelRoot/Armature/Skeleton3D/%s" % presenter.actors[9].hair_ids[0]) as MeshInstance3D
+	var first_hair_material := first_pawn_hair.get_surface_override_material(0) as StandardMaterial3D
+	var second_hair_material := second_pawn_hair.get_surface_override_material(0) as StandardMaterial3D
+	assert(first_hair_material != null and second_hair_material != null and not first_hair_material.albedo_color.is_equal_approx(second_hair_material.albedo_color), "Square-stable appearance seeds must vary hair and brow colors across otherwise matching pieces.")
 	assert(presenter.matches_state(BoardState.starting_position()))
 	presenter.set_selected_square(8)
 	var selected_ring := presenter.actors[8].get_node("VisualAccents/TeamRing") as MeshInstance3D

@@ -84,6 +84,7 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 	var cleanup_duration := maxf(death_duration, (choreography.cleanup_time_s - elapsed_before_death) / playback_speed)
 	await _wait_or_skip(cleanup_duration)
 	victim_death_finished.emit()
+	await _walk_winner_to_destination(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -167,6 +168,7 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
 	victim_death_finished.emit()
+	await _walk_winner_to_destination(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -184,16 +186,9 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	var direction := target - origin
 	direction.y = 0.0
 	var distance := maxf(direction.length(), 0.1)
-	var wall := MeshInstance3D.new()
+	var wall := Node3D.new()
 	wall.name = "RookCrushWall"
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(1.35, 3.2, 1.0)
-	wall.mesh = mesh
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.28, 0.34, 0.42)
-	material.metallic = 0.22
-	material.roughness = 0.68
-	wall.material_override = material
+	_build_rook_wall(wall)
 	add_child(wall)
 	wall.global_position = origin.lerp(target, 0.5) + Vector3.UP * 1.55
 	wall.look_at(target, Vector3.UP, true)
@@ -216,7 +211,42 @@ func _play_rook_wall_capture(attacker, victim, destination: Vector3) -> void:
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
 	victim_death_finished.emit()
+	await _walk_winner_to_destination(attacker, destination)
 	_finish_capture(attacker, victim, destination)
+
+
+func _build_rook_wall(wall: Node3D) -> void:
+	# A crenellated basalt barricade reads as a rook's moving fortress instead of
+	# the prior anonymous gray slab. Scaling its depth still gives it the clear
+	# lane-crushing motion required by the choreography.
+	var dark_stone := StandardMaterial3D.new()
+	dark_stone.albedo_color = Color(0.12, 0.15, 0.20)
+	dark_stone.metallic = 0.28
+	dark_stone.roughness = 0.62
+	var lit_stone := dark_stone.duplicate() as StandardMaterial3D
+	lit_stone.albedo_color = Color(0.31, 0.18, 0.07)
+	lit_stone.emission_enabled = true
+	lit_stone.emission = Color(1.0, 0.22, 0.035)
+	lit_stone.emission_energy_multiplier = 1.4
+	for row in 4:
+		for column in 3:
+			var brick := MeshInstance3D.new()
+			brick.name = "FortressBrick_%d_%d" % [row, column]
+			var brick_mesh := BoxMesh.new()
+			brick_mesh.size = Vector3(0.52, 0.62, 1.0)
+			brick.mesh = brick_mesh
+			brick.position = Vector3((column - 1) * 0.47 + (0.12 if row % 2 else 0.0), -0.95 + row * 0.62, 0.0)
+			brick.material_override = lit_stone if (row + column) % 5 == 0 else dark_stone
+			wall.add_child(brick)
+	for column in 3:
+		var crenel := MeshInstance3D.new()
+		crenel.name = "Crenellation_%d" % column
+		var crenel_mesh := BoxMesh.new()
+		crenel_mesh.size = Vector3(0.38, 0.38, 1.08)
+		crenel.mesh = crenel_mesh
+		crenel.position = Vector3((column - 1) * 0.54, 1.43, 0.0)
+		crenel.material_override = lit_stone if column == 1 else dark_stone
+		wall.add_child(crenel)
 
 
 func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void:
@@ -263,6 +293,7 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	victim.play_state(last_victim_death_clip)
 	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
 	victim_death_finished.emit()
+	await _walk_winner_to_destination(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -386,6 +417,20 @@ func _move_actor(actor, target: Vector3, duration: float) -> void:
 			actor.global_position = target
 			return
 		await get_tree().process_frame
+
+
+func _walk_winner_to_destination(attacker, destination: Vector3) -> void:
+	if _skip_requested:
+		return
+	var distance: float = attacker.global_position.distance_to(destination)
+	if distance < 0.03:
+		return
+	attacker.face_world_position(destination)
+	var duration := clampf(distance / 7.0, 0.24, 1.0) / playback_speed
+	var walk_duration := maxf(attacker.state_duration(&"locomotion.walk.forward"), 0.01)
+	attacker.set_animation_speed(walk_duration / duration)
+	attacker.play_state(&"locomotion.walk.forward")
+	await _move_actor(attacker, destination, duration)
 
 
 func _resolve_victim_hit_clip(attacker, victim) -> StringName:
