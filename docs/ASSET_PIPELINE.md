@@ -142,6 +142,23 @@ project-owned bridge timelines until a redistributable source provides a
 meaningfully compatible humanoid rig and passes Animation Browser plus the
 20-cycle Combat Lab gate.
 
+**CMU Graphics Lab Motion Capture Database** was also evaluated on 2026-09-11.
+Its documented commercial-use terms permit inclusion in a commercially sold
+product but prohibit direct resale of the data, with a requested CMU/NSF
+acknowledgement. Trial `79_86` (shooting bow and arrow; SHA-256
+`fabe071c2c3fb0a636035cca5d82ff282f851d711cf1b3736e2b12d355283056`) and
+trial `62_10` (hammering sequence; SHA-256
+`2cdd4da130e60bee55521616688c5b614e60e4c4adcb92ffb3b2321f6faeb49a`) supply
+spine, forearm, and hand joints, but `62_10` is a one-handed nail action—not a
+two-handed weapon strike. Trial `79_01` (chopping wood; SHA-256
+`397e7883dccc8037eec1183b93b91cc0527ab28060b840c0d4996632b237721f`) was
+tested as a two-handed heavy-swing proxy. Conversion to the matching 65-joint
+Quaternius skeleton succeeded structurally, but visual playback produced
+distorted arm axes and lost two-hand contact. No CMU trial, conversion, or
+derived asset is retained. A future CMU candidate requires a deliberate
+per-rig retarget authoring pass and the full visual gate; do not treat generic
+bone-name correspondence as sufficient.
+
 The compatibility proof is structural: both imported scenes use `Armature/Skeleton3D`. At runtime, `PieceActor` places the imported animation player under the base-character root, where its existing tracks address that shared hierarchy. Root translation remains code-controlled.
 
 ## Looping
