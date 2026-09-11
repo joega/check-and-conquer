@@ -55,7 +55,11 @@ func _run() -> void:
 	screen._restart()
 	var board_camera = screen.get_node("Camera3D")
 	var capture_camera_height := 0.0
-	screen.get_node("BattleDirector").impact_landed.connect(func(): capture_camera_height = board_camera.global_position.y)
+	var capture_ui_is_clean := [false]
+	screen.get_node("BattleDirector").impact_landed.connect(func():
+		capture_camera_height = board_camera.global_position.y
+		capture_ui_is_clean[0] = not screen.get_node("UI/Move").visible and screen.get_node("UI/Skip").visible
+	)
 	board_camera.zoom_by(1.7)
 	board_camera.orbit_by(0.7, -0.12)
 	var board_camera_transform: Transform3D = board_camera.global_transform
@@ -64,6 +68,7 @@ func _run() -> void:
 		await screen._submit()
 	assert(screen.get_node("BoardPresenter").matches_state(screen.controller.game.state), "Capture presentation must settle on the committed board state.")
 	assert(capture_camera_height < 12.0, "The camera must be in the close overhead action shot at the capture impact beat.")
+	assert(capture_ui_is_clean[0] and screen.get_node("UI/Move").visible, "Only the skip control may remain over the capture cinematic, and the move controls must return afterward.")
 	assert(not board_camera.global_transform.is_equal_approx(board_camera_transform), "After presentation, the board camera must snap away from a manually roamed view.")
 	assert(board_camera.focused_side() == screen.controller.game.state.side_to_move, "After every move the default three-quarter board view must face the side deciding next.")
 	assert(not screen.get_node("UI/Skip").visible)

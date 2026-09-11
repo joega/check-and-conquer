@@ -12,6 +12,7 @@ const SETTINGS_MENU_NODES := [
 	"Computer", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "MasterVolume", "Fullscreen", "ResetView", "EngineLog",
 ]
+const CAPTURE_HIDDEN_UI_NODES := ["Move", "Submit", "Restart", "Undo", "Back", "Settings", "CameraHelp"]
 var controller
 var selected_square := Types.NO_SQUARE
 var engine
@@ -123,12 +124,14 @@ func _present_result(result) -> void:
 		var victim = $BoardPresenter.actors.get(victim_square)
 		if attacker != null and victim != null:
 			capture_impact_position = victim.global_position + Vector3.UP * 1.0
+			_set_capture_ui_visible(false)
 			$UI/Skip.visible = true
 			$CameraDirector.begin_capture(attacker, victim)
 			await $BattleDirector.play_capture(attacker, victim, Mapper.square_to_world(result.to_square))
 			$BoardPresenter.settle_capture(result)
 			await $CameraDirector.return_to_board().finished
 			$UI/Skip.visible = false
+			_set_capture_ui_visible(true)
 		else:
 			await $BoardPresenter.present_quiet_move(result)
 	else:
@@ -263,6 +266,13 @@ func _set_settings_menu_visible(visible: bool) -> void:
 	for node_name in SETTINGS_MENU_NODES:
 		$UI.get_node(node_name).visible = visible
 	$UI/Settings.text = "Close settings" if visible else "Settings"
+
+
+func _set_capture_ui_visible(visible: bool) -> void:
+	if not visible:
+		_set_settings_menu_visible(false)
+	for node_name in CAPTURE_HIDDEN_UI_NODES:
+		$UI.get_node(node_name).visible = visible
 
 func _load_settings() -> void:
 	settings = SessionSettings.load_values()
