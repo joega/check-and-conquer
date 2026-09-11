@@ -10,7 +10,7 @@ const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
 const LegalMoveGenerator = preload("res://scripts/chess/legal_move_generator.gd")
 const SETTINGS_MENU_NODES := [
-	"Move", "Submit", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
+	"Move", "Submit", "CameraDebug", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
 	"CameraShake", "BeginnerCoach", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
 	"MenuHeading", "DifficultyCaption", "PlayerCaption", "PromotionCaption", "SpeedCaption", "ViewCaption", "VolumeCaption", "DifficultyReadout",
 ]
@@ -23,7 +23,6 @@ var spectator_enabled := false
 var engine_request_pending := false
 var hint_request_pending := false
 var beginner_coach_enabled := true
-var _last_move_trail_token := 0
 var engine_configured := false
 var difficulty_index := 0
 var player_side := Types.WHITE
@@ -43,9 +42,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Keep the tuning readout available while the board remains otherwise clean.
-	# It reports the controller's actual editable orbit state on every frame.
-	$UI/CameraDebug.text = $Camera3D.debug_readout()
+	if $UI/CameraDebug.visible:
+		$UI/CameraDebug.text = $Camera3D.debug_readout()
 
 
 func _initialize_game() -> void:
@@ -223,6 +221,8 @@ func _undo() -> void:
 		return
 	selected_square = Types.NO_SQUARE
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$ChessBoard.clear_hint()
+	$ChessBoard.clear_last_move()
 	$BoardPresenter.set_selected_square(Types.NO_SQUARE)
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Move.clear()
@@ -354,16 +354,8 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 
 
 func _show_last_move_trail(result) -> void:
-	_last_move_trail_token += 1
-	var token := _last_move_trail_token
+	# Remain available throughout the player's decision, until replaced or reset.
 	$ChessBoard.show_last_move(result.from_square, result.to_square)
-	_clear_last_move_trail_later(token)
-
-
-func _clear_last_move_trail_later(token: int) -> void:
-	await get_tree().create_timer(3.2).timeout
-	if token == _last_move_trail_token:
-		$ChessBoard.clear_last_move()
 
 
 func _request_hint() -> void:
@@ -660,6 +652,8 @@ func _show_review_position(index: int) -> void:
 	replay_index = clampi(index, 0, controller.game.state_history.size() - 1)
 	$BoardPresenter.rebuild_from_state(controller.game.state_history[replay_index])
 	$ChessBoard.set_highlights(Types.NO_SQUARE, [])
+	$ChessBoard.clear_hint()
+	$ChessBoard.clear_last_move()
 	$UI/GameOverPanel/Content/Review.visible = false
 	$UI/GameOverPanel/Content/Previous.visible = replay_index > 0
 	$UI/GameOverPanel/Content/Next.visible = replay_index < controller.game.move_history.size()

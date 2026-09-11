@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/board/ChessBoard.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="2"]
@@ -51,6 +51,18 @@ initial_velocity_max = 6.0
 scale_min = 0.65
 scale_max = 1.35
 color = Color(1, 0.75, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="SettingsSurface"]
+bg_color = Color(0.035, 0.045, 0.06, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.34, 0.20, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
 
 [node name="GameScreen" type="Node3D"]
 script = ExtResource("2")
@@ -226,6 +238,7 @@ text = "CHECK!"
 horizontal_alignment = 1
 visible = false
 [node name="CameraDebug" type="Label" parent="UI"]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -247,17 +260,19 @@ theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "Right-drag: rotate  •  Middle-drag: pan  •  Mouse wheel: zoom"
 visible = false
 [node name="Move" type="LineEdit" parent="UI"]
-offset_left = 24.0
-offset_top = 70.0
-offset_right = 160.0
-offset_bottom = 108.0
+z_index = 1
+offset_left = 48.0
+offset_top = 554.0
+offset_right = 210.0
+offset_bottom = 588.0
 placeholder_text = "e2e4"
 visible = false
 [node name="Submit" type="Button" parent="UI"]
-offset_left = 170.0
-offset_top = 70.0
-offset_right = 290.0
-offset_bottom = 108.0
+z_index = 1
+offset_left = 222.0
+offset_top = 554.0
+offset_right = 390.0
+offset_bottom = 588.0
 text = "Make move"
 visible = false
 [node name="Settings" type="Button" parent="UI"]
@@ -275,6 +290,7 @@ theme_override_colors/font_color = Color(1, 0.78, 0.26, 1)
 text = "Hint ✦"
 tooltip_text = "Ask the Beginner Coach for one strong move"
 [node name="SettingsPanel" type="Panel" parent="UI"]
+theme_override_styles/panel = SubResource("SettingsSurface")
 offset_left = 24.0
 offset_top = 152.0
 offset_right = 900.0
@@ -349,8 +365,9 @@ offset_top = 492.0
 offset_right = 876.0
 offset_bottom = 570.0
 bbcode_enabled = false
-fit_content = true
-scroll_active = false
+fit_content = false
+scroll_active = true
+scroll_following = true
 tooltip_text = "Latest Stockfish UCI output"
 [node name="QuickResetView" type="Button" parent="UI"]
 anchor_left = 1.0
