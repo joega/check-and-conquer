@@ -122,6 +122,26 @@ Project-authored overlay semantics are kept separate from imported clips:
 These are not claims that the third-party packs contain skeletal bow or hammer
 clips. A future source clip must go through the complete intake checklist.
 
+### Rejected animation intake
+
+**KayKit Character Animations 1.2** was evaluated on 2026-09-11 as a possible
+CC0 source for `Shoot(2h)Bow` and `HeavyAttack`. The evaluation archive was
+`kaykit_character_animations_1.2.zip` (SHA-256
+`c9d3fbea492dc6edd0903939369a564c2240b892430bcd99e0aee4876110bb8f`), obtained
+from the creator's current [KayKit Character Animations page](https://kaylousberg.itch.io/kaykit-character-animations)
+via its OpenGameArt mirror. It is not a production dependency and no copy is
+retained in the repository.
+
+The pack clears the CC0 license gate but fails the compatibility gate: its
+animated character has only `Body`, `Head`, `armLeft`, `handSlotLeft`,
+`armRight`, and `handSlotRight` bones, while the project's compatible
+Quaternius actors use a 65-joint humanoid skeleton with forearm, hand, and
+lower-body articulation. Retargeting it would make the exact bow/hammer hand
+contact this intake is meant to improve visibly less credible. Keep the
+project-owned bridge timelines until a redistributable source provides a
+meaningfully compatible humanoid rig and passes Animation Browser plus the
+20-cycle Combat Lab gate.
+
 The compatibility proof is structural: both imported scenes use `Armature/Skeleton3D`. At runtime, `PieceActor` places the imported animation player under the base-character root, where its existing tracks address that shared hierarchy. Root translation remains code-controlled.
 
 ## Looping

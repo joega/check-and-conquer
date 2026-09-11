@@ -35,6 +35,11 @@ func _run() -> void:
 	victim = lab.get_node("Victim")
 	var attacker_home: Transform3D = attacker.global_transform
 	var victim_home: Transform3D = victim.global_transform
+	lab._preview_recovery()
+	assert(attacker.current_semantic_state() == &"recovery.capture_ready_01" and attacker.global_transform.is_equal_approx(attacker_home), "Combat Lab recovery preview must preserve the authoritative actor transform.")
+	lab._preview_victory()
+	assert(attacker.current_semantic_state().begins_with("celebration.") and victim.current_semantic_state().begins_with("celebration."), "Combat Lab must expose acknowledgement previews for pose timing inspection.")
+	lab._reset_lab()
 	Engine.time_scale = 32.0
 	for cycle in CYCLE_COUNT:
 		lab._play_capture()

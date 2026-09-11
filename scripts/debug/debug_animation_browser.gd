@@ -31,6 +31,8 @@ func _ready() -> void:
 		get_node("UI/Margin/Controls/%s" % button_name).pressed.connect(_play.bind(CLIPS[button_name], button_name))
 	$UI/Margin/Controls/Attack.pressed.connect(_play_primary_attack)
 	$UI/Margin/Controls/CombatIdle.pressed.connect(_play_combat_idle)
+	$UI/Margin/Controls/Recovery.pressed.connect(_play_recovery)
+	$UI/Margin/Controls/Victory.pressed.connect(_play_victory)
 	$UI/Margin/Controls/Pause.pressed.connect(_toggle_pause)
 	$UI/Margin/Controls/Reset.pressed.connect(_reset)
 	$UI/Margin/Controls/Back.pressed.connect(_back)
@@ -70,6 +72,18 @@ func _play_primary_attack() -> void:
 
 func _play_combat_idle() -> void:
 	_play(_actor.combat_idle_state(), "Combat idle")
+
+
+func _play_recovery() -> void:
+	_actor.recover_after_capture()
+	$UI/Margin/Controls/Pause.text = "Pause"
+	$UI/Margin/Controls/Status.text = "Capture recovery — root stays on the board square."
+
+
+func _play_victory() -> void:
+	_actor.celebrate_victory(0)
+	$UI/Margin/Controls/Pause.text = "Pause"
+	$UI/Margin/Controls/Status.text = "Victory acknowledgement — non-combat gesture."
 
 
 func _reset() -> void:

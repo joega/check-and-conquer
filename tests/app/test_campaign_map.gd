@@ -59,6 +59,14 @@ func _run() -> void:
 	map._select_practice_arena(3)
 	map.persist_selection(false, map.practice_arena_id)
 	assert(SessionSettings.load_values().campaign_enabled == false and SessionSettings.load_values().selected_arena_id == "lava_forge", "Practice must persist a freely selected arena while disabling campaign progression.")
+	map.set_campaign_snapshot({
+		"current_arena_id": "forest_ruins",
+		"unlocked_ids": ["mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins"],
+		"completed_ids": ["mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins"],
+	})
+	assert("FINAL CONQUERED" in map.get_node("Route/ForestRuins").text, "The final route card must become a distinct completed-campaign landmark.")
+	assert("CAMPAIGN CONQUERED" in map.get_node("CampaignFocus/Chapter").text and "FINAL GROVE" in map.get_node("CampaignFocus/Title").text, "A complete campaign must show a distinct completion moment instead of a disabled current objective.")
+	assert(map.get_node("EnterArena").disabled and "CAMPAIGN CONQUERED" in map.get_node("EnterArena").text, "Completion must not offer an invalid sixth campaign match.")
 	map.queue_free()
 	await process_frame
 	print("PASS: campaign map route states and arena selection persistence.")

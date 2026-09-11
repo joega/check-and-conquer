@@ -34,6 +34,10 @@ func _run() -> void:
 	browser._play_combat_idle()
 	assert(browser._actor.combat_idle_state() == &"combat.idle.spell_01")
 	assert(browser._actor.supports_state(browser._actor.combat_idle_state()))
+	browser._play_recovery()
+	assert(browser._actor.current_semantic_state() == &"recovery.capture_ready_01", "Animation Browser must expose the root-stable post-capture recovery preview.")
+	browser._play_victory()
+	assert(browser._actor.current_semantic_state().begins_with("celebration."), "Animation Browser must expose the non-combat victory acknowledgement preview.")
 	browser._select_archetype(3)
 	await process_frame
 	await process_frame

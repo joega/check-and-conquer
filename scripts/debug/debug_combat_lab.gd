@@ -38,6 +38,8 @@ func _ready() -> void:
 	$BattleDirector.presentation_finished.connect(_finish_capture)
 	_play_button.pressed.connect(_play_capture)
 	_reset_button.pressed.connect(_reset_lab)
+	$UI/Margin/Controls/PreviewRecovery.pressed.connect(_preview_recovery)
+	$UI/Margin/Controls/PreviewVictory.pressed.connect(_preview_victory)
 	$UI/Margin/Controls/Back.pressed.connect(_back)
 	_status.text = "Ready — camera: capture_medium | anchors: 2.6 m"
 
@@ -106,6 +108,21 @@ func _reset_lab() -> void:
 	$UI/Margin/Controls/VictimArchetype.disabled = false
 	$UI/Margin/Controls/PlaybackSpeed.disabled = false
 	_status.text = "Reset complete — transforms restored exactly."
+
+
+func _preview_recovery() -> void:
+	if _play_button.disabled:
+		return
+	_attacker.recover_after_capture()
+	_status.text = "Capture recovery preview — attacker root remains fixed."
+
+
+func _preview_victory() -> void:
+	if _play_button.disabled:
+		return
+	_attacker.celebrate_victory(0)
+	_victim.celebrate_victory(1)
+	_status.text = "Victory acknowledgement preview — varied non-combat gestures."
 
 
 func _show_impact() -> void:

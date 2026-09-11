@@ -188,6 +188,8 @@ func play_clip(clip: StringName) -> void:
 
 func play_state(semantic_id: StringName) -> void:
 	_cancel_role_action(semantic_id != &"attack.bow.draw_release_01")
+	if semantic_id != &"recovery.capture_ready_01":
+		_cancel_recovery()
 	_animation_paused = false
 	_last_played_state = semantic_id
 	if CLIP_MAP_2.has(semantic_id):
@@ -264,8 +266,7 @@ func recover_after_capture() -> void:
 	# local exhale/brace after the decisive beat, so it cannot introduce root
 	# drift or delay the logical turn handoff.
 	_cancel_role_action(true)
-	if _recovery_tween != null and _recovery_tween.is_valid():
-		_recovery_tween.kill()
+	_cancel_recovery()
 	_last_played_state = &"recovery.capture_ready_01"
 	_animation_paused = false
 	play_clip(CLIP_MAP[&"recovery.capture_ready_01"])
@@ -341,6 +342,12 @@ func _cancel_role_action(remove_arrow: bool) -> void:
 		release_authored_projectile()
 
 
+func _cancel_recovery() -> void:
+	if _recovery_tween != null and _recovery_tween.is_valid():
+		_recovery_tween.kill()
+	_recovery_tween = null
+
+
 func combat_idle_state() -> StringName:
 	# The UAL1 Rail idle is not available on every imported outfit skeleton.
 	# Neutral idle is present for every role and avoids a preview/control state
@@ -350,6 +357,7 @@ func combat_idle_state() -> StringName:
 
 func start_battle_stance() -> void:
 	_cancel_role_action(true)
+	_cancel_recovery()
 	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
 	# The supplied looping clips visibly snap at their seams. Hold each actor in
 	# a clean neutral pose, then let BoardPresenter occasionally select one actor
@@ -558,6 +566,7 @@ func set_home_transform(value: Transform3D) -> void:
 
 func reset_actor() -> void:
 	_cancel_role_action(true)
+	_cancel_recovery()
 	global_transform = _home_transform
 	visible = true
 	if _animation_player != null:

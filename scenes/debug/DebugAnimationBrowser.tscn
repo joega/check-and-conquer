@@ -68,6 +68,14 @@ text = "Combat Idle"
 layout_mode = 2
 text = "Sword Attack"
 
+[node name="Recovery" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Capture Recovery"
+
+[node name="Victory" type="Button" parent="UI/Margin/Controls"]
+layout_mode = 2
+text = "Victory Acknowledgement"
+
 [node name="Hit" type="Button" parent="UI/Margin/Controls"]
 layout_mode = 2
 text = "Hit"

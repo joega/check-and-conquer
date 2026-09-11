@@ -26,6 +26,7 @@ var arena_selected := "mountain_fortress"
 var practice_arena_id := "mountain_fortress"
 var campaign := CampaignProgress.new()
 var _session_values: Dictionary = {}
+var _completion_tween: Tween
 func _ready() -> void:
 	$EnterArena.pressed.connect(_enter_selected_arena)
 	$PracticeArena.pressed.connect(_enter_practice_arena)
@@ -66,10 +67,11 @@ func refresh_state() -> void:
 			continue
 		var conquered := arena_id in campaign.completed_ids
 		var available := campaign.is_unlocked(arena_id) and not conquered
+		var final_conquest := conquered and campaign.campaign_complete() and index == ROUTE_NODE_NAMES.size() - 1
 		node.disabled = not available
 		var label_color := Color(1.0, 0.82, 0.35)
 		if conquered:
-			node.text = "✓  %s\nCONQUERED" % ARENA_TITLES[index]
+			node.text = "✦  %s\nFINAL CONQUERED" % ARENA_TITLES[index] if final_conquest else "✓  %s\nCONQUERED" % ARENA_TITLES[index]
 			label_color = Color(0.48, 0.92, 0.62)
 		elif available:
 			var arena := ArenaCatalog.definition(arena_id)
@@ -81,18 +83,28 @@ func refresh_state() -> void:
 		node.modulate = Color.WHITE
 		node.add_theme_color_override("font_color", label_color)
 		node.add_theme_color_override("font_disabled_color", label_color)
-		_apply_route_hierarchy(node, available)
+		_apply_route_hierarchy(node, available, final_conquest)
 	$EnterArena.disabled = not campaign.is_unlocked(arena_selected) or arena_selected in campaign.completed_ids
-	var selected_arena := ArenaCatalog.definition(arena_selected)
-	$CampaignFocus/Chapter.text = "%s  ·  CURRENT OBJECTIVE" % str(selected_arena.chapter).to_upper()
-	$CampaignFocus/Title.text = str(selected_arena.title)
-	$CampaignFocus/Detail.text = "%s  —  %s" % [str(selected_arena.opponent), str(selected_arena.intro)]
-	$EnterArena.text = "ENTER ARENA  ·  %s" % str(selected_arena.title).to_upper()
+	if campaign.campaign_complete():
+		_show_campaign_conquered_state()
+	else:
+		if _completion_tween != null and _completion_tween.is_valid():
+			_completion_tween.kill()
+		_completion_tween = null
+		$CampaignFocus.modulate = Color.WHITE
+		var selected_arena := ArenaCatalog.definition(arena_selected)
+		$CampaignFocus/Chapter.text = "%s  ·  CURRENT OBJECTIVE" % str(selected_arena.chapter).to_upper()
+		$CampaignFocus/Title.text = str(selected_arena.title)
+		$CampaignFocus/Detail.text = "%s  —  %s" % [str(selected_arena.opponent), str(selected_arena.intro)]
+		$CampaignFocus/Chapter.modulate = Color.WHITE
+		$CampaignFocus/Title.modulate = Color.WHITE
+		$CampaignFocus/Detail.modulate = Color.WHITE
+		$EnterArena.text = "ENTER ARENA  ·  %s" % str(selected_arena.title).to_upper()
 	var practice_index := CampaignProgress.ARENA_IDS.find(practice_arena_id)
 	$PracticeArenaPicker.select(maxi(practice_index, 0))
 
 
-func _apply_route_hierarchy(card: Button, is_current: bool) -> void:
+func _apply_route_hierarchy(card: Button, is_current: bool, is_final_conquest := false) -> void:
 	# One current route card acts as the campaign's visual destination. Locked
 	# and conquered locations keep their readable backing but deliberately lose
 	# the gold keyline, so the central action does not compete with five peers.
@@ -100,14 +112,35 @@ func _apply_route_hierarchy(card: Button, is_current: bool) -> void:
 	if base == null:
 		return
 	var style := base.duplicate() as StyleBoxFlat
-	style.border_width_left = 3 if is_current else 1
-	style.border_width_top = 3 if is_current else 1
-	style.border_width_right = 3 if is_current else 1
-	style.border_width_bottom = 3 if is_current else 1
-	style.border_color = Color(1.0, 0.76, 0.25, 0.96) if is_current else Color(0.82, 0.61, 0.22, 0.28)
-	style.bg_color = Color(0.06, 0.09, 0.14, 0.88) if is_current else Color(0.025, 0.045, 0.08, 0.68)
+	var emphasized := is_current or is_final_conquest
+	style.border_width_left = 3 if emphasized else 1
+	style.border_width_top = 3 if emphasized else 1
+	style.border_width_right = 3 if emphasized else 1
+	style.border_width_bottom = 3 if emphasized else 1
+	style.border_color = Color(0.48, 0.92, 0.62, 0.98) if is_final_conquest else Color(1.0, 0.76, 0.25, 0.96) if is_current else Color(0.82, 0.61, 0.22, 0.28)
+	style.bg_color = Color(0.035, 0.12, 0.08, 0.90) if is_final_conquest else Color(0.06, 0.09, 0.14, 0.88) if is_current else Color(0.025, 0.045, 0.08, 0.68)
 	card.add_theme_stylebox_override("normal", style)
 	card.add_theme_stylebox_override("disabled", style)
+
+
+func _show_campaign_conquered_state() -> void:
+	$CampaignFocus/Chapter.text = "CAMPAIGN CONQUERED"
+	$CampaignFocus/Title.text = "THE FINAL GROVE IS YOURS"
+	$CampaignFocus/Detail.text = "Five arenas secured. Practice any battlefield from the Warpath."
+	$CampaignFocus/Chapter.modulate = Color(0.58, 1.0, 0.72)
+	$CampaignFocus/Title.modulate = Color(1.0, 0.84, 0.34)
+	$CampaignFocus/Detail.modulate = Color(0.82, 0.94, 0.84)
+	$EnterArena.text = "CAMPAIGN CONQUERED"
+	$EnterArena.disabled = true
+	# The completion read needs a distinct arrival moment without obscuring the
+	# route artwork or turning the map into a reward screen with new gameplay.
+	if _completion_tween != null and _completion_tween.is_valid():
+		_completion_tween.kill()
+	$CampaignFocus.modulate = Color(1.0, 1.0, 1.0, 0.58)
+	_completion_tween = create_tween()
+	_completion_tween.tween_property($CampaignFocus, "modulate:a", 1.0, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_completion_tween.tween_property($CampaignFocus, "modulate:a", 0.82, 0.80).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_completion_tween.set_loops()
 
 
 func select_arena(arena_id: String) -> void:

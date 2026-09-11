@@ -26,8 +26,15 @@ func _scene(path: String):
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(output_dir)
-	await _scene("res://scenes/app/CampaignMap.tscn")
+	var campaign_map = await _scene("res://scenes/app/CampaignMap.tscn")
 	await _shot("01-campaign")
+	campaign_map.set_campaign_snapshot({
+		"current_arena_id": "forest_ruins",
+		"unlocked_ids": ["mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins"],
+		"completed_ids": ["mountain_fortress", "arcane_sky_citadel", "frozen_keep", "lava_forge", "forest_ruins"],
+	})
+	await create_timer(0.8).timeout
+	await _shot("01b-campaign-conquered")
 	var game = await _scene("res://scenes/app/GameScreen.tscn")
 	await create_timer(3.0).timeout
 	await _shot("02-board")
@@ -64,6 +71,13 @@ func _run() -> void:
 		browser._play_primary_attack()
 		await create_timer(0.35).timeout
 		await _shot("07-role-%d-contact" % index)
+		if index == 3:
+			browser._play_recovery()
+			await create_timer(0.16).timeout
+			await _shot("07-role-%d-capture-recovery" % index)
+			browser._play_victory()
+			await create_timer(0.16).timeout
+			await _shot("07-role-%d-victory" % index)
 		browser._actor.side = -1
 		browser._actor.restore_board_facing()
 		await _shot("07-role-%d-black-view" % index)
@@ -78,6 +92,14 @@ func _run() -> void:
 	await _shot("10-combat-settled")
 	lab._reset_lab()
 	await _shot("11-combat-reset")
+	lab._preview_recovery()
+	await create_timer(0.16).timeout
+	await _shot("11b-combat-recovery")
+	lab._preview_victory()
+	await create_timer(0.16).timeout
+	await _shot("11c-combat-victory")
+	lab._reset_lab()
+	await process_frame
 	# Explicit spell captures exercise the visual changes rather than relying on
 	# the default melee lab pairing.
 	for spell_role in [2, 4]:

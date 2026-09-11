@@ -22,6 +22,16 @@ func _run() -> void:
 	var lab = preload("res://scenes/debug/DebugCombatLab.tscn").instantiate()
 	root.add_child(lab)
 	await process_frame
+	# These controls intentionally bypass a match so their end poses can be
+	# inspected without capture timing or destination movement in the way.
+	lab._preview_recovery()
+	await create_timer(0.16).timeout
+	await _shot("capture-recovery")
+	lab._preview_victory()
+	await create_timer(0.16).timeout
+	await _shot("victory-acknowledgement")
+	lab._reset_lab()
+	await process_frame
 	# The bow shot is captured during its nocked-arrow preparation, then again
 	# at contact. The precise release hand-off remains owned by BattleDirector.
 	lab._select_attacker(2)

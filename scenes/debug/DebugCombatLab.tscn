@@ -89,6 +89,16 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Reset"
 
+[node name="PreviewRecovery" type="Button" parent="UI/Margin/Controls"]
+custom_minimum_size = Vector2(220, 38)
+layout_mode = 2
+text = "Preview Capture Recovery"
+
+[node name="PreviewVictory" type="Button" parent="UI/Margin/Controls"]
+custom_minimum_size = Vector2(220, 38)
+layout_mode = 2
+text = "Preview Victory Acknowledgement"
+
 [node name="Back" type="Button" parent="UI/Margin/Controls"]
 custom_minimum_size = Vector2(220, 40)
 layout_mode = 2
