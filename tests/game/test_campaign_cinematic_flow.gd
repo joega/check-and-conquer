@@ -22,6 +22,7 @@ func _run() -> void:
 	assert(not screen.get_node("UI/Status").visible and not screen.get_node("UI/Settings").visible and not screen.get_node("UI/Hint").visible, "Story playback must own the HUD and hide gameplay controls.")
 	assert(screen.get_node("CampaignCinematic/Overlay/Skip").visible, "Story playback must expose its Skip control.")
 	assert(screen.has_node("GrandmasterCeremony/Grandmaster") and screen.get_node("BoardPresenter").actor_count() == 32, "The Grandmaster must remain on a dedicated dais, outside the authoritative 32-piece board projection.")
+	assert((screen.get_node("ArenaEntryHorn") as AudioStreamPlayer).playing, "The arena-entry horn must carry the opening cinematic arrival.")
 	var initial_fen: String = screen.controller.game.state.to_fen()
 	screen.get_node("UI/Move").text = "e2e4"
 	await screen._submit()
@@ -33,6 +34,7 @@ func _run() -> void:
 	assert(screen.screen_phase == screen.ScreenPhase.PLAYING and screen.controller.phase == screen.controller.Phase.PLAYER_INPUT, "Skip must hand off exactly once to the first player turn.")
 	assert(screen.get_node("Camera3D").controls_enabled(), "Skipping an intro must restore board camera input.")
 	assert(screen.get_node("UI/Status").visible and screen.get_node("UI/Settings").visible and screen.get_node("UI/Hint").visible, "Story handoff must restore normal HUD ownership.")
+	assert(not (screen.get_node("ArenaEntryHorn") as AudioStreamPlayer).playing, "Once the full board returns from the opening cinematic, only the arena ambience may continue.")
 	assert(screen.controller.game.move_history.is_empty() and screen.controller.game.game_result() == "ongoing" and screen.controller.game.legal_moves().size() == 20, "A cinematic handoff must preserve the untouched legal starting position.")
 	assert(not screen.get_node("UI/OutcomeBanner").visible, "Restoring the cinematic HUD must not turn the OutcomeBanner placeholder into a false check announcement.")
 	for actor in screen.get_node("BoardPresenter").actors.values():

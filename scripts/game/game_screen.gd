@@ -138,6 +138,10 @@ func _begin_match() -> void:
 		_set_cinematic_hud_visible(false)
 		if completion.is_empty() or int(completion[0]) != run_id or not is_instance_valid(controller):
 			return
+		# The horn punctuates arrival through the story sequence.  Once the
+		# ceremony has restored the complete board, leave the arena ambience as
+		# the sole match audio bed.
+		$ArenaEntryHorn.stop()
 	else:
 		_play_arena_intro()
 	_reset_match_presentation()
