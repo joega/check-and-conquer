@@ -196,3 +196,46 @@ arrow handoff and authoritative settlement remains unchanged. The overlays are
 not represented as acquired third-party clips; a future skeletal-animation
 intake still needs provenance and compatibility review. See
 `TERRA_VISUAL_TRANCHE_03.md` for timing and visual verification.
+
+## ADR-022 — Explicit player entry and spectator results
+
+**Status:** Accepted
+**Date:** 2026-09-11
+**Decision:** Campaign-map Enter Arena clears a saved spectator preference.
+Practice retains that preference, and the in-match spectator toggle remains
+available. Spectator results identify the actual winning color and state that
+watched matches do not unlock arenas.
+**Reason:** A saved spectator setting silently converted campaign entry into
+an exhibition, while the result panel could describe an engine win as the
+player's victory even though advancement correctly rejected it.
+**Consequences:** Human campaign eligibility is unchanged. No saved victories
+are inferred or awarded retroactively. Reproduce by saving spectator mode,
+returning to the map, and entering a campaign arena: it must start a player
+match. Explicitly enable spectator mode to inspect the revised result text.
+Regression coverage lives in the campaign-map and GameScreen integration tests.
+
+## ADR-023 — Campaign cinematics own presentation, never match authority
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Mountain Fortress cinematics use a dedicated camera and a small presentation director. GameScreen retains lifecycle, chess, campaign-save, and result-panel ownership; intro holds TurnController at `READY`, while victory progress is recorded before the outro starts.
+**Reason:** A timeline completion or Skip must never create a move, unlock an arena, or overwrite the player's board camera state.
+**Consequences:** Practice/spectator paths continue to bypass the slice. Every completion path restores board controls and the original camera transform; missing cinematic presentation falls back to normal play/results. The UCI adapter drains a cancelled search behind an `isready` barrier so a late `bestmove` cannot cross match transitions.
+
+## ADR-024 — Campaign sequence data is a small finite presentation contract
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Each authored campaign sequence is a `CampaignCinematicSequence`
+resource identified by `arena_id` and outcome. It contains ordered
+`CampaignCinematicCue` resources: stable cue/speaker IDs, display text and hold,
+camera position/target/duration, and only the finite ceremony actions
+`seating_and_approach`, `return`, and `formation_restore`. `GameScreen` selects
+the resource from immutable arena/result facts through `CampaignCinematicCatalog`;
+the director resolves visual speaker bindings and never reads or changes chess or
+campaign state.
+**Reason:** Arena writers need to author dialogue, timing, and shots without
+creating alternate match flows or inferring domain results in presentation code.
+**Consequences:** Unknown arena/outcome data completes asynchronously through the
+existing fallback path. New sequences must use catalog identity and the finite
+action vocabulary before parallel content work begins.

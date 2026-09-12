@@ -218,4 +218,15 @@ Not V1 commitments:
 
 ## M10 — Grand arena campaign
 
+**Campaign cinematics (2026-09-12):** All five arenas now use data-authored,
+skippable intros and outcomes with a dedicated camera, camera-projected speech
+bubbles, a persisted Campaign Cinematics setting, and explicit lifecycle
+ownership. Mountain, Arcane, Frozen, Lava, and Forest have story-specific
+intro/victory/defeat data; draw uses a shared treatment, and a newly earned
+Forest completion selects the distinct conquest ending while repeats use an
+ordinary victory. The real Grandmaster ceremony remains a rebuildable
+presentation projection: kings return to exact authoritative transforms and
+turns stay `READY` until intro completion. `DebugCinematicLab.tscn` provides
+deterministic arena/outcome/side/fixture replay, Skip, Reset, and stress.
+
 **Progress:** Implemented. The game launches directly to a map-like five-stop Warpath route, with temporary developer tools on its lower left and Practice Arena/Quick Match plus an unrestricted arena picker on its lower right. `CampaignProgress` advances only after the human player checkmates Stockfish at the current arena; Practice Arena explicitly disables progression. Campaign progress persists as a validated primitive snapshot and unlocks the next location. Mountain Fortress Terrace is the first playable grand arena; Arcane Sky Citadel, Frozen Keep, Lava Forge, and Forest Ruins are themed follow-up locations, with Forest Ruins as the final match. Every location has an original generated 2:1 panorama plus a shared local terrace ring plus distinctive watchtowers, obelisks, ice spires, forge braziers, or ruined arches, neutral board lighting, HUD identity, and a brief chapter card that introduces a location-specific opponent and objective. The campaign shell changes no chess rule, board coordinate, piece, engine, or capture contract.

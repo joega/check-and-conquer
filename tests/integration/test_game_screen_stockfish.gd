@@ -3,6 +3,7 @@ extends SceneTree
 const GAME_SCREEN = preload("res://scenes/app/GameScreen.tscn")
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const MoveResult = preload("res://scripts/chess/move_result.gd")
+const CinematicCatalog = preload("res://scripts/presentation/campaign_cinematic_catalog.gd")
 
 
 func _init() -> void:
@@ -10,7 +11,12 @@ func _init() -> void:
 
 
 func _run() -> void:
-	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
+	var fast_settings := SessionSettings.DEFAULTS.duplicate()
+	# This broad Stockfish integration test exercises ordinary play; dedicated
+	# cinematic tests cover the default campaign presentation without spending
+	# eighteen seconds before every engine fixture.
+	fast_settings.campaign_cinematics_enabled = false
+	assert(SessionSettings.save_values(fast_settings) == OK)
 	var screen = GAME_SCREEN.instantiate()
 	root.add_child(screen)
 	await process_frame
@@ -32,7 +38,7 @@ func _run() -> void:
 	var settings_panel := screen.get_node("UI/SettingsPanel") as Control
 	assert(screen.get_node("UI/CameraDebug").visible, "Menu must retain access to camera tuning readout.")
 	assert(is_equal_approx(settings_panel.get_theme_stylebox("panel").bg_color.a, 1.0), "Settings must have an opaque reading surface.")
-	for node_name in ["Move", "Submit", "Restart", "Undo", "Pause", "Back", "Difficulty", "PlayerSide", "Promotion", "Spectator", "AnimationSpeed", "CameraShake", "BeginnerCoach", "Fullscreen", "ResetView", "MasterVolume", "EngineLog"]:
+	for node_name in ["Move", "Submit", "Restart", "Undo", "Pause", "Back", "Difficulty", "PlayerSide", "Promotion", "Spectator", "AnimationSpeed", "CameraShake", "BeginnerCoach", "CampaignCinematics", "Fullscreen", "ResetView", "MasterVolume", "EngineLog"]:
 		assert(settings_panel.get_global_rect().encloses((screen.get_node("UI/%s" % node_name) as Control).get_global_rect()), "Every settings control must fit inside the compact settings panel.")
 	for left_right in [["Restart", "Undo"], ["Undo", "Pause"], ["Pause", "Back"], ["Difficulty", "PlayerSide"], ["PlayerSide", "Promotion"], ["Promotion", "Spectator"]]:
 		assert(not (screen.get_node("UI/%s" % left_right[0]) as Control).get_global_rect().intersects((screen.get_node("UI/%s" % left_right[1]) as Control).get_global_rect()), "Settings row controls must not overlap.")
@@ -42,6 +48,13 @@ func _run() -> void:
 	screen._resume_match()
 	assert(not screen.match_paused and not paused and not screen.get_node("UI/PauseOverlay").visible, "Resuming must restore board input and normal simulation.")
 	assert(screen.computer_enabled, "The playable screen should enable Stockfish by default.")
+	var history_before_stale: int = screen.controller.game.move_history.size()
+	screen._engine_request = {"generation": screen._match_generation - 1, "kind": "hint", "fen": screen.controller.game.state.to_fen()}
+	screen.hint_request_pending = true
+	screen._on_engine_bestmove("e2e4")
+	assert(screen.controller.game.move_history.size() == history_before_stale and screen.get_node("ChessBoard")._hint_squares.is_empty(), "A delayed cancelled hint must not mutate the fresh match or paint stale guidance.")
+	screen._engine_request.clear()
+	screen.hint_request_pending = false
 	screen.get_node("UI/Move").text = "e2e4"
 	await screen._submit()
 	var deadline := Time.get_ticks_msec() + 12000
@@ -129,6 +142,15 @@ func _run() -> void:
 	screen.controller.game.state.side_to_move = screen.player_side
 	var defeat_copy: Dictionary = screen._outcome_copy(check_result, false)
 	assert("DEFEAT" in defeat_copy.title, "Checkmate must clearly distinguish a player defeat.")
+	screen.spectator_enabled = true
+	for losing_side in [1, -1]:
+		screen.controller.game.state.side_to_move = losing_side
+		var watched_copy: Dictionary = screen._outcome_copy(check_result, false)
+		assert(watched_copy.title == "SPECTATOR MATCH COMPLETE", "An engine exhibition must not claim the human won.")
+		assert("do not unlock" in watched_copy.detail, "Spectator results must explain why campaign progress is unchanged.")
+		assert(("Black wins" if losing_side == 1 else "White wins") in watched_copy.detail)
+		assert(not screen._record_campaign_victory_if_earned(check_result), "Neither spectator winner can advance the campaign.")
+	screen.spectator_enabled = false
 	screen._show_outcome_banner("CHECK!", Color.WHITE, 0.01)
 	assert(screen.get_node("UI/OutcomeBanner").visible, "Checks and final outcomes need a prominent board-facing callout.")
 	board_camera.reset_view()
@@ -141,6 +163,13 @@ func _run() -> void:
 	assert(screen._record_campaign_victory_if_earned(campaign_win), "A human checkmate at the current arena must unlock the next campaign location.")
 	assert(screen.campaign.current_arena() == "arcane_sky_citadel", "Campaign victory must advance from Mountain Fortress Terrace to Arcane Sky Citadel.")
 	assert(not screen._record_campaign_victory_if_earned(campaign_win), "The same arena victory cannot unlock multiple campaign locations.")
+	var return_map = load("res://scenes/app/CampaignMap.tscn").instantiate()
+	root.add_child(return_map)
+	await process_frame
+	assert(not return_map.get_node("Route/ArcaneSkyCitadel").disabled, "Returning to the map must load the saved human victory and unlock the second arena.")
+	assert("CONQUERED" in return_map.get_node("Route/MountainFortress").text)
+	return_map.queue_free()
+	await process_frame
 	screen._set_capture_speed(1)
 	screen._set_camera_shake(false)
 	screen._set_master_volume(-8.0)
@@ -170,7 +199,9 @@ func _run() -> void:
 	await process_frame
 	assert(arcane_screen.arena_id == "arcane_sky_citadel" and arcane_screen.get_node("BattlefieldEnvironment").arena_id == "arcane_sky_citadel", "A campaign-selected arena must apply its own presentation environment to the match.")
 	assert("Arcane Sky Citadel" in arcane_screen.get_node("UI/ArenaTitle").text, "The selected arena identity must appear in the match HUD.")
-	assert("Sky Seer" in arcane_screen.get_node("UI/ArenaIntro/Panel/Content/Challenge").text, "Each arena intro must introduce its own campaign opponent.")
+	var arcane_intro: Resource = CinematicCatalog.sequence_for("arcane_sky_citadel", "intro")
+	assert(arcane_screen.screen_phase == arcane_screen.ScreenPhase.INTRO and arcane_screen.get_node("CampaignCinematic").is_active() and arcane_intro.cues[1].speaker_label == "Sky Seer", "Each arena must select its authored cinematic opponent introduction.")
+	arcane_screen.get_node("CampaignCinematic").skip()
 	arcane_screen.queue_free()
 	await process_frame
 	var practice_session := SessionSettings.DEFAULTS.duplicate()
@@ -184,7 +215,7 @@ func _run() -> void:
 	assert(practice_screen.arena_id == "lava_forge" and practice_screen.get_node("BattlefieldEnvironment").arena_id == "lava_forge", "Practice must allow any selected arena even while it remains campaign-locked.")
 	practice_screen.queue_free()
 	await process_frame
-	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
+	assert(SessionSettings.save_values(fast_settings) == OK)
 	var surrender_screen = GAME_SCREEN.instantiate()
 	root.add_child(surrender_screen)
 	await process_frame

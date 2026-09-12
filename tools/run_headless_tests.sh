@@ -16,6 +16,11 @@ tests=(
   tests/chess/test_turn_controller.gd
   tests/game/test_session_settings.gd
   tests/game/test_campaign_progress.gd
+  tests/game/test_campaign_cinematic_flow.gd
+  tests/game/test_campaign_cinematic_modes.gd
+  tests/game/test_campaign_terminal_cinematics.gd
+  tests/game/test_arcane_campaign_cinematic_flow.gd
+  tests/game/test_final_conquest_selection.gd
   tests/app/test_main_loading.gd
   tests/app/test_campaign_map.gd
   tests/engine/test_uci_protocol.gd
@@ -26,6 +31,13 @@ tests=(
   tests/presentation/test_board_camera_controller.gd
   tests/presentation/test_battlefield_environment.gd
   tests/presentation/test_camera_director.gd
+  tests/presentation/test_cinematic_director.gd
+  tests/presentation/test_campaign_cinematic_catalog.gd
+  tests/presentation/test_arcane_cinematic_matrix.gd
+  tests/presentation/test_cinematic_lifecycle.gd
+  tests/presentation/test_debug_cinematic_lab.gd
+  tests/presentation/test_grandmaster_ceremony.gd
+  tests/presentation/test_king_parley.gd
   tests/presentation/test_procedural_impact_audio.gd
   tests/presentation/test_arena_audio_director.gd
   tests/presentation/test_weapon_presentation.gd
@@ -33,6 +45,7 @@ tests=(
   tests/presentation/test_authored_role_actions.gd
   tests/presentation/test_battle_death_completion.gd
   tests/presentation/test_melee_polish.gd
+  tests/presentation/test_piece_actor_animation_routing.gd
   tests/presentation/test_animation_browser.gd
   tests/presentation/test_board_presenter.gd
   tests/presentation/test_capture_projection.gd

@@ -22,4 +22,6 @@ Chess state will be authoritative. Presentation receives structured move results
 
 `CampaignProgress` is a pure `scripts/game/` model for the ordered five-location route. It persists primitive snapshots, unlocks exactly one next arena after an authoritative player victory, and has no Node, chess, engine, or rendering dependency. `CampaignMap` only selects its current unlocked destination. `ArenaCatalog` and `BattlefieldEnvironment` map that selected ID to a panorama, local terrace materials, lighting, and decorative markers; they never change rules, positions, or combat anchors.
 
+`CinematicDirector` is presentation-only and owns a separate `Camera3D` while a campaign sequence runs. It receives only side/outcome display context, disables the board-camera controls, and emits one completion after normal playback or Skip. `GameScreen` owns the `INITIALIZING → INTRO → PLAYING → OUTRO → RESULTS` lifecycle; it alone starts turns, records campaign wins, and opens result/review UI. Restoring the board camera never changes its orbit/pan/zoom state.
+
 `PieceActor` chooses a deterministic per-character battle stance from normalized Quaternius clips and offsets its loop phase. It may play a bounded gesture before returning to its assigned stance; `BoardPresenter` restarts that stance after a quiet move or capture settlement. The actor has no chess-rule knowledge.

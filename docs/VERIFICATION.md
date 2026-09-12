@@ -20,7 +20,11 @@ The suite covers:
 - board mapping, board-edge coordinate labels, FEN-to-actor reconstruction, input projection, quiet/capture/special-move settlement, and all 36 choreography resolver pairings;
 - camera orbit/zoom and capture-shot exit;
 - capture audio generation, full victim-death completion, the animation browser, and 20 deterministic Combat Lab play/reset cycles;
+- Mountain Fortress Grandmaster dais props, king-only parley staging, and exact 32-piece authoritative formation restoration;
 - a playable GameScreen turn against Stockfish and autonomous Stockfish-versus-Stockfish spectator turns.
+- all delivered campaign cinematic catalog resources, terminal outcome selection,
+  Arcane/Frozen/Lava/Forest real-lab side/outcome/sparse-fixture Skip matrix,
+  and one-time Forest conquest selection.
 
 The FEN Position Loader test is part of this command. It verifies valid FEN reconstruction in the scene's actual `BoardPresenter` and confirms invalid input preserves the last valid visual board.
 
@@ -65,6 +69,58 @@ Before tagging a public release, run the game from the editor and review:
 4. Settings-menu readability at the target window size.
 5. The final title, logo, and marketing art for originality and trademark suitability.
 
-## Known environment note
+## Ceremony seating and king arrival regression (2026-09-12)
+
+The Grandmaster uses the existing 2.75 chair scale and 1.48 actor scale (with
+2.0 internal character display scale). Chair_1's seat top is at source y=0.50.
+UAL1 Sitting_Idle puts the pelvis behind the actor origin; the seated origin
+now sits 0.60 world metres toward the board from the chair origin. This puts
+the hips over the seat, knees beyond its front edge, and feet on the dais.
+The ceremony test samples actual pelvis, knee, and toe bones in chair space
+through two seconds of seated idle, rather than asserting equal root positions.
+
+The king arrival failure was an animation-library mismatch: Idle_Rail_Call
+exists in UAL2, but stance.challenge_01 requested it from UAL1. The old request
+recorded a standing semantic state while leaving Walk playing. Both challenge
+and the Grandmaster's Idle_FoldArms alias now use their supplying UAL2 player.
+The new `test_king_parley.gd` checks actual players on the arrival frame before
+dialogue, for both colors and either commander side, and during speaker swaps.
+
+Listener pose follow-up: the ceremony now uses `idle.neutral` (UAL1 `Idle`)
+at the gates, on arrival, and while listening. The rail-call pose leans forward
+and gestures with both hands, so it is unsuitable for a standing listener.
+Only the current speaker uses `Idle_Talking`; the parley regression asserts
+the listener's actual `Idle` playback after each speaker swap.
+
+Camera follow-up: Grandmaster lines cut to her dais before their text appears
+(opening, objective, and victory). Her opening line holds for four seconds.
+The kings share a west-to-east group shot with the Grandmaster visible behind
+them; this composition stays on the same side for either player color because
+the dais is fixed. Her speech anchor clears her taller seated silhouette.
+`capture_grandmaster_ceremony.gd` now captures each intro dialogue cue by title
+instead of using stale fixed delays. The cinematic test checks Grandmaster
+frustum visibility throughout each of her lines for both player colors.
+
+Verification: ceremony pose/projection test, king parley regression, campaign
+intro/outro Skip integration, cinematic director's 20-cycle check, and animation
+browser test passed. Rendered the actual Mountain Fortress intro and inspected
+front, side, and three-quarter seating views with Godot's OpenGL renderer.
+GameScreen-based runs can still emit their existing shutdown resource-leak
+diagnostic; the isolated king regression and seating render exit cleanly.
+
+Reproduce the close seating views without changing campaign saves:
+
+```sh
+XDG_DATA_HOME=/tmp/cac-seat-review godot --path . --script tools/capture_seating_fit.gd -- /tmp/cac-seat-fit
+```
+
+For the live entrance, start a fresh Mountain Fortress campaign match with
+cinematics enabled: both kings finish walking at their center markers before
+the Gatekeeper speaks, and the Grandmaster remains seated on the side dais.
+The full rendered capture is also available through
+`tools/capture_grandmaster_ceremony.gd` with isolated XDG data/config paths.
+No assets were acquired or modified; licenses are unchanged.
+
+## Headless environment
 
 Headless Godot in the development sandbox can report TCP-listener and user-log-file warnings during export. These are environment limitations; the package completes and the executable passes the smoke launch described above.

@@ -94,6 +94,7 @@ For each archetype:
 - [x] camera shake setting/off.
 - [x] game-over result clear.
 - [x] Linux release build launches without editor.
+- [x] Mountain Fortress intro/victory cinematic restores camera/input on completion and Skip; 20 deterministic replay cycles pass.
 
 ## Licensing/provenance
 

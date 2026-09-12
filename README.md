@@ -32,7 +32,10 @@ Godot or Stockfish installation is needed.
 - An animated 3D board with six readable fantasy archetypes, full outfits, detailed faces, role-specific hair, and distinct weapons.
 - Walk animations for ordinary moves and cinematic capture choreography with impact effects, death reactions, and camera framing.
 - A stable player-side board view that remains behind the human player while Stockfish moves across the board. Five themed grand arenas use original generated 360° panoramas, local stone terraces, and arena-specific lighting. Right-drag orbits, middle-drag pans to any character, and the mouse wheel zooms to face level.
-- Post-game move review and one-click PGN copy built from authoritative snapshots, plus debug scenes for replaying combat, browsing animations, and rebuilding the board from a FEN position.
+- Five-arena campaign intros and outcomes with a dedicated camera, Skip control,
+  shared draw treatment, and a one-time Forest conquest ending, plus post-game
+  move review/PGN copy and debug scenes for combat, animation, FEN loading, and
+  cinematic replay.
 
 Check & Conquer is early in development. The focus is a polished offline desktop prototype before any distribution features are considered.
 
@@ -89,6 +92,24 @@ bash tools/run_headless_tests.sh
 GitHub Actions runs the same suite on pushes and pull requests. It compiles the
 committed Stockfish source into a temporary CI executable, so the real engine
 integration remains covered without committing the large platform binary.
+
+Preview the deterministic Mountain Fortress cinematic harness without opening a
+campaign match or Stockfish:
+
+```sh
+godot --path . res://scenes/debug/DebugCinematicLab.tscn
+```
+
+The lab offers White/Black, intro/victory, Play, Skip, Reset, and a 20-cycle
+stress action. In campaign play, **Skip cinematic** (or Space/Escape) returns
+to the unchanged board camera and then starts the turn or opens results.
+
+Inspect the Mountain Fortress Grandmaster ceremony as rendered frames:
+
+```sh
+XDG_DATA_HOME=/tmp/cac-ceremony-data XDG_CACHE_HOME=/tmp/cac-ceremony-cache XDG_CONFIG_HOME=/tmp/cac-ceremony-config \
+  godot --path . --headless --script tools/capture_grandmaster_ceremony.gd -- /tmp/cac-grandmaster-ceremony
+```
 
 Create a Linux export with Godot's matching export templates installed:
 

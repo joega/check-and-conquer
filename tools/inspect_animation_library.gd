@@ -9,6 +9,7 @@ func _inspect() -> void:
 	for scene_path: String in [
 		"res://assets/characters/quaternius/Superhero_Male_FullBody.gltf",
 		"res://assets/animations/quaternius/UAL1_Standard.glb",
+		"res://assets/animations/quaternius/UAL2_Standard.glb",
 	]:
 		var packed_scene := load(scene_path) as PackedScene
 		assert(packed_scene != null, "Could not load: %s" % scene_path)

@@ -11,6 +11,7 @@ func _init() -> void:
 	assert(defaults.beginner_coach_enabled == true)
 	assert(defaults.capture_speed_index == 0)
 	assert(defaults.campaign_enabled == true)
+	assert(defaults.campaign_cinematics_enabled == true)
 	assert(defaults.selected_arena_id == "mountain_fortress" and defaults.campaign_snapshot.is_empty(), "A fresh session must start at the first campaign arena.")
 	var expected := defaults.duplicate()
 	expected.computer_enabled = false
@@ -24,6 +25,7 @@ func _init() -> void:
 	expected.fullscreen = true
 	expected.selected_arena_id = "arcane_sky_citadel"
 	expected.campaign_enabled = false
+	expected.campaign_cinematics_enabled = false
 	expected.campaign_snapshot = {
 		"current_arena_id": "arcane_sky_citadel",
 		"unlocked_ids": ["mountain_fortress", "arcane_sky_citadel"],
@@ -44,6 +46,10 @@ func _init() -> void:
 	var migrated := SessionSettings.load_values()
 	assert(migrated.difficulty_index == 1)
 	assert(migrated.camera_shake == false)
+	var malformed := ConfigFile.new()
+	malformed.set_value(SessionSettings.SECTION, "campaign_cinematics_enabled", "false")
+	assert(malformed.save(SessionSettings.PATH) == OK)
+	assert(SessionSettings.load_values().campaign_cinematics_enabled == true, "Malformed cinematic preference must retain the backwards-compatible enabled default.")
 	assert(SessionSettings.save_values(SessionSettings.DEFAULTS) == OK)
 	print("PASS: session settings save, restore, and legacy migration.")
 	quit(0)
