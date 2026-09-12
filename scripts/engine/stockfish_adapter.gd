@@ -22,6 +22,8 @@ var _awaiting_uciok := false
 var _awaiting_readyok := false
 var _thinking := false
 var _thinking_deadline_ms := 0
+var _draining_cancelled_search := false
+var _queued_new_game := false
 
 
 func start() -> bool:
@@ -74,7 +76,7 @@ static func stockfish_platform_directory(platform_name: String = OS.get_name()) 
 
 
 func request_move(fen: String, movetime_ms: int) -> bool:
-	if not is_running() or _awaiting_uciok or _awaiting_readyok:
+	if not is_running() or _awaiting_uciok or _awaiting_readyok or _draining_cancelled_search:
 		engine_error.emit("Stockfish is not ready for a move request.")
 		return false
 	if _thinking:
@@ -103,17 +105,30 @@ func configure_difficulty(skill_level: int, elo: int = 1320) -> void:
 func new_game() -> void:
 	if not is_running():
 		return
-	stop_thinking()
+	if _thinking or _draining_cancelled_search:
+		_queued_new_game = true
+		cancel_request()
+		return
 	_send("ucinewgame")
 	_send("isready")
 	_awaiting_readyok = true
 
 
 func stop_thinking() -> void:
-	if is_running() and _thinking:
-		_send("stop")
+	cancel_request()
+
+
+## A UCI `stop` can still produce one final `bestmove`. Do not issue another
+## search until that response has been drained behind an `isready` barrier.
+func cancel_request() -> void:
+	if not is_running() or _draining_cancelled_search or not _thinking:
+		return
+	_send("stop")
 	_thinking = false
 	_thinking_deadline_ms = 0
+	_draining_cancelled_search = true
+	_send("isready")
+	_awaiting_readyok = true
 
 
 func shutdown() -> void:
@@ -124,6 +139,8 @@ func shutdown() -> void:
 	_stderr = null
 	_pid = -1
 	_thinking = false
+	_draining_cancelled_search = false
+	_queued_new_game = false
 
 
 func _exit_tree() -> void:
@@ -134,7 +151,7 @@ func _process(_delta: float) -> void:
 	_read_available(_stdio)
 	_read_available(_stderr)
 	if _thinking and Time.get_ticks_msec() > _thinking_deadline_ms:
-		stop_thinking()
+		cancel_request()
 		engine_error.emit("Stockfish move request timed out.")
 
 
@@ -164,10 +181,19 @@ func _handle_line(line: String) -> void:
 		return
 	if line == "readyok":
 		_awaiting_readyok = false
+		if _draining_cancelled_search:
+			_draining_cancelled_search = false
+			if _queued_new_game:
+				_queued_new_game = false
+				_send("ucinewgame")
+				_send("isready")
+				_awaiting_readyok = true
+				return
 		uci_ready.emit(_engine_name)
 		return
 	var move := Uci.parse_bestmove(line)
 	if not move.is_empty():
 		_thinking = false
 		_thinking_deadline_ms = 0
-		bestmove_received.emit(move)
+		if not _draining_cancelled_search:
+			bestmove_received.emit(move)

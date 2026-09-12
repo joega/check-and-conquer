@@ -67,5 +67,17 @@ func _run() -> void:
 	adapter._process(0.0)
 	assert(failure == "Stockfish move request timed out.", "Engine timeout must produce a recoverable error.")
 	adapter.shutdown()
+	# A cancelled search may print a bestmove after `stop`.  That response must
+	# be drained, while a later post-barrier response remains usable.
+	var drained := Adapter.new()
+	var drained_moves: Array[String] = []
+	drained.bestmove_received.connect(func(uci): drained_moves.append(uci))
+	drained._draining_cancelled_search = true
+	drained._handle_line("bestmove e2e4")
+	assert(drained_moves.is_empty(), "A cancelled search bestmove must be discarded before the ready barrier.")
+	drained._handle_line("readyok")
+	drained._handle_line("bestmove d2d4")
+	assert(drained_moves == ["d2d4"], "Only a post-barrier bestmove may reach the caller.")
+	drained.queue_free()
 	print("PASS: Stockfish UCI subprocess completed 100 legal sequential moves across %d completed games and recovers from timeout." % completed_games)
 	quit(0)

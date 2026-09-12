@@ -41,7 +41,7 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 - Modifications: Extracted the Godot/Unreal `.glb` only. Mapped source clips to semantic IDs in `PieceActor`; no animation data was edited.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; source archive is retained locally in ignored `assets/source-archives/` and is not committed.
-- Verification notes: Imported successfully with Godot 4.7.2. Its `AnimationPlayer` drives the same `Armature/Skeleton3D` hierarchy as the selected character; validated source clips are `Idle`, `Walk`, `Sword_Attack`, `Hit_Chest`, and `Death01`.
+- Verification notes: Imported successfully with Godot 4.7.2. Its `AnimationPlayer` drives the same `Armature/Skeleton3D` hierarchy as the selected character; validated source clips are `Idle`, `Walk`, `Sprint`, `Sword_Attack`, `Hit_Chest`, `Death01`, `Sitting_Enter`, `Sitting_Idle`, and `Sitting_Exit`. The retained root archive matches the recorded SHA-256; no duplicate import was needed.
 
 ### Universal Animation Library 2 [Standard]
 
@@ -68,6 +68,19 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; source archive is retained locally in ignored `assets/source-archives/` and is not committed.
 - Verification notes: all four outfit skeletons have the matching 65-joint humanoid order and `Armature/Skeleton3D` / `hand_r` names used by `PieceActor`. The pack contains no shield or weapon assets; the old project-created rook shield was removed to preserve visibility.
+
+### Fantasy Props MegaKit [Standard]
+
+- Creator: Quaternius
+- Source URL: https://quaternius.com/packs/fantasypropsmegakit.html
+- License: CC0 1.0 Universal (license text retained at `assets/environment/quaternius_props/License_Standard.txt`)
+- Date acquired: 2026-09-12
+- Original archive/file: `Fantasy Props MegaKit[Standard].zip` (SHA-256 `8b6f7e806d222e585478f0e1bdc6b271bbc7bc6f84dd6af8ca703a7c64f0cb1e`)
+- Files used in project: `Chair_1`, `Banner_1`, `Torch_Metal`, their `.bin` buffers, and the referenced cloth/furniture/metal/props texture sets under `assets/environment/quaternius_props/`.
+- Modifications: Extracted only the required glTF meshes and textures. `GrandmasterCeremony` combines Chair_1 with project-authored stone dais meshes, local lights, and banners; Chair_1 is documented as a temporary throne, not represented as a supplied throne asset.
+- Attribution required: no
+- Redistribution notes: CC0 public-domain dedication; only the selected runtime files are committed. The user-supplied source archive is retained locally in ignored `assets/source-archives/`.
+- Verification notes: Godot 4.7.2 imported all selected glTF scenes. The props remain outside `BoardPresenter` and do not enter chess projection or actor counts.
 ## Runtime-generated capture audio and VFX
 
 `scripts/presentation/procedural_impact_audio.gd` synthesizes the V1 capture-impact tone at runtime from sine waves. It uses no third-party audio asset or sample.

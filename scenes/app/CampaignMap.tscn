@@ -272,3 +272,53 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.92, 0.85, 0.58, 1)
 tooltip_text = "Choose any arena for a non-campaign practice match"
+
+[node name="TransitionOverlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+z_index = 20
+visible = false
+
+[node name="Shade" type="ColorRect" parent="TransitionOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.025, 0.055, 0.92)
+mouse_filter = 2
+
+[node name="Card" type="VBoxContainer" parent="TransitionOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -74.0
+offset_right = 250.0
+offset_bottom = 74.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="TransitionOverlay/Card"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.32, 1)
+theme_override_font_sizes/font_size = 28
+text = "ENTERING THE ARENA"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="TransitionOverlay/Card"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.85, 0.96, 1)
+theme_override_font_sizes/font_size = 18
+text = "Preparing the champions and the Grandmaster's court…"
+horizontal_alignment = 1

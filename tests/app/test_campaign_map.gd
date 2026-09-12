@@ -14,6 +14,7 @@ func _run() -> void:
 	root.add_child(map)
 	await process_frame
 	assert(map.get_node("MapArt").texture is Texture2D, "The campaign route must be framed by its original illustrated map backdrop.")
+	assert(not map.get_node("TransitionOverlay").visible, "The arena-entry loading acknowledgement must remain hidden until a route action is pressed.")
 	var theme_music := map.get_node("ThemeMusic") as AudioStreamPlayer
 	assert(theme_music.stream is AudioStreamOggVorbis and theme_music.autoplay, "The campaign map must begin with the Check & Conquer Ogg theme.")
 	assert(not map.has_node("OpeningHorn"), "The war horn belongs to arena entry rather than the campaign map.")
@@ -48,16 +49,24 @@ func _run() -> void:
 	assert(not map.get_node("Route/ArcaneSkyCitadel").disabled, "The current unlocked arena must be selectable.")
 	assert(map.get_node("Route/FrozenKeep").disabled, "The next future arena must remain locked.")
 	map.select_arena("arcane_sky_citadel")
+	var watched_session := SessionSettings.load_values()
+	watched_session.spectator_enabled = true
+	assert(SessionSettings.save_values(watched_session) == OK)
 	map.persist_selection()
 	assert(map.arena_selected == "arcane_sky_citadel", "The selected arena must survive map state refresh.")
 	assert(map._session_values.get("selected_arena_id") == "arcane_sky_citadel", "Entering must stage the selected arena in session settings.")
 	assert(map._session_values.get("campaign_snapshot", {}).get("current_arena_id") == "arcane_sky_citadel", "Entering must stage a campaign snapshot.")
 	var persisted := SessionSettings.load_values()
+	assert(not persisted.spectator_enabled, "Entering the campaign must clear inherited spectator mode so human wins can advance the route.")
 	assert(persisted.get("selected_arena_id") == "arcane_sky_citadel", "Selected arena must persist through SessionSettings.")
 	assert(persisted.get("campaign_snapshot", {}).get("current_arena_id") == "arcane_sky_citadel", "Campaign snapshot must persist through SessionSettings.")
 	assert(map.get_node("PracticeArena") is Button and map.get_node("DebugTools").get_child_count() == 4, "The launch map must expose a practice arena and the current developer-tool group.")
 	map._select_practice_arena(3)
+	watched_session = SessionSettings.load_values()
+	watched_session.spectator_enabled = true
+	assert(SessionSettings.save_values(watched_session) == OK)
 	map.persist_selection(false, map.practice_arena_id)
+	assert(SessionSettings.load_values().spectator_enabled, "Practice may retain an explicitly selected spectator preference.")
 	assert(SessionSettings.load_values().campaign_enabled == false and SessionSettings.load_values().selected_arena_id == "lava_forge", "Practice must persist a freely selected arena while disabling campaign progression.")
 	map.set_campaign_snapshot({
 		"current_arena_id": "forest_ruins",

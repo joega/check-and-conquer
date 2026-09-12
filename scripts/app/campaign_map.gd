@@ -27,6 +27,7 @@ var practice_arena_id := "mountain_fortress"
 var campaign := CampaignProgress.new()
 var _session_values: Dictionary = {}
 var _completion_tween: Tween
+var _transitioning := false
 func _ready() -> void:
 	$EnterArena.pressed.connect(_enter_selected_arena)
 	$PracticeArena.pressed.connect(_enter_practice_arena)
@@ -126,7 +127,7 @@ func _apply_route_hierarchy(card: Button, is_current: bool, is_final_conquest :=
 func _show_campaign_conquered_state() -> void:
 	$CampaignFocus/Chapter.text = "CAMPAIGN CONQUERED"
 	$CampaignFocus/Title.text = "THE FINAL GROVE IS YOURS"
-	$CampaignFocus/Detail.text = "Five arenas secured. Practice any battlefield from the Warpath."
+	$CampaignFocus/Detail.text = "Five strongholds. One open road. Practice any battlefield from the Warpath."
 	$CampaignFocus/Chapter.modulate = Color(0.58, 1.0, 0.72)
 	$CampaignFocus/Title.modulate = Color(1.0, 0.84, 0.34)
 	$CampaignFocus/Detail.modulate = Color(0.82, 0.94, 0.84)
@@ -159,16 +160,38 @@ func persist_selection(is_campaign_match := true, selected_id := "") -> void:
 	_session_values["selected_arena_id"] = arena_id
 	_session_values["campaign_snapshot"] = campaign.to_snapshot()
 	_session_values["campaign_enabled"] = is_campaign_match
+	# Enter Arena is a player campaign action. A previous watched match must
+	# not silently turn the next campaign attempt into an ineligible exhibition.
+	if is_campaign_match:
+		_session_values["spectator_enabled"] = false
 	SessionSettings.save_values(_session_values)
 
 
 func _enter_selected_arena() -> void:
-	persist_selection(true)
-	get_tree().change_scene_to_file(GAME_SCREEN)
+	await _transition_to_arena(true, arena_selected)
 
 
 func _enter_practice_arena() -> void:
-	persist_selection(false, practice_arena_id)
+	await _transition_to_arena(false, practice_arena_id)
+
+
+func _transition_to_arena(is_campaign_match: bool, selected_id: String) -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	$EnterArena.disabled = true
+	$PracticeArena.disabled = true
+	$PracticeArenaPicker.disabled = true
+	$EnterArena.text = "ENTERING ARENA…"
+	$TransitionOverlay.visible = true
+	$TransitionOverlay.modulate.a = 0.0
+	var reveal := create_tween()
+	reveal.tween_property($TransitionOverlay, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Render the press acknowledgement before persistence and the heavier match
+	# scene begin. This removes the ambiguous flat-button pause on arena entry.
+	await get_tree().process_frame
+	persist_selection(is_campaign_match, selected_id)
+	await get_tree().process_frame
 	get_tree().change_scene_to_file(GAME_SCREEN)
 
 
