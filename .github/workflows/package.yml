@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: package-main
+  group: package-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
