@@ -4,8 +4,8 @@
 
 ## Download the latest prerelease
 
-- [Windows x86-64 — v0.0.1](https://github.com/joega/check-and-conquer/releases/download/v0.0.1/check-and-conquer-windows-x86_64.zip)
-- [Linux x86-64 — v0.0.1](https://github.com/joega/check-and-conquer/releases/download/v0.0.1/check-and-conquer-linux-x86_64.zip)
+- [Windows x86-64 — v0.0.2](https://github.com/joega/check-and-conquer/releases/download/v0.0.2/check-and-conquer-windows-x86_64.zip)
+- [Linux x86-64 — v0.0.2](https://github.com/joega/check-and-conquer/releases/download/v0.0.2/check-and-conquer-linux-x86_64.zip)
 
 Extract the entire ZIP, then run the executable from the extracted folder. No
 Godot or Stockfish installation is needed.
