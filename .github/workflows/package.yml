@@ -50,11 +50,13 @@ jobs:
             chmod +x "$GODOT_BIN"
           fi
           template_dir="$HOME/.local/share/godot/export_templates/$GODOT_TEMPLATE_VERSION"
-          if [[ ! -d "$template_dir" ]]; then
+          if [[ ! -f "$template_dir/linux_release.x86_64" || ! -f "$template_dir/windows_release_x86_64.exe" ]]; then
+            rm -rf "$template_dir" /tmp/godot-templates
             mkdir -p "$template_dir"
             curl --fail --location --retry 3 --output /tmp/godot-templates.tpz \
               "https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}/Godot_v${GODOT_RELEASE}_export_templates.tpz"
-            unzip -q /tmp/godot-templates.tpz -d "$template_dir"
+            unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
+            mv /tmp/godot-templates/templates/* "$template_dir/"
           fi
           "$GODOT_BIN" --version
 
