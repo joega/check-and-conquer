@@ -33,6 +33,10 @@ func _run() -> void:
 	assert(screen.screen_phase == screen.ScreenPhase.PLAYING and screen.controller.phase == screen.controller.Phase.PLAYER_INPUT, "Skip must hand off exactly once to the first player turn.")
 	assert(screen.get_node("Camera3D").controls_enabled(), "Skipping an intro must restore board camera input.")
 	assert(screen.get_node("UI/Status").visible and screen.get_node("UI/Settings").visible and screen.get_node("UI/Hint").visible, "Story handoff must restore normal HUD ownership.")
+	assert(screen.controller.game.move_history.is_empty() and screen.controller.game.game_result() == "ongoing" and screen.controller.game.legal_moves().size() == 20, "A cinematic handoff must preserve the untouched legal starting position.")
+	assert(not screen.get_node("UI/OutcomeBanner").visible, "Restoring the cinematic HUD must not turn the OutcomeBanner placeholder into a false check announcement.")
+	for actor in screen.get_node("BoardPresenter").actors.values():
+		assert(actor.get_node_or_null("VisualAccents/CheckHalo") == null, "A fresh game must not retain a check indicator after the intro.")
 	screen._toggle_settings_menu()
 	assert(screen.get_node("UI/CampaignCinematics").visible and screen.get_node("UI/CampaignCinematics").button_pressed, "Match Settings must expose the persisted cinematic preference.")
 	screen._set_campaign_cinematics_enabled(false)

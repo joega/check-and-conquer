@@ -25,6 +25,7 @@ var computer_enabled := true
 var spectator_enabled := false
 var engine_request_pending := false
 var hint_request_pending := false
+var _outcome_banner_tween: Tween
 var beginner_coach_enabled := true
 var engine_configured := false
 var difficulty_index := 0
@@ -139,6 +140,7 @@ func _begin_match() -> void:
 			return
 	else:
 		_play_arena_intro()
+	_reset_match_presentation()
 	controller.start()
 	screen_phase = ScreenPhase.PLAYING
 	$Camera3D.snap_to_side(player_side, 0.0)
@@ -521,15 +523,29 @@ func _outcome_copy(result, campaign_victory: bool) -> Dictionary:
 
 func _show_outcome_banner(message: String, color: Color, duration_s: float) -> void:
 	var banner := $UI/OutcomeBanner
+	if _outcome_banner_tween != null and _outcome_banner_tween.is_valid():
+		_outcome_banner_tween.kill()
 	banner.text = message
 	banner.add_theme_color_override("font_color", color)
 	banner.visible = true
 	banner.modulate.a = 0.0
-	var reveal := create_tween()
-	reveal.tween_property(banner, "modulate:a", 1.0, 0.16)
-	reveal.tween_interval(duration_s)
-	reveal.tween_property(banner, "modulate:a", 0.0, 0.35)
-	reveal.tween_callback(func(): banner.visible = false)
+	_outcome_banner_tween = create_tween()
+	_outcome_banner_tween.tween_property(banner, "modulate:a", 1.0, 0.16)
+	_outcome_banner_tween.tween_interval(duration_s)
+	_outcome_banner_tween.tween_property(banner, "modulate:a", 0.0, 0.35)
+	_outcome_banner_tween.tween_callback(func(): banner.visible = false)
+
+
+func _reset_match_presentation() -> void:
+	# The cinematic HUD owns the outcome label while it is active.  A label
+	# authored with placeholder text must never become a gameplay announcement
+	# when that HUD is restored; chess state remains the only source of checks.
+	$BoardPresenter.clear_check_indicator()
+	if _outcome_banner_tween != null and _outcome_banner_tween.is_valid():
+		_outcome_banner_tween.kill()
+	_outcome_banner_tween = null
+	$UI/OutcomeBanner.visible = false
+	$UI/OutcomeBanner.modulate.a = 0.0
 
 func _request_engine_move() -> void:
 	if screen_phase != ScreenPhase.PLAYING:
@@ -677,7 +693,9 @@ func _set_capture_ui_visible(visible: bool) -> void:
 func _set_cinematic_hud_visible(visible: bool) -> void:
 	_set_settings_menu_visible(false)
 	for node_name in CINEMATIC_HIDDEN_UI_NODES:
-		$UI.get_node(node_name).visible = not visible
+		# Outcome text is transient and must be explicitly requested by a chess
+		# result.  Restoring the general HUD must not reveal its placeholder text.
+		$UI.get_node(node_name).visible = false if node_name == "OutcomeBanner" else not visible
 	if not visible:
 		_update_coach_prompt()
 
