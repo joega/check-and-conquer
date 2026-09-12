@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script = ExtResource("2")
+cue_id = "frozen.opening"
+title = "III · THE WINTER CROWN"
+speaker_label = "Narration"
+body = "Winter sealed the keep. The silence of its allies sealed its heart."
+hold_s = 6.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(-20, 3, -23)
+shot_duration_s = 0.65
+stage_action = "seating_and_approach"
+[sub_resource type="Resource" id="b"]
+script = ExtResource("2")
+cue_id = "frozen.guardian"
+title = "THE WINTER WARDEN"
+speaker_label = "Winter Warden"
+speaker_id = "gatekeeper"
+body = "Others promised to return. We buried those promises in the snow."
+hold_s = 6.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+shot_duration_s = 0.45
+[sub_resource type="Resource" id="c"]
+script = ExtResource("2")
+cue_id = "frozen.commander"
+title = "THE COMMANDER"
+speaker_label = "Commander"
+speaker_id = "commander"
+body = "Then judge me by the road I leave open."
+hold_s = 5.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+[sub_resource type="Resource" id="d"]
+script = ExtResource("2")
+cue_id = "frozen.objective"
+title = "OBJECTIVE"
+speaker_label = "Grandmaster"
+speaker_id = "grandmaster"
+body = "Defeat the Winter Warden. Restore the northern passage."
+hold_s = 3.0
+shot_position = Vector3(8, 5.7, 10)
+shot_target = Vector3(19, 3.2, 0)
+stage_action = "return"
+after_action = "formation_restore"
+[resource]
+script = ExtResource("1")
+sequence_id = "frozen_keep.intro"
+arena_id = "frozen_keep"
+outcome = "intro"
+final_hold_s = 1.0
+cues = [SubResource("a"), SubResource("b"), SubResource("c"), SubResource("d")]

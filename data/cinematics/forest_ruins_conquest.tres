@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script=ExtResource("2")
+cue_id="forest.conquest_guardian"
+title="THE FINAL WATCH"
+speaker_label="Grove Sovereign"
+speaker_id="gatekeeper"
+body="Then take no throne. Take the watch."
+hold_s=6.0
+shot_position=Vector3(23,25,25)
+shot_target=Vector3(0,0,0)
+[sub_resource type="Resource" id="b"]
+script=ExtResource("2")
+cue_id="forest.conquest_commander"
+title="THE COMMANDER"
+speaker_label="Commander"
+speaker_id="commander"
+body="No stronghold stands alone again."
+hold_s=6.0
+shot_position=Vector3(23,25,25)
+shot_target=Vector3(0,0,0)
+[sub_resource type="Resource" id="c"]
+script=ExtResource("2")
+cue_id="forest.conquest_narration"
+title="WARPATH CONQUERED"
+speaker_label="Narration"
+body="Five oaths renewed. One road reopened.\nThe road is open. Your watch begins."
+hold_s=10.0
+shot_position=Vector3(23,25,25)
+shot_target=Vector3(0,0,0)
+[resource]
+script=ExtResource("1")
+sequence_id="forest_ruins.conquest"
+arena_id="forest_ruins"
+outcome="conquest"
+final_hold_s=2.0
+cues=[SubResource("a"),SubResource("b"),SubResource("c")]

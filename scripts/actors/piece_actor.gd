@@ -44,19 +44,22 @@ const WEAPON_GRIPS := {
 }
 const CLIP_MAP := {
 	&"idle.neutral": &"Idle",
-	&"idle.watch_01": &"Idle_Rail",
+	# UAL2 supplies the rail and advanced sword clips. Keep UAL1 aliases here
+	# only when that player actually owns the imported animation.
 	&"idle.talking_01": &"Idle_Talking",
 	# Sword_Idle ends in a held pose in the supplied library, so it is not a
 	# suitable living board idle. Keep this semantic alias on a looping watch.
-	&"combat.idle.sword_01": &"Idle_Rail",
 	&"combat.idle.spell_01": &"Spell_Simple_Idle",
 	&"locomotion.walk.forward": &"Walk",
+	# Sprint is the supplied fast forward locomotion clip.  Keep the source name
+	# behind a semantic request so presentation callers never depend on UAL.
+	&"locomotion.run.forward": &"Sprint",
+	# Ceremony-only seating uses UAL1's non-root-motion clips; root placement is
+	# still controlled by GrandmasterCeremony like every other actor move.
+	&"ceremony.seat.enter": &"Sitting_Enter",
+	&"ceremony.seat.idle": &"Sitting_Idle",
+	&"ceremony.seat.exit": &"Sitting_Exit",
 	&"attack.sword.slash_01": &"Sword_Attack",
-	&"attack.sword.heavy_combo_01": &"Sword_Heavy_Combo",
-	&"attack.sword.dash_01": &"Sword_Dash",
-	&"stance.guard_01": &"Sword_Block",
-	&"stance.challenge_01": &"Idle_Rail_Call",
-	&"stance.fold_arms_01": &"Idle_FoldArms",
 	&"attack.punch.jab_01": &"Punch_Jab",
 	&"attack.push.guard_01": &"Push",
 	&"attack.spell.shot_01": &"Spell_Simple_Shoot",
@@ -64,7 +67,6 @@ const CLIP_MAP := {
 	# motion. They deliberately remain semantic gameplay requests rather than
 	# exposing a source-library filename as a choreography contract.
 	&"attack.bow.draw_release_01": &"Spell_Simple_Shoot",
-	&"recovery.capture_ready_01": &"Idle_Rail",
 	# Victory reactions must read as acknowledgement from the board camera. Keep
 	# combat clips out of this family: attacks belong to the capture itself.
 	&"reaction.hit.generic_01": &"Hit_Chest",
@@ -72,10 +74,20 @@ const CLIP_MAP := {
 	&"death.backward_01": &"Death01",
 }
 const CLIP_MAP_2 := {
+	&"idle.watch_01": &"Idle_Rail",
+	&"combat.idle.sword_01": &"Idle_Rail",
+	&"stance.fold_arms_01": &"Idle_FoldArms",
+	# This pose belongs to UAL2. Resolving it through UAL1 silently leaves the
+	# previous clip (notably a king's entrance walk) running after arrival.
+	&"stance.challenge_01": &"Idle_Rail_Call",
 	&"celebration.call_01": &"Idle_Rail_Call",
 	&"celebration.salute_01": &"Yes",
 	&"attack.hammer.overhead_01": &"Melee_Hook",
 	&"attack.melee.hook_01": &"Melee_Hook",
+	&"attack.sword.heavy_combo_01": &"Sword_Heavy_Combo",
+	&"attack.sword.dash_01": &"Sword_Dash",
+	&"stance.guard_01": &"Sword_Block",
+	&"recovery.capture_ready_01": &"Idle_Rail",
 	&"attack.sword.regular_a_01": &"Sword_Regular_A",
 	&"attack.sword.regular_b_01": &"Sword_Regular_B",
 	&"attack.sword.regular_c_01": &"Sword_Regular_C",
@@ -184,6 +196,11 @@ func play_clip(clip: StringName) -> void:
 		if _animation_player_2 != null:
 			_animation_player_2.stop()
 		_animation_player.play(clip)
+		return
+	if _animation_player_2 != null and _animation_player_2.has_animation(clip):
+		if _animation_player != null:
+			_animation_player.stop()
+		_animation_player_2.play(clip)
 
 
 func play_state(semantic_id: StringName) -> void:
@@ -191,29 +208,40 @@ func play_state(semantic_id: StringName) -> void:
 	if semantic_id != &"recovery.capture_ready_01":
 		_cancel_recovery()
 	_animation_paused = false
+	var player := _player_for_state(semantic_id)
+	var clip := _clip_for_state(semantic_id)
+	if player == null or clip.is_empty() or not player.has_animation(clip):
+		# A semantic request must never leave a previous locomotion or attack clip
+		# driving the model. Fall back to the known neutral state and report that
+		# state truthfully to callers.
+		player = _animation_player
+		clip = CLIP_MAP[&"idle.neutral"]
+		semantic_id = &"idle.neutral"
+	if player == _animation_player:
+		if _animation_player_2 != null:
+			_animation_player_2.stop()
+	elif _animation_player != null:
+		_animation_player.stop()
+	player.play(clip)
 	_last_played_state = semantic_id
-	if CLIP_MAP_2.has(semantic_id):
-		var clip_2: StringName = CLIP_MAP_2[semantic_id]
-		if _animation_player_2 != null and _animation_player_2.has_animation(clip_2):
-			if _animation_player != null:
-				_animation_player.stop()
-			_animation_player_2.play(clip_2)
-			if semantic_id in [&"attack.bow.draw_release_01", &"attack.hammer.overhead_01"]:
-				_play_role_authored_action(semantic_id)
-			return
-	play_clip(CLIP_MAP.get(semantic_id, &"Idle"))
 	if semantic_id in [&"attack.bow.draw_release_01", &"attack.hammer.overhead_01"]:
 		_play_role_authored_action(semantic_id)
 
 
 func supports_state(semantic_id: StringName) -> bool:
-	if semantic_id in [&"attack.bow.draw_release_01", &"recovery.capture_ready_01"]:
-		return _animation_player != null and _animation_player.has_animation(CLIP_MAP[semantic_id])
-	if semantic_id == &"attack.hammer.overhead_01":
-		return _animation_player_2 != null and _animation_player_2.has_animation(CLIP_MAP_2[semantic_id])
+	var player := _player_for_state(semantic_id)
+	var clip := _clip_for_state(semantic_id)
+	return player != null and not clip.is_empty() and player.has_animation(clip)
+
+
+func _player_for_state(semantic_id: StringName) -> AnimationPlayer:
+	return _animation_player_2 if CLIP_MAP_2.has(semantic_id) else _animation_player
+
+
+func _clip_for_state(semantic_id: StringName) -> StringName:
 	if CLIP_MAP_2.has(semantic_id):
-		return _animation_player_2 != null and _animation_player_2.has_animation(CLIP_MAP_2[semantic_id])
-	return CLIP_MAP.has(semantic_id) and _animation_player != null and _animation_player.has_animation(CLIP_MAP[semantic_id])
+		return CLIP_MAP_2[semantic_id]
+	return CLIP_MAP.get(semantic_id, &"")
 
 
 func primary_attack_state() -> StringName:
@@ -267,9 +295,7 @@ func recover_after_capture() -> void:
 	# drift or delay the logical turn handoff.
 	_cancel_role_action(true)
 	_cancel_recovery()
-	_last_played_state = &"recovery.capture_ready_01"
-	_animation_paused = false
-	play_clip(CLIP_MAP[&"recovery.capture_ready_01"])
+	play_state(&"recovery.capture_ready_01")
 	if _model_root == null:
 		return
 	var rest_position := _model_root.position
@@ -394,8 +420,8 @@ func battle_stance_state() -> StringName:
 
 
 func battle_stance_loops() -> bool:
-	var player := _animation_player_2 if CLIP_MAP_2.has(_stance_loop_state) else _animation_player
-	var clip: StringName = CLIP_MAP_2.get(_stance_loop_state, CLIP_MAP.get(_stance_loop_state, &"Idle"))
+	var player := _player_for_state(_stance_loop_state)
+	var clip := _clip_for_state(_stance_loop_state)
 	var animation := player.get_animation(clip) if player != null else null
 	return animation != null and animation.loop_mode != Animation.LOOP_NONE
 
@@ -433,8 +459,8 @@ func _process(delta: float) -> void:
 
 
 func _seek_stance_offset() -> void:
-	var player := _animation_player_2 if CLIP_MAP_2.has(_stance_loop_state) else _animation_player
-	var clip: StringName = CLIP_MAP_2.get(_stance_loop_state, CLIP_MAP.get(_stance_loop_state, &"Idle"))
+	var player := _player_for_state(_stance_loop_state)
+	var clip := _clip_for_state(_stance_loop_state)
 	if player == null:
 		return
 	var animation := player.get_animation(clip)
@@ -463,19 +489,16 @@ func state_duration(semantic_id: StringName) -> float:
 		return 0.60
 	if semantic_id == &"recovery.capture_ready_01":
 		return 0.36
-	var player := _animation_player
-	var clip: StringName = CLIP_MAP.get(semantic_id, &"Idle")
-	if CLIP_MAP_2.has(semantic_id):
-		player = _animation_player_2
-		clip = CLIP_MAP_2[semantic_id]
-	if player == null:
+	var player := _player_for_state(semantic_id)
+	var clip := _clip_for_state(semantic_id)
+	if player == null or clip.is_empty():
 		return 0.0
 	var animation := player.get_animation(clip)
 	return animation.length if animation != null else 0.0
 
 
 func animation_playback_position() -> float:
-	var player := _animation_player_2 if CLIP_MAP_2.has(_last_played_state) else _animation_player
+	var player := _player_for_state(_last_played_state)
 	if player == null:
 		return 0.0
 	# Non-looping players clear current_animation when they complete. At that
@@ -503,7 +526,7 @@ func animation_speed_multiplier() -> float:
 
 func set_animation_paused(paused: bool) -> void:
 	_animation_paused = paused
-	var active_player := _animation_player_2 if CLIP_MAP_2.has(_last_played_state) else _animation_player
+	var active_player := _player_for_state(_last_played_state)
 	if active_player == null:
 		return
 	if paused:

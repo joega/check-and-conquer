@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script = ExtResource("2")
+cue_id = "lava.opening"
+title = "IV · THE EMBER TRIAL"
+speaker_label = "Narration"
+body = "At the heart of the mountain, strength has become a throne."
+hold_s = 5.0
+shot_position = Vector3(-12, 7, 16)
+shot_target = Vector3(-18, 2, -23)
+shot_duration_s = 0.5
+stage_action = "seating_and_approach"
+[sub_resource type="Resource" id="b"]
+script = ExtResource("2")
+cue_id = "lava.guardian"
+title = "THE FORGE TYRANT"
+speaker_label = "Forge Tyrant"
+speaker_id = "gatekeeper"
+body = "You take gates and crowns. Why pretend you are different?"
+hold_s = 5.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+[sub_resource type="Resource" id="c"]
+script = ExtResource("2")
+cue_id = "lava.commander"
+title = "THE COMMANDER"
+speaker_label = "Commander"
+speaker_id = "commander"
+body = "Because the road will belong to everyone."
+hold_s = 5.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+[sub_resource type="Resource" id="d"]
+script = ExtResource("2")
+cue_id = "lava.objective"
+title = "OBJECTIVE"
+speaker_label = "Grandmaster"
+speaker_id = "grandmaster"
+body = "Defeat the Forge Tyrant. Break their claim on the Warpath."
+hold_s = 3.0
+shot_position = Vector3(8, 5.7, 10)
+shot_target = Vector3(19, 3.2, 0)
+stage_action = "return"
+after_action = "formation_restore"
+[resource]
+script = ExtResource("1")
+sequence_id = "lava_forge.intro"
+arena_id = "lava_forge"
+outcome = "intro"
+final_hold_s = 1.0
+cues = [SubResource("a"), SubResource("b"), SubResource("c"), SubResource("d")]

@@ -8,13 +8,16 @@ const ChoreographyResolver = preload("res://scripts/presentation/capture_choreog
 const SessionSettings = preload("res://scripts/game/session_settings.gd")
 const CampaignProgress = preload("res://scripts/game/campaign_progress.gd")
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
+const CinematicCatalog = preload("res://scripts/presentation/campaign_cinematic_catalog.gd")
 const LegalMoveGenerator = preload("res://scripts/chess/legal_move_generator.gd")
 const SETTINGS_MENU_NODES := [
 	"Move", "Submit", "CameraDebug", "Spectator", "Difficulty", "Promotion", "PlayerSide", "AnimationSpeed",
-	"CameraShake", "BeginnerCoach", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
+	"CameraShake", "BeginnerCoach", "CampaignCinematics", "MasterVolume", "Fullscreen", "ResetView", "EngineLog", "Restart", "Undo", "Pause", "Back", "CameraHelp",
 	"MenuHeading", "DifficultyCaption", "PlayerCaption", "PromotionCaption", "SpeedCaption", "ViewCaption", "VolumeCaption", "DifficultyReadout",
 ]
 const CAPTURE_HIDDEN_UI_NODES := ["Settings"]
+const POST_LOADING_HUD_NODES := ["Status", "ArenaTitle", "Settings", "Hint"]
+const CINEMATIC_HIDDEN_UI_NODES := ["Status", "ArenaTitle", "Settings", "Hint", "QuickResetView", "OutcomeBanner"]
 var controller
 var selected_square := Types.NO_SQUARE
 var engine
@@ -34,9 +37,14 @@ var arena_id := "mountain_fortress"
 var campaign_enabled := true
 var match_paused := false
 var surrendering := false
+enum ScreenPhase { INITIALIZING, INTRO, PLAYING, OUTRO, RESULTS, LEAVING }
+var screen_phase := ScreenPhase.INITIALIZING
+var _match_generation := 0
+var _engine_request: Dictionary = {}
 const ENGINE_MOVE_TIME_MS := 500
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_set_loading_hud_visible(false)
 	$UI/LoadingOverlay.visible = true
 	call_deferred("_initialize_game")
 
@@ -52,7 +60,6 @@ func _initialize_game() -> void:
 	await get_tree().process_frame
 	controller = TurnController.new()
 	add_child(controller)
-	controller.start()
 	$Camera3D.snap_to_side(Types.WHITE, 0.0)
 	$BoardPresenter.rebuild_from_state(controller.game.state)
 	$UI/Submit.pressed.connect(_submit)
@@ -63,6 +70,7 @@ func _initialize_game() -> void:
 	$UI/PauseOverlay/Content/Quit.pressed.connect(_quit_from_pause)
 	$UI/Settings.pressed.connect(_toggle_settings_menu)
 	$UI/Hint.pressed.connect(_request_hint)
+	$CampaignCinematic.get_node("Overlay/Skip").pressed.connect($CampaignCinematic.skip)
 	$UI/Fullscreen.pressed.connect(_toggle_fullscreen)
 	$UI/ResetView.pressed.connect($Camera3D.reset_view)
 	$UI/QuickResetView.pressed.connect($Camera3D.reset_view)
@@ -102,6 +110,7 @@ func _initialize_game() -> void:
 	$UI/AnimationSpeed.item_selected.connect(_set_capture_speed)
 	$UI/CameraShake.toggled.connect(_set_camera_shake)
 	$UI/BeginnerCoach.toggled.connect(_set_beginner_coach_enabled)
+	$UI/CampaignCinematics.toggled.connect(_set_campaign_cinematics_enabled)
 	$UI/MasterVolume.value_changed.connect(_set_master_volume)
 	engine = StockfishAdapter.new()
 	add_child(engine)
@@ -112,8 +121,31 @@ func _initialize_game() -> void:
 	if computer_enabled and not engine.start():
 		computer_enabled = false
 	$UI/LoadingOverlay.visible = false
+	_set_loading_hud_visible(true)
 	_update_coach_prompt()
-	_play_arena_intro()
+	await _begin_match()
+
+
+func _begin_match() -> void:
+	var show_cinematic := campaign_enabled and not spectator_enabled and bool(settings.get("campaign_cinematics_enabled", true)) and CinematicCatalog.sequence_for(arena_id, "intro") != null
+	if show_cinematic:
+		screen_phase = ScreenPhase.INTRO
+		_set_cinematic_hud_visible(true)
+		var speakers: Dictionary = $GrandmasterCeremony.prepare($BoardPresenter, player_side)
+		var run_id: int = $CampaignCinematic.play_sequence(CinematicCatalog.sequence_for(arena_id, "intro"), player_side, speakers, $GrandmasterCeremony)
+		var completion: Array = await $CampaignCinematic.finished
+		_set_cinematic_hud_visible(false)
+		if completion.is_empty() or int(completion[0]) != run_id or not is_instance_valid(controller):
+			return
+	else:
+		_play_arena_intro()
+	controller.start()
+	screen_phase = ScreenPhase.PLAYING
+	$Camera3D.snap_to_side(player_side, 0.0)
+	if computer_enabled and (spectator_enabled or player_side == Types.BLACK):
+		_request_engine_move()
+	else:
+		_update_coach_prompt()
 
 
 func _play_arena_intro() -> void:
@@ -129,14 +161,31 @@ func _play_arena_intro() -> void:
 	reveal.tween_property($UI/ArenaIntro, "modulate:a", 0.0, 0.62).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	reveal.tween_callback(func(): $UI/ArenaIntro.visible = false)
 
+
+func _set_loading_hud_visible(visible: bool) -> void:
+	if not visible:
+		# Settings fields are direct UI siblings (rather than children of the
+		# SettingsPanel), so hiding only the panel still lets them bleed through
+		# the deliberately translucent loading shade.  Loading owns this canvas:
+		# hide every sibling except itself until initialization is complete.
+		for child in $UI.get_children():
+			if child != $UI/LoadingOverlay and child is CanvasItem:
+				child.visible = false
+		return
+	for node_name in POST_LOADING_HUD_NODES:
+		$UI.get_node(node_name).visible = true
+
 func _exit_tree() -> void:
 	get_tree().paused = false
+	_invalidate_engine_work()
+	if has_node("CampaignCinematic"):
+		$CampaignCinematic.cancel()
 	if engine != null:
 		engine.shutdown()
 
 
 func _pause_match() -> void:
-	if surrendering or controller == null or controller.phase != TurnController.Phase.PLAYER_INPUT:
+	if screen_phase != ScreenPhase.PLAYING or surrendering or controller == null or controller.phase != TurnController.Phase.PLAYER_INPUT:
 		$UI/Status.text = "Pause is available between moves."
 		return
 	match_paused = true
@@ -161,11 +210,13 @@ func _quit_from_pause() -> void:
 
 
 func _surrender_and_return() -> void:
-	if surrendering:
+	if surrendering or screen_phase != ScreenPhase.PLAYING:
 		return
 	if match_paused:
 		_resume_match()
 	surrendering = true
+	screen_phase = ScreenPhase.LEAVING
+	_invalidate_engine_work()
 	$UI/PauseOverlay.visible = false
 	_set_settings_menu_visible(false)
 	$Camera3D.set_controls_enabled(false)
@@ -191,6 +242,9 @@ func _surrender_and_return() -> void:
 	_return_to_campaign()
 
 func _restart() -> void:
+	if screen_phase == ScreenPhase.INTRO or screen_phase == ScreenPhase.OUTRO:
+		return
+	_invalidate_engine_work()
 	controller.queue_free()
 	controller = TurnController.new()
 	add_child(controller)
@@ -207,13 +261,16 @@ func _restart() -> void:
 	$UI/Status.text = "White to move"
 	_update_coach_prompt()
 	$Camera3D.snap_to_side(player_side, 0.0)
+	screen_phase = ScreenPhase.PLAYING
 	if computer_enabled:
 		engine.new_game()
-	engine_request_pending = false
 	if computer_enabled and (spectator_enabled or player_side == Types.BLACK):
 		_request_engine_move()
 
 func _undo() -> void:
+	if screen_phase != ScreenPhase.PLAYING:
+		return
+	_invalidate_engine_work()
 	var plies := 2 if computer_enabled and controller.game.move_history.size() >= 2 else 1
 	var undone: int = controller.undo(plies)
 	if undone == 0:
@@ -231,7 +288,7 @@ func _undo() -> void:
 	$Camera3D.snap_to_side(player_side)
 
 func _submit() -> void:
-	if match_paused or surrendering:
+	if screen_phase != ScreenPhase.PLAYING or match_paused or surrendering:
 		return
 	if spectator_enabled:
 		$UI/Status.text = "Spectating Stockfish versus Stockfish."
@@ -324,17 +381,8 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 			# Chess state has already selected the result. The winning army's brief
 			# acknowledgement is presentation-only and cannot affect settlement.
 			$BoardPresenter.celebrate_victory_for_side(-controller.game.state.side_to_move)
-		$UI/Status.text = outcome.status
-		$UI/Submit.disabled = true
-		$UI/GameOverPanel.visible = true
-		$UI/GameOverPanel/Content/Title.text = outcome.title
-		$UI/GameOverPanel/Content/Title.add_theme_color_override("font_color", outcome.color)
-		$UI/GameOverPanel/Content/Result.text = outcome.detail
-		_show_outcome_banner(outcome.title, outcome.color, 3.0)
-		$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
-		$UI/GameOverPanel/Content/Previous.visible = false
-		$UI/GameOverPanel/Content/Next.visible = false
-		$UI/GameOverPanel/Content/ReturnFinal.visible = false
+		var terminal_kind := _terminal_cinematic_kind(result, campaign_victory)
+		_present_terminal_result.call_deferred(outcome, terminal_kind)
 	else:
 		var side_name := "White" if controller.game.state.side_to_move == Types.WHITE else "Black"
 		$UI/Status.text = "%s to move%s" % [side_name, " — Check!" if result.gives_check else ""]
@@ -357,12 +405,52 @@ func _after_presentation(result, was_engine_move: bool) -> void:
 		_update_coach_prompt()
 
 
+func _terminal_cinematic_kind(result, campaign_victory := false) -> String:
+	if result.is_checkmate:
+		if controller.game.state.side_to_move != player_side:
+			return "conquest" if campaign_victory and campaign != null and campaign.campaign_complete() else "victory"
+		return "defeat"
+	return "draw"
+
+
+func _present_terminal_result(outcome: Dictionary, terminal_kind := "") -> void:
+	if screen_phase == ScreenPhase.LEAVING or controller == null:
+		return
+	var show_cinematic := campaign_enabled and not spectator_enabled and bool(settings.get("campaign_cinematics_enabled", true)) and not terminal_kind.is_empty()
+	if show_cinematic:
+		screen_phase = ScreenPhase.OUTRO
+		_set_cinematic_hud_visible(true)
+		var sequence: Resource = CinematicCatalog.terminal_sequence_for(arena_id, terminal_kind)
+		var speakers: Dictionary = $GrandmasterCeremony.speakers_for_current_board($BoardPresenter, player_side)
+		var run_id: int = $CampaignCinematic.play_sequence(sequence, player_side, speakers)
+		var completion: Array = await $CampaignCinematic.finished
+		_set_cinematic_hud_visible(false)
+		if completion.is_empty() or int(completion[0]) != run_id or screen_phase != ScreenPhase.OUTRO:
+			return
+	screen_phase = ScreenPhase.RESULTS
+	$UI/Status.text = outcome.status
+	$UI/Submit.disabled = true
+	$UI/GameOverPanel.visible = true
+	$UI/GameOverPanel/Content/Title.text = outcome.title
+	$UI/GameOverPanel/Content/Title.add_theme_color_override("font_color", outcome.color)
+	$UI/GameOverPanel/Content/Result.text = outcome.detail
+	_show_outcome_banner(outcome.title, outcome.color, 3.0)
+	$UI/GameOverPanel/Content/Review.visible = controller.game.move_history.size() > 0
+	$UI/GameOverPanel/Content/Previous.visible = false
+	$UI/GameOverPanel/Content/Next.visible = false
+	$UI/GameOverPanel/Content/ReturnFinal.visible = false
+
+
 func _show_last_move_trail(result) -> void:
 	# Remain available throughout the player's decision, until replaced or reset.
 	$ChessBoard.show_last_move(result.from_square, result.to_square)
 
 
+
+
 func _request_hint() -> void:
+	if screen_phase != ScreenPhase.PLAYING:
+		return
 	if not beginner_coach_enabled:
 		return
 	if controller == null or spectator_enabled or controller.phase != TurnController.Phase.PLAYER_INPUT or controller.game.state.side_to_move != player_side:
@@ -371,10 +459,13 @@ func _request_hint() -> void:
 	if engine == null or not engine.is_ready_for_requests():
 		$UI/Status.text = "Coach is preparing a hint…"
 		return
-	hint_request_pending = engine.request_move(controller.game.state.to_fen(), 180)
+	_engine_request = {"generation": _match_generation, "kind": "hint", "fen": controller.game.state.to_fen()}
+	hint_request_pending = engine.request_move(str(_engine_request.fen), 180)
 	if hint_request_pending:
 		$UI/Hint.disabled = true
 		$UI/Status.text = "Coach is scouting the board…"
+	else:
+		_engine_request.clear()
 
 
 func _show_hint(uci: String) -> void:
@@ -405,7 +496,17 @@ func _set_beginner_coach_enabled(enabled: bool) -> void:
 	_save_settings()
 
 
+func _set_campaign_cinematics_enabled(enabled: bool) -> void:
+	settings.campaign_cinematics_enabled = enabled
+	_save_settings()
+
+
 func _outcome_copy(result, campaign_victory: bool) -> Dictionary:
+	if spectator_enabled:
+		var watched_result: String = result.game_result.replace("_", " ").capitalize()
+		if result.is_checkmate:
+			watched_result = "%s wins by checkmate" % ("Black" if controller.game.state.side_to_move == Types.WHITE else "White")
+		return {"title": "SPECTATOR MATCH COMPLETE", "detail": "%s\nWatched matches do not unlock campaign arenas." % watched_result, "status": "%s — spectator match; no campaign progress." % watched_result, "color": Color(0.70, 0.82, 1.0)}
 	if campaign_victory and campaign != null and campaign.campaign_complete():
 		return {"title": "CAMPAIGN CONQUERED!", "detail": "The Final Grove is yours.\nEvery arena has fallen.", "status": "Campaign conquered! The Final Grove is yours.", "color": Color(1.0, 0.78, 0.26)}
 	if campaign_victory:
@@ -431,38 +532,48 @@ func _show_outcome_banner(message: String, color: Color, duration_s: float) -> v
 	reveal.tween_callback(func(): banner.visible = false)
 
 func _request_engine_move() -> void:
+	if screen_phase != ScreenPhase.PLAYING:
+		return
 	if not controller.begin_engine_turn():
 		return
 	$UI/Status.text = "Stockfish is thinking…"
+	_engine_request = {"generation": _match_generation, "kind": "move", "fen": controller.game.state.to_fen()}
 	if not engine.is_ready_for_requests():
 		engine_request_pending = true
 		$UI/Status.text = "Stockfish is initializing…"
 		return
-	if not engine.request_move(controller.game.state.to_fen(), ENGINE_MOVE_TIME_MS):
+	if not engine.request_move(str(_engine_request.fen), ENGINE_MOVE_TIME_MS):
+		_engine_request.clear()
 		controller.engine_failed()
 
 func _on_engine_ready(_engine_name: String) -> void:
 	if not engine_configured:
 		engine_configured = true
 		_apply_difficulty()
-		if spectator_enabled:
+		if spectator_enabled and screen_phase == ScreenPhase.PLAYING:
 			_request_engine_move()
 		return
-	if engine_request_pending and controller != null and controller.phase == TurnController.Phase.ENGINE_THINKING:
+	if engine_request_pending and not _engine_request.is_empty() and int(_engine_request.generation) == _match_generation and screen_phase == ScreenPhase.PLAYING and controller != null and controller.phase == TurnController.Phase.ENGINE_THINKING:
 		engine_request_pending = false
-		if not engine.request_move(controller.game.state.to_fen(), ENGINE_MOVE_TIME_MS):
+		if not engine.request_move(str(_engine_request.fen), ENGINE_MOVE_TIME_MS):
+			_engine_request.clear()
 			controller.engine_failed()
 		return
 	if computer_enabled and controller != null:
 		$UI/Status.text = "White to move"
 
 func _on_engine_bestmove(uci: String) -> void:
-	if hint_request_pending:
+	if _engine_request.is_empty() or int(_engine_request.get("generation", -1)) != _match_generation or str(_engine_request.get("fen", "")) != controller.game.state.to_fen():
+		return
+	var request_kind := str(_engine_request.kind)
+	_engine_request.clear()
+	if request_kind == "hint":
 		hint_request_pending = false
 		$UI/Hint.disabled = false
-		_show_hint(uci)
+		if screen_phase == ScreenPhase.PLAYING and controller.phase == TurnController.Phase.PLAYER_INPUT and controller.game.state.side_to_move == player_side:
+			_show_hint(uci)
 		return
-	if controller == null or controller.phase != TurnController.Phase.ENGINE_THINKING:
+	if request_kind != "move" or screen_phase != ScreenPhase.PLAYING or controller == null or controller.phase != TurnController.Phase.ENGINE_THINKING:
 		return
 	var result = controller.submit_engine_uci(uci)
 	if result == null:
@@ -472,11 +583,17 @@ func _on_engine_bestmove(uci: String) -> void:
 	_after_presentation(result, true)
 
 func _on_engine_error(message: String) -> void:
-	if hint_request_pending:
+	if not _engine_request.is_empty() and int(_engine_request.get("generation", -1)) != _match_generation:
+		return
+	if str(_engine_request.get("kind", "")) == "hint":
+		_engine_request.clear()
 		hint_request_pending = false
 		$UI/Hint.disabled = false
 		$UI/Status.text = "Coach could not find a hint right now."
 		return
+	if _engine_request.is_empty() and engine_configured:
+		return
+	_engine_request.clear()
 	engine_request_pending = false
 	controller.engine_failed()
 	computer_enabled = false
@@ -502,6 +619,17 @@ func _set_spectator_enabled(enabled: bool) -> void:
 	_save_settings()
 	_restart()
 
+
+func _invalidate_engine_work() -> void:
+	_match_generation += 1
+	engine_request_pending = false
+	hint_request_pending = false
+	_engine_request.clear()
+	if has_node("UI/Hint"):
+		$UI/Hint.disabled = false
+	if engine != null:
+		engine.cancel_request()
+
 func _set_difficulty(index: int) -> void:
 	difficulty_index = clampi(index, 0, CampaignProgress.DIFFICULTY_PROFILES.size() - 1)
 	if engine != null and engine.is_ready_for_requests():
@@ -523,6 +651,8 @@ func _set_capture_speed(index: int) -> void:
 
 
 func _toggle_settings_menu() -> void:
+	if screen_phase != ScreenPhase.PLAYING or match_paused or surrendering:
+		return
 	_set_settings_menu_visible(not $UI/SettingsPanel.visible)
 
 
@@ -542,6 +672,14 @@ func _set_capture_ui_visible(visible: bool) -> void:
 		_set_settings_menu_visible(false)
 	for node_name in CAPTURE_HIDDEN_UI_NODES:
 		$UI.get_node(node_name).visible = visible
+
+
+func _set_cinematic_hud_visible(visible: bool) -> void:
+	_set_settings_menu_visible(false)
+	for node_name in CINEMATIC_HIDDEN_UI_NODES:
+		$UI.get_node(node_name).visible = not visible
+	if not visible:
+		_update_coach_prompt()
 
 func _load_settings() -> void:
 	settings = SessionSettings.load_values()
@@ -565,6 +703,7 @@ func _load_settings() -> void:
 	$UI/AnimationSpeed.select(speed_index)
 	$UI/CameraShake.button_pressed = $CameraDirector.shake_enabled
 	$UI/BeginnerCoach.button_pressed = beginner_coach_enabled
+	$UI/CampaignCinematics.button_pressed = bool(settings.get("campaign_cinematics_enabled", true))
 	$UI/MasterVolume.value = volume_db
 	_apply_fullscreen(bool(settings.get("fullscreen", false)))
 	campaign = CampaignProgress.new(settings.get("campaign_snapshot", {}))
@@ -607,6 +746,12 @@ func _update_difficulty_readout() -> void:
 	$UI/DifficultyReadout.text = "%s: %s  ·  %d Elo  ·  Arena %d of %d" % [mode_label, profile.name, profile.elo, arena_number, CampaignProgress.ARENA_IDS.size()]
 
 func _unhandled_input(event: InputEvent) -> void:
+	if $CampaignCinematic.is_active() and event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.keycode == KEY_SPACE):
+		$CampaignCinematic.skip()
+		get_viewport().set_input_as_handled()
+		return
+	if screen_phase != ScreenPhase.PLAYING:
+		return
 	if match_paused or surrendering:
 		return
 	if spectator_enabled:

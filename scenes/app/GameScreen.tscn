@@ -11,6 +11,8 @@
 [ext_resource type="Script" path="res://scripts/presentation/arena_audio_director.gd" id="10"]
 [ext_resource type="Texture2D" path="res://assets/ui/check-and-conquer-logo.png" id="11_logo"]
 [ext_resource type="AudioStream" path="res://assets/audio/war-horn.mp3" id="12_horn"]
+[ext_resource type="PackedScene" path="res://scenes/presentation/CampaignCinematic.tscn" id="13_cinematic"]
+[ext_resource type="Script" path="res://scripts/presentation/grandmaster_ceremony.gd" id="14_ceremony"]
 
 [sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
 panorama = ExtResource("9")
@@ -88,6 +90,12 @@ script = ExtResource("6")
 [node name="CameraDirector" type="Node" parent="."]
 script = ExtResource("5")
 camera_path = NodePath("../Camera3D")
+[node name="CampaignCinematic" parent="." instance=ExtResource("13_cinematic")]
+board_camera_path = NodePath("../Camera3D")
+cinematic_camera_path = NodePath("CinematicCamera")
+overlay_path = NodePath("Overlay")
+[node name="GrandmasterCeremony" type="Node3D" parent="."]
+script = ExtResource("14_ceremony")
 [node name="Light" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -35, 0)
 light_energy = 0.95
@@ -349,6 +357,14 @@ offset_right = 876.0
 offset_bottom = 376.0
 button_pressed = true
 text = "Beginner Coach"
+
+[node name="CampaignCinematics" type="CheckButton" parent="UI"]
+offset_left = 560.0
+offset_top = 378.0
+offset_right = 876.0
+offset_bottom = 406.0
+button_pressed = true
+text = "Campaign cinematics"
 [node name="MasterVolume" type="HSlider" parent="UI"]
 offset_left = 48.0
 offset_top = 520.0

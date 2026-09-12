@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script = ExtResource("2")
+cue_id = "lava.victory_guardian"
+title = "STRENGTH TESTED"
+speaker_label = "Forge Tyrant"
+speaker_id = "gatekeeper"
+body = "You have the strength to rule. We shall see what you do with it."
+hold_s = 5.5
+shot_position = Vector3(23, 25, 25)
+shot_target = Vector3(0, 0, 0)
+[sub_resource type="Resource" id="b"]
+script = ExtResource("2")
+cue_id = "lava.victory_narration"
+title = "ONE OATH REMAINS"
+speaker_label = "Grandmaster"
+speaker_id = "grandmaster"
+body = "One oath remains, where the first alliance took root."
+hold_s = 5.5
+shot_position = Vector3(8, 5.7, 10)
+shot_target = Vector3(19, 3.2, 0)
+[resource]
+script = ExtResource("1")
+sequence_id = "lava_forge.victory"
+arena_id = "lava_forge"
+outcome = "victory"
+cues = [SubResource("a"), SubResource("b")]

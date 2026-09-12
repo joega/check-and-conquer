@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script = ExtResource("2")
+cue_id = "arcane.opening"
+title = "II · THE CLOUD ROAD"
+speaker_label = "Narration"
+body = "Above the storms, the Sky Seer measures every possible ending."
+hold_s = 5.0
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(-18, 3, -24)
+shot_duration_s = 0.5
+stage_action = "seating_and_approach"
+[sub_resource type="Resource" id="b"]
+script = ExtResource("2")
+cue_id = "arcane.guardian"
+title = "THE SKY SEER"
+speaker_label = "Sky Seer"
+speaker_id = "gatekeeper"
+body = "I have seen your road burn in a hundred futures."
+hold_s = 5.8
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+shot_duration_s = 0.5
+[sub_resource type="Resource" id="c"]
+script = ExtResource("2")
+cue_id = "arcane.commander"
+title = "THE COMMANDER"
+speaker_label = "Commander"
+speaker_id = "commander"
+body = "Then help me find the one where it does not."
+hold_s = 4.8
+shot_position = Vector3(-12, 8, 16)
+shot_target = Vector3(7, 2, -3)
+[sub_resource type="Resource" id="d"]
+script = ExtResource("2")
+cue_id = "arcane.objective"
+title = "OBJECTIVE"
+speaker_label = "Grandmaster"
+speaker_id = "grandmaster"
+body = "Defeat the Sky Seer. Claim passage across the clouds."
+hold_s = 3.0
+shot_position = Vector3(8, 5.7, 10)
+shot_target = Vector3(19, 3.2, 0)
+stage_action = "return"
+after_action = "formation_restore"
+[resource]
+script = ExtResource("1")
+sequence_id = "arcane_sky_citadel.intro"
+arena_id = "arcane_sky_citadel"
+outcome = "intro"
+final_hold_s = 1.2
+cues = [SubResource("a"), SubResource("b"), SubResource("c"), SubResource("d")]

@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2"]
+[sub_resource type="Resource" id="a"]
+script=ExtResource("2")
+cue_id="forest.opening"
+title="V · THE FINAL GROVE"
+speaker_label="Narration"
+body="Here, five strongholds once swore that none would stand alone."
+hold_s=6.0
+shot_position=Vector3(-12,8,16)
+shot_target=Vector3(-20,3,-23)
+stage_action="seating_and_approach"
+[sub_resource type="Resource" id="b"]
+script=ExtResource("2")
+cue_id="forest.guardian"
+title="THE GROVE SOVEREIGN"
+speaker_label="Grove Sovereign"
+speaker_id="gatekeeper"
+body="Every conqueror reaches this grove. Few remember why they began."
+hold_s=6.0
+shot_position=Vector3(-12,8,16)
+shot_target=Vector3(7,2,-3)
+[sub_resource type="Resource" id="c"]
+script=ExtResource("2")
+cue_id="forest.commander"
+title="THE COMMANDER"
+speaker_label="Commander"
+speaker_id="commander"
+body="I came to open a road. I intend to keep it open."
+hold_s=5.0
+shot_position=Vector3(-12,8,16)
+shot_target=Vector3(7,2,-3)
+[sub_resource type="Resource" id="d"]
+script=ExtResource("2")
+cue_id="forest.objective"
+title="OBJECTIVE"
+speaker_label="Grandmaster"
+speaker_id="grandmaster"
+body="Defeat the Grove Sovereign. Renew the oath of the Warpath."
+hold_s=3.0
+shot_position=Vector3(8,5.7,10)
+shot_target=Vector3(19,3.2,0)
+stage_action="return"
+after_action="formation_restore"
+[resource]
+script=ExtResource("1")
+sequence_id="forest_ruins.intro"
+arena_id="forest_ruins"
+outcome="intro"
+final_hold_s=1.0
+cues=[SubResource("a"),SubResource("b"),SubResource("c"),SubResource("d")]

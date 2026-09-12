@@ -20,6 +20,7 @@ const DEFAULTS := {
 	"selected_arena_id": "mountain_fortress",
 	"campaign_enabled": true,
 	"beginner_coach_enabled": true,
+	"campaign_cinematics_enabled": true,
 }
 
 
@@ -30,7 +31,14 @@ static func load_values() -> Dictionary:
 		return values
 	for key in DEFAULTS:
 		if config.has_section_key(SECTION, key):
-			values[key] = config.get_value(SECTION, key, DEFAULTS[key])
+			var loaded_value = config.get_value(SECTION, key, DEFAULTS[key])
+			# This preference was introduced after existing campaign saves. Treat a
+			# malformed value as the backwards-compatible enabled default instead of
+			# relying on truthiness (for example, a non-empty string).
+			if key == "campaign_cinematics_enabled":
+				values[key] = loaded_value if loaded_value is bool else DEFAULTS[key]
+			else:
+				values[key] = loaded_value
 	# V1 is exclusively player-versus-Stockfish. Ignore any older saved local
 	# play toggle so opening the game never hands both sides to one player.
 	values.computer_enabled = true

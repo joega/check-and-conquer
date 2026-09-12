@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CampaignCinematicSequence" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_sequence.gd" id="1_sequence"]
+[ext_resource type="Script" path="res://scripts/presentation/campaign_cinematic_cue.gd" id="2_cue"]
+
+[sub_resource type="Resource" id="CueDraw"]
+script = ExtResource("2_cue")
+cue_id = "shared.draw"
+title = "THE ROAD REMAINS CONTESTED"
+speaker_label = "Narration"
+body = "Neither line yields. The road remains contested."
+hold_s = 4.5
+shot_position = Vector3(23, 25, 25)
+shot_target = Vector3(0, 0, 0)
+shot_duration_s = 0.35
+
+[resource]
+script = ExtResource("1_sequence")
+sequence_id = "shared.draw"
+arena_id = "shared"
+outcome = "draw"
+final_hold_s = 0.75
+cues = [SubResource("CueDraw")]
