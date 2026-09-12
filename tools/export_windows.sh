@@ -17,12 +17,12 @@ if [[ ! -f "$stockfish_corresponding_source/Copying.txt" ]]; then
 	exit 1
 fi
 
+rm -rf "$output_dir"
 mkdir -p "$output_dir/stockfish" "$output_dir/licenses"
-rm -rf "$output_dir/stockfish-source"
 godot --headless --path "$project_root" --export-release "Windows Desktop" "$output_dir/check-and-conquer.exe"
 cp -p "$stockfish_source" "$output_dir/stockfish/stockfish-windows-x86-64-universal.exe"
 cp -p "$stockfish_corresponding_source/Copying.txt" "$output_dir/stockfish/COPYING.txt"
-cp -a "$stockfish_corresponding_source" "$output_dir/stockfish-source"
+cp -p "$project_root/third_party/LICENSES/STOCKFISH-SOURCE.md" "$output_dir/stockfish/SOURCE.md"
 cp -p "$project_root/third_party/LICENSES/GODOT-MIT.txt" "$output_dir/licenses/GODOT-MIT.txt"
 
-echo "Windows build written to $output_dir (including Stockfish corresponding source and notices)"
+echo "Windows build written to $output_dir (including Stockfish GPL notice and source pointer)"

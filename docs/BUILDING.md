@@ -17,7 +17,7 @@ bash tools/run_headless_tests.sh
 ```
 
 Each distributable build needs its matching platform Stockfish executable and
-the GPLv3 source/license material recorded in [THIRD_PARTY_SOFTWARE.md](THIRD_PARTY_SOFTWARE.md).
+the GPLv3 notice/source pointer recorded in [THIRD_PARTY_SOFTWARE.md](THIRD_PARTY_SOFTWARE.md).
 
 ## Linux release build
 
@@ -27,24 +27,24 @@ Install Godot's Linux export templates for the same 4.7.2 version, then run:
 bash tools/export_linux.sh
 ```
 
-The script creates `build/linux-x86_64/check-and-conquer.x86_64`, places the unmodified Stockfish executable plus its GPLv3 notice in the adjacent `stockfish/` directory, copies Stockfish's corresponding source into `stockfish-source/`, and includes Godot's MIT notice in `licenses/`. Development tests, source archives, third-party source, and unused hair assets are excluded from the game PCK; the base-character face resources remain because they are layered over the outfit meshes. Run the exported executable from that directory so the engine remains discoverable. The runtime uses this external copy because executables stored inside a Godot PCK cannot be launched as UCI subprocesses.
+The script first recreates `build/linux-x86_64/`, so it cannot accidentally package an earlier export. It stages the unmodified Stockfish executable, its GPLv3 notice, and `stockfish/SOURCE.md`, which points to the immutable official Stockfish 19 source tag. Godot's MIT notice is staged in `licenses/`. The PCK exports only the launch, game, and debug scenes, their dependencies, dynamic choreography/difficulty resources, and the five runtime arena panoramas. Run the exported executable from that directory so the engine remains discoverable. The runtime uses this external copy because executables stored inside a Godot PCK cannot be launched as UCI subprocesses.
 
 ## Windows release build
 
 Download and unpack the official Windows x86-64 universal Stockfish archive at
 `third_party/stockfish/windows-x86_64/stockfish/`, retaining its
 `stockfish-windows-x86-64-universal.exe`. The tracked Stockfish 19 source tree
-and `Copying.txt` under `third_party/stockfish/linux-x86_64/stockfish/` supply
-the corresponding GPL material for both platform packages.
+and `Copying.txt` under `third_party/stockfish/linux-x86_64/stockfish/` support
+local compilation and provide the GPL notice for both platform packages.
 Install the matching Godot 4.7.2 Windows export templates, then run:
 
 ```sh
 bash tools/export_windows.sh
 ```
 
-The script creates `build/windows-x86_64/check-and-conquer.exe` and stages the
-unmodified engine at `stockfish/stockfish-windows-x86-64-universal.exe`, its GPL
-notice, corresponding source, and the Godot MIT notice. Run the game from that
+The script first recreates `build/windows-x86_64/`, then stages the unmodified
+engine at `stockfish/stockfish-windows-x86-64-universal.exe`, its GPL notice,
+the exact-source pointer, and the Godot MIT notice. Run the game from that
 directory so the external UCI process remains discoverable.
 
 ## Continuous GitHub builds
@@ -61,4 +61,5 @@ Pushing a tag beginning with `v` (for example, `v0.0.1`) runs the same gates and
 creates or refreshes a prerelease named for that tag. The resulting
 `check-and-conquer-windows-x86_64.zip` is self-contained: extract all files and
 run `check-and-conquer.exe`; no separate Godot or Stockfish installation is
-needed.
+needed. The package contains the Stockfish GPL notice and an exact-source
+pointer instead of duplicating the full Stockfish source tree.

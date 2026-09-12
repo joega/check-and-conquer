@@ -14,7 +14,7 @@ Populate exact versions/hashes as dependencies are added.
 - Linux x86-64 executable: `third_party/stockfish/linux-x86_64/stockfish/stockfish-linux-x86-64-universal`.
 - Windows x86-64 executable: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-universal.exe`.
 - Exact SHA-256: `0f83d24cc46d2c66c60f16001af5444873bc112b7d028594513426894c12da19`.
-- Source/license distribution: the tracked source tree and `Copying.txt` are retained under `third_party/stockfish/linux-x86_64/stockfish/`. Both platform exporters copy the GPLv3 notice and corresponding source into their release directory. The CI packaging workflow builds the Linux binary from that source and downloads the matching Windows Stockfish 19 universal binary directly from the official Stockfish GitHub release.
+- Source/license distribution: the tracked source tree and `Copying.txt` are retained under `third_party/stockfish/linux-x86_64/stockfish/`. Both platform exporters copy the GPLv3 notice and `third_party/LICENSES/STOCKFISH-SOURCE.md`, which links to the immutable official `sf_19` source tag, into their release directory. The CI packaging workflow builds the Linux binary from that source and downloads the matching Windows Stockfish 19 universal binary directly from the official Stockfish GitHub release.
 
 ## Godot Engine
 

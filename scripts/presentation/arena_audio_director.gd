@@ -7,17 +7,17 @@ extends Node
 const SAMPLE_RATE := 22050
 const MUSIC_DURATION_S := 12.0
 const SFX_STREAMS := {
-	&"piece_land": [preload("res://assets/audio/cc0_fantasy/wood-twigs-break-01.wav")],
-	&"sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav"), preload("res://assets/audio/cc0_fantasy/sword-clash-03.wav")],
-	&"dual_sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-03.wav"), preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav")],
-	&"royal_blade_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.wav")],
-	&"spear_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
-	&"arrow_release": [preload("res://assets/audio/cc0_fantasy/arrow-feathers-01.wav"), preload("res://assets/audio/cc0_fantasy/arrow-grab-from-quiver-01.wav")],
-	&"arrow_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
-	&"arcane_cast": [preload("res://assets/audio/cc0_fantasy/fireball-01.wav")],
-	&"arcane_impact": [preload("res://assets/audio/cc0_fantasy/fireball-01.wav")],
-	&"wall_slam": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
-	&"hammer_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.wav")],
+	&"piece_land": [preload("res://assets/audio/cc0_fantasy/wood-twigs-break-01.ogg")],
+	&"sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg"), preload("res://assets/audio/cc0_fantasy/sword-clash-03.ogg")],
+	&"dual_sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-03.ogg"), preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg")],
+	&"royal_blade_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg")],
+	&"spear_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.ogg")],
+	&"arrow_release": [preload("res://assets/audio/cc0_fantasy/arrow-feathers-01.ogg"), preload("res://assets/audio/cc0_fantasy/arrow-grab-from-quiver-01.ogg")],
+	&"arrow_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.ogg")],
+	&"arcane_cast": [preload("res://assets/audio/cc0_fantasy/fireball-01.ogg")],
+	&"arcane_impact": [preload("res://assets/audio/cc0_fantasy/fireball-01.ogg")],
+	&"wall_slam": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.ogg")],
+	&"hammer_impact": [preload("res://assets/audio/cc0_fantasy/metal-hammer-hit-01.ogg")],
 }
 
 var active_arena_id := "mountain_fortress"

@@ -20,6 +20,23 @@ Do not silently reverse decisions. Add a dated entry explaining evidence and con
 **Decision:** Launch official Stockfish executable and communicate over stdin/stdout using UCI.  
 **Reason:** Clean separation, standard integration path, straightforward process supervision, and clearer GPL boundary.
 
+## ADR-023 — Lean reproducible desktop packages
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Each platform exporter recreates its staging directory before
+exporting, ships only the current game, platform Stockfish executable, required
+notices, and a pointer to the immutable official Stockfish 19 source tag. Godot
+exports the selected runtime roots and their dependencies rather than every
+project resource.
+**Reason:** Release folders had retained prior game exports and copied a 296 MB
+Stockfish source directory into every download. `all_resources` also packaged
+non-runtime screenshots and unused project assets.
+**Consequences:** GitHub Actions uses the same lean exporters, so hosted ZIPs
+contain only the new staging output. Dynamic scene/resource paths are explicitly
+listed in the preset `export_files`; adding a new runtime-loaded path requires
+adding it to that list and testing an exported build.
+
 ## ADR-004 — Chess domain independent from Stockfish
 
 **Status:** Accepted  

@@ -44,9 +44,9 @@ executable from the extracted folder:
 - **Windows:** `check-and-conquer.exe`
 - **Linux:** `check-and-conquer.x86_64`
 
-Each package already includes the correct Stockfish engine, GPL notice, and
-corresponding source. No separate engine download, Godot installation, or
-first-launch update is needed.
+Each package already includes the correct Stockfish engine, GPL notice, and a
+pointer to the exact official Stockfish 19 source. No separate engine download,
+Godot installation, or first-launch update is needed.
 
 ## Run from source
 
@@ -64,8 +64,9 @@ source checkout locally, download the matching official build from the
 - Windows x86-64 universal: `third_party/stockfish/windows-x86_64/stockfish/stockfish-windows-x86-64-universal.exe`
 
 Keep Stockfish's `Copying.txt` and corresponding source tree in
-`third_party/stockfish/linux-x86_64/stockfish/`; both platform exporters stage
-that GPL material beside their platform-specific binary.
+`third_party/stockfish/linux-x86_64/stockfish/`; local Linux builds compile
+from that source. Release packages stage the GPL notice and an exact-source
+pointer beside their platform-specific binary.
 
 Open the project in Godot or run:
 
@@ -105,7 +106,7 @@ bash tools/export_windows.sh
 ```
 
 This produces `build/windows-x86_64/` with the Windows executable, Stockfish,
-the corresponding source, and license notices.
+license notices, and an exact-source pointer.
 
 ## Design principles
 
@@ -118,7 +119,7 @@ the corresponding source, and license notices.
 
 ## Credits and licenses
 
-Character models, outfits, and animation source packs are by [Quaternius](https://quaternius.com/) under CC0 1.0. The bundled chess engine is [Stockfish](https://stockfishchess.org/), distributed under GPLv3; its executable, source, and notices are staged with Linux exports. Godot is MIT licensed.
+Character models, outfits, and animation source packs are by [Quaternius](https://quaternius.com/) under CC0 1.0. The bundled chess engine is [Stockfish](https://stockfishchess.org/), distributed under GPLv3; its executable, GPL notice, and an exact-source pointer are staged with each desktop export. Godot is MIT licensed.
 
 See [third-party asset provenance](assets/THIRD_PARTY_ASSETS.md) and [third-party software notices](docs/THIRD_PARTY_SOFTWARE.md) for the complete record.
 

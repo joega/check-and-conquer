@@ -64,7 +64,7 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 - Date acquired: 2026-09-10
 - Original archive/file: `Modular Character Outfits - Fantasy[Standard].zip` (SHA-256 `c3468b18871cc8c8f05ab14df7712baf22cb9f389cbd870babf130e595187f70`)
 - Files used in project: full Godot/Unreal glTF outfits `Male_Peasant`, `Female_Peasant`, `Male_Ranger`, and `Female_Ranger`, with their buffers and referenced textures under `assets/characters/quaternius/outfits/`.
-- Modifications: Extracted the complete outfit scenes rather than overlaying clothing on the base bodies, as required by the source Readme to avoid clipping. The existing compatible animation library remains attached at runtime. The matching base face, eyes, and brows are transferred onto the shared skeleton, while its torso and limbs remain absent to avoid clothing overlap.
+- Modifications: Extracted the complete outfit scenes rather than overlaying clothing on the base bodies, as required by the source Readme to avoid clipping. The existing compatible animation library remains attached at runtime. The matching base face, eyes, and brows are transferred onto the shared skeleton, while its torso and limbs remain absent to avoid clothing overlap. On 2026-09-12, resampled the six 4096×4096 outfit base-color, normal, and ORM maps to 2048×2048 for desktop release size; source mesh/rig content is unchanged.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; source archive is retained locally in ignored `assets/source-archives/` and is not committed.
 - Verification notes: all four outfit skeletons have the matching 65-joint humanoid order and `Armature/Skeleton3D` / `hand_r` names used by `PieceActor`. The pack contains no shield or weapon assets; the old project-created rook shield was removed to preserve visibility.
@@ -97,8 +97,8 @@ model, VFX pack, or other third-party visual asset.
 - License: CC0 1.0 Universal
 - Date acquired: 2026-09-11
 - Original archive/file: `tinysized.zip` (SHA-256 `7f00e2b1dae15e68db0e1d6096767f03755e9e7c247128afc3e935e63774d7db`; archive remains outside the repository)
-- Files used in project: `assets/audio/cc0_fantasy/arrow-feathers-01.wav`, `arrow-grab-from-quiver-01.wav`, `metal-hammer-hit-01.wav`, `paralyzer-discharge-02.wav`, `sword-clash-01.wav`, `sword-clash-03.wav`, and `wood-twigs-break-01.wav`.
-- Modifications: Extracted the selected WAV effects without editing. `ArenaAudioDirector` assigns them to landings, blade clashes, arrows, arcane discharges, and heavy impacts.
+- Files used in project: `assets/audio/cc0_fantasy/arrow-feathers-01.ogg`, `arrow-grab-from-quiver-01.ogg`, `metal-hammer-hit-01.ogg`, `paralyzer-discharge-02.ogg`, `sword-clash-01.ogg`, `sword-clash-03.ogg`, and `wood-twigs-break-01.ogg`.
+- Modifications: Converted the selected WAV effects to Vorbis OGG at quality 5 for distribution. `ArenaAudioDirector` assigns them to landings, blade clashes, arrows, arcane discharges, and heavy impacts.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; only the selected runtime effects are committed.
 - Verification notes: Imported by Godot 4.7.2 and selected through `ArenaAudioDirector`; these replace the ordinary runtime-synthesized combat beeps.
@@ -136,8 +136,8 @@ model, VFX pack, or other third-party visual asset.
 - License: CC0 1.0 Universal
 - Date acquired: 2026-09-11
 - Original archive/file: `105016__julien-matthey__jm-fx-fireball-01.wav` (SHA-256 `3992598c814de25c318780e506aeda673a7e410b7b3c4f0793883483ff9766b8`)
-- Files used in project: `assets/audio/cc0_fantasy/fireball-01.wav`
-- Modifications: none
+- Files used in project: `assets/audio/cc0_fantasy/fireball-01.ogg`
+- Modifications: Converted from the supplied WAV to Vorbis OGG at quality 5 for distribution.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication.
 - Verification notes: Assigned to the Queen arcane cast and impact cues, replacing the lightning-like prototype discharge.

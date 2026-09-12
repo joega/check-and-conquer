@@ -123,7 +123,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
               gh release create "$RELEASE_TAG" --prerelease --title "Check & Conquer ${RELEASE_TAG}" \
-                --notes "Pre-release playtest build. Includes self-contained Linux x86-64 and Windows x86-64 packages, each with Stockfish 19 and its required notices/source. Please report chess-rule, move-selection, check/checkmate, presentation, and usability feedback with reproduction steps." \
+                --notes "Pre-release playtest build. Includes self-contained Linux x86-64 and Windows x86-64 packages, each with Stockfish 19, its GPL notice, and a pointer to the exact official source. Please report chess-rule, move-selection, check/checkmate, presentation, and usability feedback with reproduction steps." \
                 --target "$COMMIT"
             fi
             gh release upload "$RELEASE_TAG" dist/*.zip --clobber
