@@ -56,3 +56,9 @@ game suite, and only then uploads ready-to-run Linux and Windows zip files. The
 latest pair replaces the assets in the
 repository's **Latest development build** prerelease; the same pair is retained
 for 30 days with the individual Actions run.
+
+Pushing a tag beginning with `v` (for example, `v0.0.1`) runs the same gates and
+creates or refreshes a prerelease named for that tag. The resulting
+`check-and-conquer-windows-x86_64.zip` is self-contained: extract all files and
+run `check-and-conquer.exe`; no separate Godot or Stockfish installation is
+needed.

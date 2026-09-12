@@ -3,6 +3,7 @@ name: Package desktop builds
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -109,18 +110,29 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish latest development build
+      - name: Publish release build
         env:
           GH_TOKEN: ${{ github.token }}
           COMMIT: ${{ github.sha }}
+          RELEASE_TAG: ${{ github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
-          if ! gh release view continuous >/dev/null 2>&1; then
-            gh release create continuous --prerelease --title "Latest development build" \
-              --notes "Automated desktop builds from main. Commit: ${COMMIT}" \
-              --target "$COMMIT"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+              gh release create "$RELEASE_TAG" --prerelease --title "Check & Conquer ${RELEASE_TAG}" \
+                --notes "Pre-release playtest build. Includes self-contained Linux x86-64 and Windows x86-64 packages, each with Stockfish 19 and its required notices/source. Please report chess-rule, move-selection, check/checkmate, presentation, and usability feedback with reproduction steps." \
+                --target "$COMMIT"
+            fi
+            gh release upload "$RELEASE_TAG" dist/*.zip --clobber
+            gh release edit "$RELEASE_TAG" --title "Check & Conquer ${RELEASE_TAG}" --prerelease
+          else
+            if ! gh release view continuous >/dev/null 2>&1; then
+              gh release create continuous --prerelease --title "Latest development build" \
+                --notes "Automated desktop builds from main. Commit: ${COMMIT}" \
+                --target "$COMMIT"
+            fi
+            gh release upload continuous dist/*.zip --clobber
+            gh release edit continuous --title "Latest development build" --prerelease \
+              --notes "Automated desktop builds from main. Commit: ${COMMIT}"
           fi
-          gh release upload continuous dist/*.zip --clobber
-          gh release edit continuous --title "Latest development build" --prerelease \
-            --notes "Automated desktop builds from main. Commit: ${COMMIT}"
