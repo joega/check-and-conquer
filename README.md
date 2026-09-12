@@ -2,6 +2,14 @@
 
 **Check & Conquer** is an original 3D chess game where every legal move plays out on a living battlefield. Chess rules remain authoritative; animated duels give captures their drama.
 
+## Download the latest prerelease
+
+- [Windows x86-64 — v0.0.1](https://github.com/joega/check-and-conquer/releases/download/v0.0.1/check-and-conquer-windows-x86_64.zip)
+- [Linux x86-64 — v0.0.1](https://github.com/joega/check-and-conquer/releases/download/v0.0.1/check-and-conquer-linux-x86_64.zip)
+
+Extract the entire ZIP, then run the executable from the extracted folder. No
+Godot or Stockfish installation is needed.
+
 ![Status](https://img.shields.io/badge/status-prototype-gold) ![Engine](https://img.shields.io/badge/Godot-4.7.2-blue) ![Platform](https://img.shields.io/badge/platform-Linux%20%2B%20Windows-lightgrey)
 
 [![Test](https://github.com/joega/check-and-conquer/actions/workflows/test.yml/badge.svg)](https://github.com/joega/check-and-conquer/actions/workflows/test.yml)
@@ -30,9 +38,8 @@ Check & Conquer is early in development. The focus is a polished offline desktop
 
 ## Download and play
 
-Download the package for your platform from the
-[Latest development build](https://github.com/joega/check-and-conquer/releases/tag/continuous),
-extract it, and run the game executable from the extracted folder:
+Use the latest prerelease links above, extract the package, and run the game
+executable from the extracted folder:
 
 - **Windows:** `check-and-conquer.exe`
 - **Linux:** `check-and-conquer.x86_64`
