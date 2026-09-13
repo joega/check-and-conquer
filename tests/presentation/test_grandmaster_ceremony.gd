@@ -25,13 +25,14 @@ func _run() -> void:
 	var grandmaster := ceremony.get_node("Grandmaster") as Node3D
 	assert(is_equal_approx(chair.rotation.y, PI), "The temporary throne chair must receive its own 180-degree board-facing correction.")
 	assert(is_equal_approx(chair.scale.x, 2.75), "The human-scale chair must match the Grandmaster rather than swallowing the seated pose.")
-	assert(grandmaster.current_semantic_state() == &"stance.fold_arms_01", "The Grandmaster must retain the distinct overseer pose while facing the board.")
-	assert(grandmaster._animation_player_2.current_animation == &"Idle_FoldArms", "The standing pose must actually play from its supplying library.")
-	assert(grandmaster.global_position.distance_to(chair.global_position) > 2.2, "The Grandmaster must stand clear of the chair rather than clipping through its seat.")
+	assert(grandmaster.current_semantic_state() == &"ceremony.seat.idle", "The Grandmaster must begin in the stable throne pose rather than overlap the dais during a standing transition.")
+	assert(grandmaster.active_animation_name() == &"ual1/Sitting_Idle", "The throne pose must actually play from its namespaced source library.")
+	assert(grandmaster.global_position.distance_to(chair.global_position) < 1.0, "The Grandmaster root must remain aligned with the throne seat.")
+	assert(not grandmaster.equipped_weapons_visible(), "The seated Grandmaster must not drop a hand-bound queen weapon across the dais.")
 	assert(is_equal_approx(grandmaster.scale.x, 1.48), "The Grandmaster must be scaled to read credibly beside the oversized throne prop.")
 	ceremony.begin_grandmaster_seating()
-	await create_timer(1.35).timeout
-	assert(grandmaster.current_semantic_state() == &"ceremony.seat.idle", "The Grandmaster must settle into UAL1's seated idle after entering the chair.")
+	await process_frame
+	assert(grandmaster.current_semantic_state() == &"ceremony.seat.idle", "Repeated seating requests must leave the stable throne pose unchanged.")
 	# Inspect the actual skeletal pose relative to the source chair mesh. A root
 	# equality test passed while the knees/shins were inside the seat.
 	var skeleton: Skeleton3D = grandmaster.find_children("*", "Skeleton3D", true, false)[0]

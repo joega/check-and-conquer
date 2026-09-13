@@ -306,19 +306,21 @@ func _build_dais() -> void:
 	_grandmaster.side = Types.WHITE
 	_grandmaster.side_color = Color(0.18, 0.07, 0.26)
 	_grandmaster.appearance_seed = 91
-	# Start in front of the chair, then place the sitting clip using the seat
-	# offset below; its skeleton pelvis is not at the actor root.
-	_grandmaster.position = Vector3(17.25, 0.70, 0.0)
+	# Seat placement is finalized after the dais receives its board-facing
+	# rotation; its skeleton pelvis is not at the actor root.
+	_grandmaster.position = Vector3(0.0, 0.70, 0.0)
 	_grandmaster.scale = Vector3.ONE * GRANDMASTER_SCALE
 	add_child(_grandmaster)
 	dais.look_at(Vector3.ZERO, Vector3.UP)
-	_grandmaster_home_transform = _grandmaster.global_transform
 	# Chair_1's feet begin at local y=0.  Its root is already placed on the dais
 	# floor, so this keeps the actor root on that same floor while the UAL1
 	# sitting pose lowers the body into the chair's measured seat height.
 	_grandmaster_seat_position = _chair.global_position
 	_grandmaster_seat_position.y = _grandmaster.global_position.y
 	_grandmaster_seat_position -= dais.global_basis.z * GRANDMASTER_SEAT_FORWARD
+	_grandmaster.global_position = _grandmaster_seat_position
+	_grandmaster.face_world_position(Vector3.ZERO)
+	_grandmaster_home_transform = _grandmaster.global_transform
 	call_deferred("_finish_grandmaster_setup")
 
 
@@ -326,8 +328,11 @@ func _finish_grandmaster_setup() -> void:
 	var accents := _grandmaster.get_node_or_null("VisualAccents") as Node3D
 	if accents != null:
 		accents.visible = false
+	_grandmaster.set_equipped_weapons_visible(false)
+	_grandmaster.global_position = _grandmaster_seat_position
 	_grandmaster.face_world_position(Vector3.ZERO)
-	_grandmaster.play_state(&"stance.fold_arms_01")
+	_grandmaster.play_state(&"ceremony.seat.idle")
+	_grandmaster_seated = true
 
 
 func _finish_grandmaster_seating(generation := _operation_generation) -> void:

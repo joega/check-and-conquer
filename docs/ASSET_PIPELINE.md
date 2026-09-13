@@ -15,7 +15,7 @@ source model/animation
   -> canonical scale/orientation
   -> humanoid bone map / retarget
   -> normalized semantic clip names
-  -> AnimationTree
+  -> namespaced AnimationPlayer mixer
   -> PieceActor contract
   -> Combat Lab validation
   -> production archetype
@@ -75,6 +75,27 @@ V1 default: disable/strip root translation from locomotion and attacks when prac
 Godot moves `PieceActor` root. Skeleton animation supplies body motion. This keeps final board transforms exact.
 
 If an otherwise excellent signature animation requires root motion, isolate that exception inside the signature choreography and restore exact final transforms at the end.
+
+### Runtime locomotion contract
+
+UAL1 and UAL2 are duplicated into `ual1` and `ual2` namespaces on one
+AnimationPlayer. Semantic callers never select a source player or filename.
+Godot's native blend time connects compatible clips across both libraries;
+the actor owns pause, speed, movement, turn, ambient, role-action, and recovery
+cancellation as one lifecycle.
+
+The current in-place `Walk` calibration is 2.2 displayed world metres per
+cycle. Root travel uses a short quadratic acceleration, linear middle, and
+quadratic deceleration. Animation cadence is derived from travelled distance
+and actual root duration, so playback-speed changes are applied once and long
+moves add cycles. Quiet board travel targets 9 m/s plus a 0.18 s plant allowance,
+with root duration bounded to 0.50–4.0 s. Facing into travel uses animated
+shortest-yaw turns; rebuild/reset methods keep their immediate orientation path.
+
+The imported neutral idle is duplicated with ping-pong looping because its
+ordinary end-to-start seam visibly resets. Stance phase remains deterministic
+from actor identity and position. Do not change the source import globally:
+the runtime copy keeps previews and other source users isolated.
 
 ## Clip semantics
 
@@ -295,3 +316,58 @@ A custom animator/mocap process should deliver:
 - export file + license/provenance.
 
 Runtime choreography remains responsible for camera, VFX, audio, cleanup, and exact chess-square settlement.
+
+## Procedural hard-surface reference
+
+Small altar, rail, tile, terrace, and accessory hard-surface pieces may use
+`BeveledBoxMesh.create(size, bevel)`. It preserves the requested outer AABB and
+adds flat-shaded inset faces, edge strips, and corner facets. Board tile centers
+stay on `BoardMapper`; a 0.12 m tile remains centered at y=-0.06 so its top is
+exactly y=0. Materials that receive gameplay highlights must be duplicated per
+tile even when their base palette is shared.
+
+Mountain Fortress is the material/lighting reference: warm limestone, dark
+slate, aged bronze, neutral color-sourced ambient light, and a neutral two-split
+key shadow. Panorama light does not tint the playable stage. Existing CC0
+Banner_1 and Torch_Metal props replace local placeholder towers. Compatibility
+AA was measured after warm-up on identical fixtures; 2× MSAA is the selected
+balance, with the exact 720p/1080p samples retained in the P3 manifests.
+
+## Role silhouette accessories
+
+Small role cues remain presentation-only children of the current compatible
+65-joint outfit rig. Project-authored crests, mantles, pauldrons, diadems, and
+crowns use `BoneAttachment3D` on Head or spine_03; the bishop
+hood duplicates the separately skinned `Female_Ranger_Head_Hood` mesh and
+rebinds it with `skeleton = NodePath("..")`. The native ranger hood stays
+hidden on knight, queen, rook, and king so shared outfits do not produce shared
+head silhouettes. Hair selection is part of face clearance: queens use the
+compatible buns mesh because the long front lock covered both eyes beneath the
+diadem.
+
+Accessory dimensions must be checked label-hidden at gameplay scale and through
+idle, walk, attack, recovery, and death. They may not change actor root scale,
+ModelRoot scale, combat anchors, or weapon grips. Team color stays on small
+hood/pauldron details and cloth accessories; broad belt meshes retain near-source
+color so they do not read as floating torso bands. Authored bronze stays
+side-neutral. The piece glyph remains a fallback base cue and must be hidden
+during silhouette acceptance evidence.
+
+## Shared combat timeline and measured contact
+
+`CaptureChoreography` owns plant time, clip-relative impact time, recovery time,
+contact height, and accepted contact radius. `BattleDirector` latches the
+selected presentation speed at capture start and applies that scale to turns,
+root travel, body clips, project-authored prop motion, projectile arrival,
+sound, death, settlement, and recovery. A settings change during a capture is
+therefore applied to the next capture.
+
+Contact evidence must measure the nearest point on the equipped weapon mesh to
+the choreography's victim contact point. The current pawn reference uses 1.30 m
+anchor separation, a 0.40 s dagger marker, 2.30 m contact height, and a 0.60 m
+radius; the final measured distance is 0.431 m. At the marker, generic melee
+holds the exact clip pose for one process frame before measuring so Skeleton3D
+bone attachments commit consistently at normal, slow, and accelerated rates.
+Effects may reinforce that beat but must leave the weapon and victim silhouette
+visible. Cancellation stops actor motion, temporary effects, and combat audio
+before authoritative snapping.

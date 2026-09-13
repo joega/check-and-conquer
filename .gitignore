@@ -8,6 +8,10 @@
 builds/
 build/
 
+# Regenerable rendered evidence. The checked-in artifact README and capture
+# tools document exact reproduction; local PNG sequences remain in the workspace.
+artifacts/presentation_overhaul/*/
+
 # Source-asset archives are recorded in assets/THIRD_PARTY_ASSETS.md, not committed.
 assets/source-archives/
 

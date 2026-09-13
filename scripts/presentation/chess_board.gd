@@ -1,6 +1,7 @@
 extends Node3D
 
 const Mapper = preload("res://scripts/presentation/board_mapper.gd")
+const BeveledBoxMesh = preload("res://scripts/presentation/beveled_box_mesh.gd")
 
 @export var square_size := Mapper.SQUARE_SIZE_M
 var tiles: Dictionary = {}
@@ -14,41 +15,47 @@ var _square_markers: Array[Node3D] = []
 
 func _ready() -> void:
 	_create_board_altar()
+	var tile_mesh := BeveledBoxMesh.create(Vector3(square_size * 0.98, 0.12, square_size * 0.98), 0.055)
+	var pale_tiles: Array[StandardMaterial3D] = []
+	var dark_tiles: Array[StandardMaterial3D] = []
+	for variation in [-0.025, 0.0, 0.022]:
+		pale_tiles.append(_stone_material(Color("a7977e").lightened(variation) if variation >= 0.0 else Color("a7977e").darkened(-variation), 0.86))
+		dark_tiles.append(_stone_material(Color("344640").lightened(variation) if variation >= 0.0 else Color("344640").darkened(-variation), 0.88))
 	for rank in 8:
 		for file in 8:
 			var square := rank * 8 + file
 			var tile := MeshInstance3D.new()
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(square_size * 0.98, 0.12, square_size * 0.98)
-			tile.mesh = mesh
+			tile.mesh = tile_mesh
 			tile.position = Mapper.square_to_world(square, square_size) + Vector3(0, -0.06, 0)
-			var material := StandardMaterial3D.new()
-			material.albedo_color = Color("b5a384") if (file + rank) % 2 == 0 else Color("354c43")
-			material.roughness = 0.92
+			var variation_index := posmod(file * 5 + rank * 3, 3)
+			# Highlight state is tile-local; duplicate the palette sample so one
+			# square's emission cannot bleed into every matching variation.
+			var material: StandardMaterial3D = (pale_tiles[variation_index] if (file + rank) % 2 == 0 else dark_tiles[variation_index]).duplicate()
 			tile.material_override = material
 			add_child(tile)
 			tiles[square] = tile
 	_create_coordinate_labels()
 
 
+func _stone_material(color: Color, roughness: float, metallic := 0.0) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	material.metallic = metallic
+	return material
+
+
 func _create_board_altar() -> void:
 	var board_extent := Mapper.BOARD_SIZE_M
-	var stone := StandardMaterial3D.new()
-	stone.albedo_color = Color(0.055, 0.075, 0.10)
-	stone.metallic = 0.18
-	stone.roughness = 0.74
+	var stone := _stone_material(Color("242a2e"), 0.82, 0.06)
 	var pedestal := MeshInstance3D.new()
 	pedestal.name = "BoardPedestal"
-	var pedestal_mesh := BoxMesh.new()
-	pedestal_mesh.size = Vector3(board_extent + 2.4, 0.7, board_extent + 2.4)
+	var pedestal_mesh := BeveledBoxMesh.create(Vector3(board_extent + 2.4, 0.7, board_extent + 2.4), 0.18)
 	pedestal.mesh = pedestal_mesh
 	pedestal.position.y = -0.43
 	pedestal.material_override = stone
 	add_child(pedestal)
-	var bronze := StandardMaterial3D.new()
-	bronze.albedo_color = Color(0.55, 0.34, 0.12)
-	bronze.metallic = 0.72
-	bronze.roughness = 0.32
+	var bronze := _stone_material(Color("755330"), 0.48, 0.58)
 	var rail_index := 0
 	for rail_data in [
 		[Vector3(0, -0.03, -(board_extent * 0.5 + 0.48)), Vector3(board_extent + 1.45, 0.24, 0.42)],
@@ -59,17 +66,17 @@ func _create_board_altar() -> void:
 		var rail := MeshInstance3D.new()
 		rail.name = "BoardBronzeRail%02d" % rail_index
 		rail_index += 1
-		var rail_mesh := BoxMesh.new()
-		rail_mesh.size = rail_data[1]
+		var rail_mesh := BeveledBoxMesh.create(rail_data[1], 0.075)
 		rail.mesh = rail_mesh
 		rail.position = rail_data[0]
 		rail.material_override = bronze
 		add_child(rail)
 	var rune_material := StandardMaterial3D.new()
-	rune_material.albedo_color = Color(0.20, 0.70, 1.0)
-	rune_material.emission_enabled = true
-	rune_material.emission = Color(0.06, 0.35, 1.0)
-	rune_material.emission_energy_multiplier = 2.4
+	rune_material.albedo_color = Color("765431")
+	rune_material.metallic = 0.58
+	rune_material.roughness = 0.50
+	rune_material.emission_enabled = false
+	rune_material.emission_energy_multiplier = 0.0
 	var rune_index := 0
 	for corner in [Vector3(-17.1, 0.13, -17.1), Vector3(17.1, 0.13, -17.1), Vector3(-17.1, 0.13, 17.1), Vector3(17.1, 0.13, 17.1)]:
 		var rune := MeshInstance3D.new()

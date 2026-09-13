@@ -14,7 +14,8 @@ func _run() -> void:
 	for archetype in [Types.PAWN, Types.KNIGHT, Types.BISHOP, Types.ROOK, Types.QUEEN, Types.KING]:
 		var choreography = Resolver.resolve(archetype)
 		assert(choreography != null and not choreography.id.is_empty())
-		assert(choreography.approach_duration_s > 0.0 and choreography.cleanup_time_s >= choreography.impact_time_s)
+		assert(choreography.approach_duration_s > 0.0 and choreography.plant_duration_s > 0.0 and choreography.cleanup_time_s >= choreography.impact_time_s)
+		assert(choreography.recovery_duration_s > 0.0 and choreography.contact_height_m > 0.0 and choreography.contact_radius_m > 0.0)
 		assert(choreography.victim_hit_variants.size() >= 2, "Generic choreography must provide a deterministic choice of victim reactions.")
 		assert(choreography.victim_death_variants.size() >= 2, "Generic choreography must provide a deterministic choice of victim deaths.")
 		var actor = PIECE_ACTOR_SCENE.instantiate()

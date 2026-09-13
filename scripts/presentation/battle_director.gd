@@ -9,6 +9,8 @@ const TRAIL_MAX_PER_PROJECTILE := 24
 const TRAIL_LIFETIME_S := 0.16
 
 signal presentation_finished
+signal presentation_cancelled
+signal presentation_stage(stage: StringName)
 signal impact_landed
 signal victim_death_finished
 signal weapon_impact(kind: StringName)
@@ -18,10 +20,14 @@ signal weapon_impact(kind: StringName)
 
 var _running := false
 var _skip_requested := false
+var _active_playback_speed := 1.0
 var _active_attacker
 var _active_victim
 var _active_destination := Vector3.ZERO
 var last_victim_death_clip: StringName = &""
+var last_stage: StringName = &""
+var stage_history: Array[StringName] = []
+var last_weapon_contact_distance_m := INF
 var _temporary_effects: Array[Node] = []
 var _trail_mesh: SphereMesh
 var _trail_materials: Dictionary = {}
@@ -32,11 +38,15 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 		return
 	_running = true
 	_skip_requested = false
+	_active_playback_speed = maxf(playback_speed, 0.1)
+	stage_history.clear()
+	last_weapon_contact_distance_m = INF
+	_stage(&"anticipation")
 	_active_attacker = attacker
 	_active_victim = victim
 	_active_destination = destination
-	attacker.set_animation_speed(playback_speed)
-	victim.set_animation_speed(playback_speed)
+	attacker.set_animation_speed(_active_playback_speed)
+	victim.set_animation_speed(_active_playback_speed)
 	if choreography.delivery == "arrow":
 		await _play_bishop_ranged_capture(attacker, victim, destination)
 		return
@@ -54,58 +64,80 @@ func play_capture(attacker, victim, destination: Vector3) -> void:
 		approach_direction = Vector3.BACK
 	var approach_position: Vector3 = victim.global_position + approach_direction.normalized() * choreography.anchor_separation_m
 	approach_position.y = attacker.global_position.y
-	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
-	attacker.play_state(&"locomotion.walk.forward")
-	await _move_actor(attacker, approach_position, choreography.approach_duration_s / playback_speed)
+	_stage(&"approach")
+	await _move_actor(attacker, approach_position, _scaled(choreography.approach_duration_s))
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
+	_stage(&"plant")
+	weapon_impact.emit(&"approach_step")
+	await _wait_or_skip(_scaled(choreography.plant_duration_s))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	attacker.face_world_position(victim.global_position)
 	var attack_state: StringName = attacker.capture_attack_state(choreography.attacker_clip)
+	_stage(&"strike")
 	attacker.play_state(attack_state)
 	# Keep the short afterimage alive across contact, rather than spending it
 	# during the windup. Both waits honor the same skip path as the attack.
 	var swing_lead_s := minf(0.09, maxf(choreography.impact_time_s, 0.0))
-	await _wait_or_skip(maxf(choreography.impact_time_s - swing_lead_s, 0.0) / playback_speed)
+	await _wait_or_skip(_scaled(maxf(choreography.impact_time_s - swing_lead_s, 0.0)))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	_spawn_weapon_swing(attacker)
-	await _wait_or_skip(swing_lead_s / playback_speed)
+	await _wait_or_skip(_scaled(swing_lead_s))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
+	# Evaluate the exact authored impact pose before measuring contact. Frame
+	# cadence can otherwise leave an accelerated clip on either side of contact.
+	# Hold it for one process frame so Skeleton3D and its bone attachments commit
+	# the sampled transforms before the weapon bounds are queried.
+	attacker.sample_active_animation_at(choreography.impact_time_s)
+	attacker.set_animation_paused(true)
+	await get_tree().process_frame
+	if _skip_requested:
+		attacker.set_animation_paused(false)
+		_finish_capture(attacker, victim, destination)
+		return
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
-	impact_landed.emit()
+	_record_weapon_contact(attacker, victim)
+	attacker.set_animation_paused(false)
 	_spawn_role_impact(attacker, victim.global_position + Vector3.UP * 0.95)
 	weapon_impact.emit(_melee_sound_for(attacker))
-	await _wait_or_skip(0.16 / playback_speed)
+	impact_landed.emit()
+	_stage(&"reaction")
+	await _wait_or_skip(_scaled(0.16))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	var elapsed_before_death: float = choreography.impact_time_s + 0.16
 	if not choreography.attacker_followup_clip.is_empty():
+		_stage(&"followup")
 		attacker.play_state(choreography.attacker_followup_clip)
-		await _wait_or_skip(choreography.followup_time_s / playback_speed)
+		await _wait_or_skip(_scaled(choreography.followup_time_s))
 		if _skip_requested:
 			_finish_capture(attacker, victim, destination)
 			return
 		impact_landed.emit()
 		weapon_impact.emit(_melee_sound_for(attacker))
 		var followup_settle_s := 0.10
-		await _wait_or_skip(followup_settle_s / playback_speed)
+		await _wait_or_skip(_scaled(followup_settle_s))
 		if _skip_requested:
 			_finish_capture(attacker, victim, destination)
 			return
 		elapsed_before_death += choreography.followup_time_s + followup_settle_s
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
+	_stage(&"death")
 	victim.play_state(last_victim_death_clip)
-	var death_duration: float = victim.state_duration(last_victim_death_clip) / playback_speed
-	var cleanup_duration := maxf(death_duration, (choreography.cleanup_time_s - elapsed_before_death) / playback_speed)
+	var death_duration: float = _scaled(victim.state_duration(last_victim_death_clip))
+	var cleanup_duration := maxf(death_duration, _scaled(choreography.cleanup_time_s - elapsed_before_death))
 	await _wait_or_skip(cleanup_duration)
 	victim_death_finished.emit()
-	await _walk_winner_to_destination(attacker, destination)
+	await _settle_and_recover(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -113,12 +145,11 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
 	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
+	_stage(&"strike")
 	weapon_impact.emit(&"arcane_cast")
-	# The cast and arrival are separate presentation beats. Signature queen
-	# captures intentionally retain both so the spell reads as a command followed
-	# by its destructive payoff.
-	impact_landed.emit()
-	await _wait_or_skip(0.24 / playback_speed)
+	# Casting is an anticipation cue. The impact signal is reserved for the
+	# projectile reaching the victim contact zone.
+	await _wait_or_skip(_scaled(0.24))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
@@ -170,9 +201,10 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	var impact: Vector3 = victim.global_position + Vector3.UP * 1.2
 	bolt.global_position = launch
 	var flight := create_tween()
-	flight.tween_property(bolt, "global_position", impact, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	flight.parallel().tween_property(bolt, "scale", Vector3.ONE * 1.8, 0.30 / playback_speed)
-	flight.parallel().tween_property(halo, "rotation:y", TAU * 3.0, 0.30 / playback_speed)
+	_stage(&"delivery")
+	flight.tween_property(bolt, "global_position", impact, _scaled(0.30)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	flight.parallel().tween_property(bolt, "scale", Vector3.ONE * 1.8, _scaled(0.30))
+	flight.parallel().tween_property(halo, "rotation:y", TAU * 3.0, _scaled(0.30))
 	var trail_state := {"last_position": launch, "emitted": 0}
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
@@ -184,18 +216,21 @@ func _play_queen_arcane_capture(attacker, victim, destination: Vector3) -> void:
 	_spawn_elemental_impact(impact, Color(1.0, 0.15, 0.03), Color(1.0, 0.48, 0.08))
 	_spawn_role_impact(attacker, impact)
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
-	impact_landed.emit()
+	last_weapon_contact_distance_m = 0.0
 	weapon_impact.emit(&"arcane_impact")
-	await _wait_or_skip(0.12 / playback_speed)
+	impact_landed.emit()
+	_stage(&"reaction")
+	await _wait_or_skip(_scaled(0.12))
 	await _play_delivery_followup(attacker, victim, impact)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
+	_stage(&"death")
 	victim.play_state(last_victim_death_clip)
-	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
+	await _wait_or_skip(_scaled(victim.state_duration(last_victim_death_clip)))
 	victim_death_finished.emit()
-	await _walk_winner_to_destination(attacker, destination)
+	await _settle_and_recover(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -208,35 +243,45 @@ func _play_rook_hammer_capture(attacker, victim, destination: Vector3) -> void:
 		approach_direction = Vector3.BACK
 	var approach_position: Vector3 = victim.global_position + approach_direction.normalized() * choreography.anchor_separation_m
 	approach_position.y = attacker.global_position.y
-	attacker.play_state(&"locomotion.walk.forward")
-	await _move_actor(attacker, approach_position, choreography.approach_duration_s / playback_speed)
+	_stage(&"approach")
+	await _move_actor(attacker, approach_position, _scaled(choreography.approach_duration_s))
+	if _skip_requested:
+		_finish_capture(attacker, victim, destination)
+		return
+	_stage(&"plant")
+	weapon_impact.emit(&"approach_step")
+	await _wait_or_skip(_scaled(choreography.plant_duration_s))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	attacker.face_world_position(victim.global_position)
+	_stage(&"strike")
 	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
 	# The impact is aligned to the authored overhead descent, not to the old
 	# masonry volley. This keeps the visible hammer, audio, victim reaction and
 	# contact marker on a single readable beat.
-	await _wait_or_skip(choreography.impact_time_s / playback_speed)
+	await _wait_or_skip(_scaled(choreography.impact_time_s))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
-	impact_landed.emit()
+	_record_weapon_contact(attacker, victim)
 	_spawn_weapon_swing(attacker)
 	_spawn_role_impact(attacker, victim.global_position + Vector3.UP * 1.0)
 	weapon_impact.emit(&"hammer_impact")
-	await _wait_or_skip(0.12 / playback_speed)
+	impact_landed.emit()
+	_stage(&"reaction")
+	await _wait_or_skip(_scaled(0.12))
 	await _play_delivery_followup(attacker, victim, victim.global_position + Vector3.UP * 1.0)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
+	_stage(&"death")
 	victim.play_state(last_victim_death_clip)
-	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
+	await _wait_or_skip(_scaled(victim.state_duration(last_victim_death_clip)))
 	victim_death_finished.emit()
-	await _walk_winner_to_destination(attacker, destination)
+	await _settle_and_recover(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
@@ -267,18 +312,19 @@ func _spawn_rook_brick_volley(origin: Vector3, target: Vector3) -> Node3D:
 		var impact_spread := right * (float((index % 3) - 1) * 0.28) + Vector3.UP * (float(index % 2) * 0.22)
 		var apex := brick.global_position.lerp(target + impact_spread, 0.48) + Vector3.UP * (0.85 + float(index % 3) * 0.14)
 		var flight := create_tween()
-		flight.tween_property(brick, "global_position", apex, 0.17 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		flight.tween_property(brick, "global_position", target + impact_spread, 0.25 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		flight.parallel().tween_property(brick, "rotation", brick.rotation + Vector3(5.0, 7.0, 4.0), 0.42 / playback_speed)
+		flight.tween_property(brick, "global_position", apex, _scaled(0.17)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		flight.tween_property(brick, "global_position", target + impact_spread, _scaled(0.25)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		flight.parallel().tween_property(brick, "rotation", brick.rotation + Vector3(5.0, 7.0, 4.0), _scaled(0.42))
 	return volley
 
 
 func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void:
 	attacker.face_world_position(victim.global_position)
 	victim.face_world_position(attacker.global_position)
+	_stage(&"strike")
 	attacker.play_state(attacker.capture_attack_state(choreography.attacker_clip))
 	# Release timing is authored with the Bishop's local bow/arrow timeline.
-	await _wait_or_skip(0.32 / playback_speed)
+	await _wait_or_skip(_scaled(0.32))
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
@@ -295,6 +341,7 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	# letting a bishop's arrow fill the capture camera.
 	arrow.scale = Vector3.ONE * RANGED_PROJECTILE_SCALE
 	weapon_impact.emit(&"arrow_release")
+	_stage(&"delivery")
 	var frost_light := OmniLight3D.new()
 	frost_light.name = "FrostArrowLight"
 	frost_light.light_color = Color(0.32, 0.78, 1.0)
@@ -302,7 +349,7 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	frost_light.omni_range = 3.5
 	arrow.add_child(frost_light)
 	var flight := create_tween()
-	flight.tween_property(arrow, "global_position", impact, 0.34 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	flight.tween_property(arrow, "global_position", impact, _scaled(0.34)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	var trail_state := {"last_position": launch, "emitted": 0}
 	while flight.is_running() and not _skip_requested:
 		await get_tree().process_frame
@@ -314,24 +361,32 @@ func _play_bishop_ranged_capture(attacker, victim, destination: Vector3) -> void
 	_spawn_elemental_impact(impact, Color(0.22, 0.72, 1.0), Color(0.66, 0.92, 1.0))
 	_spawn_role_impact(attacker, impact)
 	victim.play_state(_resolve_victim_hit_clip(attacker, victim))
-	impact_landed.emit()
+	last_weapon_contact_distance_m = 0.0
 	weapon_impact.emit(&"arrow_impact")
-	await _wait_or_skip(0.14 / playback_speed)
+	impact_landed.emit()
+	_stage(&"reaction")
+	await _wait_or_skip(_scaled(0.14))
 	await _play_delivery_followup(attacker, victim, impact)
 	if _skip_requested:
 		_finish_capture(attacker, victim, destination)
 		return
 	last_victim_death_clip = _resolve_victim_death_clip(attacker, victim)
+	_stage(&"death")
 	victim.play_state(last_victim_death_clip)
-	await _wait_or_skip(victim.state_duration(last_victim_death_clip) / playback_speed)
+	await _wait_or_skip(_scaled(victim.state_duration(last_victim_death_clip)))
 	victim_death_finished.emit()
-	await _walk_winner_to_destination(attacker, destination)
+	await _settle_and_recover(attacker, destination)
 	_finish_capture(attacker, victim, destination)
 
 
 func request_skip() -> void:
-	if _running:
+	if _running and not _skip_requested:
 		_skip_requested = true
+		presentation_cancelled.emit()
+
+
+func active_playback_speed() -> float:
+	return _active_playback_speed
 
 
 func active_temporary_effect_count() -> int:
@@ -355,15 +410,16 @@ func _play_delivery_followup(attacker, victim, impact_position: Vector3) -> void
 	# choreography flow, so they explicitly honor the same optional second beat.
 	if choreography.attacker_followup_clip.is_empty() or _skip_requested:
 		return
+	_stage(&"followup")
 	attacker.face_world_position(victim.global_position)
 	attacker.play_state(choreography.attacker_followup_clip)
-	await _wait_or_skip(choreography.followup_time_s / playback_speed)
+	await _wait_or_skip(_scaled(choreography.followup_time_s))
 	if _skip_requested:
 		return
 	_spawn_role_impact(attacker, impact_position)
-	impact_landed.emit()
 	weapon_impact.emit(_melee_sound_for(attacker))
-	await _wait_or_skip(0.10 / playback_speed)
+	impact_landed.emit()
+	await _wait_or_skip(_scaled(0.10))
 
 
 func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: Color) -> void:
@@ -393,9 +449,9 @@ func _spawn_elemental_impact(position: Vector3, core_color: Color, spark_color: 
 	var burst_tween := create_tween()
 	# Keep the contact core smaller than a torso and fade it immediately; the
 	# surrounding role shards provide the wider read without replacing a victim.
-	burst_tween.tween_property(flash, "scale", Vector3.ONE * 2.4, 0.16 / playback_speed)
-	burst_tween.parallel().tween_property(flash, "transparency", 1.0, 0.16 / playback_speed)
-	burst_tween.parallel().tween_property(light, "light_energy", 0.0, 0.16 / playback_speed)
+	burst_tween.tween_property(flash, "scale", Vector3.ONE * 2.4, _scaled(0.16))
+	burst_tween.parallel().tween_property(flash, "transparency", 1.0, _scaled(0.16))
+	burst_tween.parallel().tween_property(light, "light_energy", 0.0, _scaled(0.16))
 	burst_tween.tween_callback(burst.queue_free)
 
 
@@ -438,8 +494,8 @@ func _spawn_projectile_trail(position: Vector3, color: Color) -> void:
 	_register_temporary_effect(trail)
 	trail.global_position = position
 	var tween := create_tween()
-	tween.tween_property(trail, "scale", Vector3.ONE * 2.2, TRAIL_LIFETIME_S / playback_speed)
-	tween.parallel().tween_property(trail, "transparency", 1.0, TRAIL_LIFETIME_S / playback_speed)
+	tween.tween_property(trail, "scale", Vector3.ONE * 2.2, _scaled(TRAIL_LIFETIME_S))
+	tween.parallel().tween_property(trail, "transparency", 1.0, _scaled(TRAIL_LIFETIME_S))
 	tween.tween_callback(trail.queue_free)
 
 
@@ -490,8 +546,8 @@ func _spawn_role_impact(attacker, position: Vector3) -> void:
 	ring.rotation.x = PI * 0.5
 	impact.add_child(ring)
 	var impact_tween := create_tween()
-	impact_tween.tween_property(ring, "scale", Vector3.ONE * 3.2, 0.28 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	impact_tween.parallel().tween_property(ring, "transparency", 1.0, 0.28 / playback_speed)
+	impact_tween.tween_property(ring, "scale", Vector3.ONE * 3.2, _scaled(0.28)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	impact_tween.parallel().tween_property(ring, "transparency", 1.0, _scaled(0.28))
 	for index in shard_count:
 		var shard := MeshInstance3D.new()
 		shard.name = "ImpactShard_%02d" % index
@@ -504,8 +560,8 @@ func _spawn_role_impact(attacker, position: Vector3) -> void:
 		var angle := TAU * float(index) / float(shard_count) + 0.18 * float(attacker.archetype)
 		var destination := Vector3(cos(angle), 0.20 + float(index % 2) * 0.18, sin(angle)) * (0.55 + float(index % 3) * 0.12)
 		var shard_tween := create_tween()
-		shard_tween.tween_property(shard, "position", destination, 0.30 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		shard_tween.parallel().tween_property(shard, "transparency", 1.0, 0.30 / playback_speed)
+		shard_tween.tween_property(shard, "position", destination, _scaled(0.30)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		shard_tween.parallel().tween_property(shard, "transparency", 1.0, _scaled(0.30))
 	impact_tween.tween_callback(impact.queue_free)
 
 
@@ -521,7 +577,9 @@ func _spawn_weapon_swing(attacker) -> void:
 	match attacker.archetype:
 		Types.PAWN:
 			color = Color(0.92, 0.86, 0.66)
-			count = 2
+			# The equipped daggers now enter the measured contact zone. A proxy
+			# torus covered that actual intersection in slow-motion review.
+			count = 0
 		Types.KNIGHT:
 			color = Color(0.36, 0.76, 1.0)
 		Types.ROOK:
@@ -550,8 +608,8 @@ func _spawn_weapon_swing(attacker) -> void:
 		arc.global_rotation = Vector3(PI * 0.5, attacker.global_rotation.y + index * 0.35, 0.0)
 		arc.scale = Vector3.ONE * 0.35
 		var swing := create_tween()
-		swing.tween_property(arc, "scale", Vector3.ONE * 1.75, 0.18 / playback_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		swing.parallel().tween_property(arc, "transparency", 1.0, 0.18 / playback_speed)
+		swing.tween_property(arc, "scale", Vector3.ONE * 1.75, _scaled(0.18)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		swing.parallel().tween_property(arc, "transparency", 1.0, _scaled(0.18))
 		swing.tween_callback(arc.queue_free)
 
 
@@ -569,10 +627,17 @@ func _melee_sound_for(attacker) -> StringName:
 
 
 func _move_actor(actor, target: Vector3, duration: float) -> void:
+	actor.turn_toward_world_position(target, _scaled(actor.turn_duration_toward(target)))
+	while actor.is_presentation_turning():
+		if _skip_requested:
+			actor.cancel_presentation_motion()
+			actor.global_position = target
+			return
+		await get_tree().process_frame
 	var tween = actor.move_to_world_position(target, duration)
 	while tween.is_running():
 		if _skip_requested:
-			tween.kill()
+			actor.cancel_presentation_motion()
 			actor.global_position = target
 			return
 		await get_tree().process_frame
@@ -584,12 +649,33 @@ func _walk_winner_to_destination(attacker, destination: Vector3) -> void:
 	var distance: float = attacker.global_position.distance_to(destination)
 	if distance < 0.03:
 		return
-	attacker.face_world_position(destination)
-	var duration := clampf(distance / 7.0, 0.24, 1.0) / playback_speed
-	var walk_duration := maxf(attacker.state_duration(&"locomotion.walk.forward"), 0.01)
-	attacker.set_animation_speed(walk_duration / duration)
-	attacker.play_state(&"locomotion.walk.forward")
+	var duration: float = _scaled(attacker.travel_duration_for_distance(distance, 7.0))
 	await _move_actor(attacker, destination, duration)
+
+
+func _settle_and_recover(attacker, destination: Vector3) -> void:
+	_stage(&"settlement")
+	await _walk_winner_to_destination(attacker, destination)
+	if _skip_requested:
+		return
+	_stage(&"recovery")
+	attacker.recover_after_capture()
+	await _wait_or_skip(_scaled(choreography.recovery_duration_s))
+
+
+func _scaled(duration_s: float) -> float:
+	return maxf(duration_s, 0.0) / _active_playback_speed
+
+
+func _stage(stage: StringName) -> void:
+	last_stage = stage
+	stage_history.append(stage)
+	presentation_stage.emit(stage)
+
+
+func _record_weapon_contact(attacker, victim) -> void:
+	var contact_point: Vector3 = victim.global_position + Vector3.UP * choreography.contact_height_m
+	last_weapon_contact_distance_m = attacker.weapon_contact_distance_to(contact_point)
 
 
 func _resolve_victim_hit_clip(attacker, victim) -> StringName:
@@ -625,12 +711,15 @@ func _wait_or_skip(duration: float) -> void:
 
 func _finish_capture(attacker, victim, destination: Vector3) -> void:
 	_clear_temporary_effects()
+	attacker.cancel_presentation_motion()
+	victim.cancel_presentation_motion()
 	victim.visible = false
 	attacker.global_position = destination
 	attacker.restore_board_facing()
 	attacker.set_animation_speed(1.0)
 	victim.set_animation_speed(1.0)
 	attacker.start_battle_stance()
+	_stage(&"finished")
 	_running = false
 	_active_attacker = null
 	_active_victim = null
@@ -638,4 +727,6 @@ func _finish_capture(attacker, victim, destination: Vector3) -> void:
 
 
 func _exit_tree() -> void:
+	if _running and not _skip_requested:
+		presentation_cancelled.emit()
 	_clear_temporary_effects()

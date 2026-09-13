@@ -31,11 +31,11 @@ func _run() -> void:
 		ceremony.bring_kings_to_parley()
 		await create_timer(0.35).timeout
 		for actor in board.actors.values():
-			assert(actor._animation_player.current_animation == &"Walk", "Both kings must actually walk during travel.")
+			assert(actor.active_source_clip() == &"Walk", "Both kings must actually walk during travel.")
 		# An early speech cue cannot stop either actor before arrival.
 		ceremony.set_dialogue_speaker(speakers.gatekeeper)
 		for actor in board.actors.values():
-			assert(actor._animation_player.current_animation == &"Walk", "Dialogue cannot stop an approaching king.")
+			assert(actor.active_source_clip() == &"Walk", "Dialogue cannot stop an approaching king.")
 		var pending: Array = board.actors.values()
 		var deadline := Time.get_ticks_msec() + 2500
 		while not pending.is_empty() and Time.get_ticks_msec() < deadline:
@@ -45,7 +45,7 @@ func _run() -> void:
 				# travel ends. Check the exact tween destination for arrival.
 				if actor.position == Vector3(-3.2, 0.0, -6.5) or actor.position == Vector3(3.2, 0.0, -6.5):
 					_assert_stopped(actor)
-					assert(actor._animation_player.current_animation == &"Idle", "Arrival must play the actual neutral standing idle.")
+					assert(actor.active_source_clip() == &"Idle", "Arrival must play the actual neutral standing idle.")
 					pending.erase(actor)
 		assert(pending.is_empty(), "Both kings must reach their own parley markers.")
 		# Check the listener through the first speaker's line, then swap roles.
@@ -55,9 +55,9 @@ func _run() -> void:
 			for actor in board.actors.values():
 				_assert_stopped(actor)
 				if actor == speaker:
-					assert(actor._animation_player.current_animation == &"Idle_Talking")
+					assert(actor.active_source_clip() == &"Idle_Talking")
 				else:
-					assert(actor._animation_player.current_animation == &"Idle", "The listening king must stand neutrally without a rail-leaning gesture.")
+					assert(actor.active_source_clip() == &"Idle", "The listening king must stand neutrally without a rail-leaning gesture.")
 		ceremony.cleanup()
 	stage.queue_free()
 	print("PASS: Both king colors stop actual walk playback on arrival, before dialogue, for either commander side.")
@@ -65,5 +65,5 @@ func _run() -> void:
 
 
 func _assert_stopped(actor) -> void:
-	assert(actor._animation_player.current_animation != &"Walk", "A king at its final parley marker must not keep walking in place.")
-	assert(not (actor._animation_player.is_playing() and actor._animation_player_2.is_playing()), "Only one library may animate a king at a time.")
+	assert(actor.active_source_clip() != &"Walk", "A king at its final parley marker must not keep walking in place.")
+	assert(actor.animation_mixer_count() == 1, "Only one mixer may animate a king at a time.")

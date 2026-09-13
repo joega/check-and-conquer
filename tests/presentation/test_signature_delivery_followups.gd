@@ -28,6 +28,9 @@ func _run() -> void:
 		director.impact_landed.connect(func(): impacts[0] += 1)
 		director.choreography = Resolver.resolve_matchup(matchup[0], matchup[1])
 		await director.play_capture(attacker, victim, victim.global_position)
+		assert(director.stage_history.front() == &"anticipation" and director.stage_history.back() == &"finished")
+		for required_stage in [&"strike", &"reaction", &"death", &"settlement", &"recovery"]:
+			assert(director.stage_history.has(required_stage), "%s must use the shared %s stage." % [director.choreography.id, required_stage])
 		var expected_impacts := 1 if director.choreography.delivery == "hammer_smash" else 2
 		assert(impacts[0] >= expected_impacts, "%s must play its authored delivery%s before settlement." % [director.choreography.id, "" if expected_impacts == 1 else " and follow-up impact"])
 		assert(not victim.visible and attacker.global_position.is_equal_approx(Vector3(2.0, 0.0, 0.0)), "%s must still settle deterministically after its signature follow-up." % director.choreography.id)

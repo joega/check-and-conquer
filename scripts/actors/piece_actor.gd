@@ -22,6 +22,7 @@ const HAMMER_SCENE := preload("res://assets/weapons/quaternius/Hammer_Double.fbx
 const GOLDEN_SWORD_SCENE := preload("res://assets/weapons/quaternius/Sword_Golden.fbx")
 const CLAYMORE_SCENE := preload("res://assets/weapons/quaternius/Claymore.fbx")
 const ARROW_SCENE := preload("res://assets/weapons/quaternius/Arrow.fbx")
+const BeveledBoxMesh = preload("res://scripts/presentation/beveled_box_mesh.gd")
 ## Presentation scale only. The actor root stays in board metres so chess
 ## coordinates, capture destinations, and rebuild checks remain authoritative.
 const CHARACTER_PRESENTATION_SCALE := 2.0
@@ -36,7 +37,7 @@ const WEAPON_GRIPS := {
 		[&"hand_r", "PawnRightDagger", DAGGER_SCENE, 0.075, Vector3(0.018, -0.015, 0.045), Vector3(82, 8, 92)],
 		[&"hand_l", "PawnLeftDagger", DAGGER_2_SCENE, 0.075, Vector3(-0.018, -0.015, 0.045), Vector3(82, -8, -92)],
 	],
-	Types.KNIGHT: [[&"hand_r", "KnightSpear", SPEAR_SCENE, 0.105, Vector3(0.015, -0.02, 0.06), Vector3(88, 0, 92)]],
+	Types.KNIGHT: [[&"hand_r", "KnightSpear", SPEAR_SCENE, 0.105, Vector3(0.015, -0.02, 0.06), Vector3(88, 0, 2)]],
 	Types.BISHOP: [[&"hand_l", "BishopGoldenBow", BOW_SCENE, 0.088, Vector3(-0.025, 0.005, 0.035), Vector3(88, 0, -88)]],
 	Types.ROOK: [[&"hand_r", "RookWarHammer", HAMMER_SCENE, 0.094, Vector3(0.02, -0.03, 0.055), Vector3(88, 4, 92)]],
 	Types.QUEEN: [[&"hand_r", "QueenGoldenSword", GOLDEN_SWORD_SCENE, 0.092, Vector3(0.018, -0.02, 0.052), Vector3(88, 0, 92)]],
@@ -104,10 +105,11 @@ var _home_transform: Transform3D
 var _model_root: Node3D
 var _visual_accents: Node3D
 var _animation_player: AnimationPlayer
-var _animation_player_2: AnimationPlayer
 var _last_played_state: StringName = &"idle.neutral"
 var _animation_paused := false
 var _animation_speed_multiplier := 1.0
+var _locomotion_speed_multiplier := 1.0
+var _last_transition_duration_s := 0.0
 var _selection_tween: Tween
 var _stance_seed := 0
 var _stance_loop_state: StringName = &"idle.neutral"
@@ -116,12 +118,21 @@ var _ambient_motion_active := false
 var _ambient_motion_tween: Tween
 var _role_action_tween: Tween
 var _recovery_tween: Tween
+var _movement_tween: Tween
+var _turn_tween: Tween
+var _motion_generation := 0
+var _moving := false
 var _nocked_arrow: Node3D
 var uses_female_model := false
 var outfit_id := ""
 var hair_ids: Array[String] = []
 var appearance_seed := 0
 var silhouette_profile := ""
+var role_accessory_ids: Array[String] = []
+var walk_stride_m := 2.2
+var last_travel_distance_m := 0.0
+var last_travel_duration_s := 0.0
+var last_travel_stride_cycles := 0.0
 
 
 func _ready() -> void:
@@ -136,9 +147,11 @@ func _ready() -> void:
 	_visual_accents.name = "VisualAccents"
 	_visual_accents.scale = Vector3.ONE * CHARACTER_PRESENTATION_SCALE
 	add_child(_visual_accents)
+	_configure_outfit_parts()
 	_apply_team_material_variant(_model_root)
 	_create_head()
 	_create_hair()
+	_create_role_accessories()
 	_create_role_prop()
 	_attach_compatible_animation_player()
 	_create_team_accent()
@@ -176,31 +189,37 @@ func _outfit_scene_for_archetype() -> PackedScene:
 
 
 func _attach_compatible_animation_player() -> void:
-	_animation_player = _attach_animation_player(ANIMATION_LIBRARY_SCENE, "AnimationPlayer")
-	_animation_player_2 = _attach_animation_player(ANIMATION_LIBRARY_2_SCENE, "CombatAnimationPlayer")
+	_animation_player = AnimationPlayer.new()
+	_animation_player.name = "AnimationPlayer"
+	_model_root.add_child(_animation_player)
+	_add_namespaced_library(ANIMATION_LIBRARY_SCENE, &"ual1")
+	_add_namespaced_library(ANIMATION_LIBRARY_2_SCENE, &"ual2")
+	# The source neutral idle has a visible end-to-start reset. Ping-pong keeps
+	# the breathing/weight motion continuous without changing the licensed clip.
+	var idle := _animation_player.get_animation(&"ual1/Idle")
+	if idle != null:
+		idle.loop_mode = Animation.LOOP_PINGPONG
 
 
-func _attach_animation_player(source_scene: PackedScene, player_name: String) -> AnimationPlayer:
+func _add_namespaced_library(source_scene: PackedScene, library_namespace: StringName) -> void:
 	var animation_source := source_scene.instantiate()
-	var player := animation_source.get_node("AnimationPlayer") as AnimationPlayer
-	animation_source.remove_child(player)
-	player.name = player_name
-	player.owner = null
-	_model_root.add_child(player)
+	var source_player := animation_source.get_node("AnimationPlayer") as AnimationPlayer
+	var source_library := source_player.get_animation_library(&"")
+	assert(source_library != null, "Imported animation scene must expose its default library.")
+	_animation_player.add_animation_library(library_namespace, source_library.duplicate(true) as AnimationLibrary)
 	animation_source.free()
-	return player
 
 
 func play_clip(clip: StringName) -> void:
-	if _animation_player != null and _animation_player.has_animation(clip):
-		if _animation_player_2 != null:
-			_animation_player_2.stop()
-		_animation_player.play(clip)
+	if _animation_player == null:
 		return
-	if _animation_player_2 != null and _animation_player_2.has_animation(clip):
-		if _animation_player != null:
-			_animation_player.stop()
-		_animation_player_2.play(clip)
+	var animation_name := clip
+	if not _animation_player.has_animation(animation_name):
+		animation_name = StringName("ual1/%s" % clip)
+	if not _animation_player.has_animation(animation_name):
+		animation_name = StringName("ual2/%s" % clip)
+	if _animation_player.has_animation(animation_name):
+		_animation_player.play(animation_name, _blend_duration(_last_played_state, &""))
 
 
 func play_state(semantic_id: StringName) -> void:
@@ -208,40 +227,93 @@ func play_state(semantic_id: StringName) -> void:
 	if semantic_id != &"recovery.capture_ready_01":
 		_cancel_recovery()
 	_animation_paused = false
-	var player := _player_for_state(semantic_id)
-	var clip := _clip_for_state(semantic_id)
-	if player == null or clip.is_empty() or not player.has_animation(clip):
+	var animation_name := _animation_for_state(semantic_id)
+	if _animation_player == null or animation_name.is_empty() or not _animation_player.has_animation(animation_name):
 		# A semantic request must never leave a previous locomotion or attack clip
 		# driving the model. Fall back to the known neutral state and report that
 		# state truthfully to callers.
-		player = _animation_player
-		clip = CLIP_MAP[&"idle.neutral"]
 		semantic_id = &"idle.neutral"
-	if player == _animation_player:
-		if _animation_player_2 != null:
-			_animation_player_2.stop()
-	elif _animation_player != null:
-		_animation_player.stop()
-	player.play(clip)
+		animation_name = _animation_for_state(semantic_id)
+	_last_transition_duration_s = _blend_duration(_last_played_state, semantic_id)
+	# Blend time is expressed in wall-clock seconds by AnimationPlayer. Scale it
+	# with the active presentation rate so accelerated audits preserve the same
+	# normalized transition and cannot sample the preceding pose at contact.
+	var playback_blend_s := _last_transition_duration_s / maxf(_animation_speed_multiplier, 0.1)
+	_animation_player.play(animation_name, playback_blend_s)
+	_apply_animation_speed()
 	_last_played_state = semantic_id
 	if semantic_id in [&"attack.bow.draw_release_01", &"attack.hammer.overhead_01"]:
 		_play_role_authored_action(semantic_id)
 
 
 func supports_state(semantic_id: StringName) -> bool:
-	var player := _player_for_state(semantic_id)
-	var clip := _clip_for_state(semantic_id)
-	return player != null and not clip.is_empty() and player.has_animation(clip)
+	var animation_name := _animation_for_state(semantic_id)
+	return _animation_player != null and not animation_name.is_empty() and _animation_player.has_animation(animation_name)
 
 
 func _player_for_state(semantic_id: StringName) -> AnimationPlayer:
-	return _animation_player_2 if CLIP_MAP_2.has(semantic_id) else _animation_player
+	return _animation_player
 
 
 func _clip_for_state(semantic_id: StringName) -> StringName:
 	if CLIP_MAP_2.has(semantic_id):
 		return CLIP_MAP_2[semantic_id]
 	return CLIP_MAP.get(semantic_id, &"")
+
+
+func _animation_for_state(semantic_id: StringName) -> StringName:
+	var clip := _clip_for_state(semantic_id)
+	if clip.is_empty():
+		return &""
+	return StringName("%s/%s" % ["ual2" if CLIP_MAP_2.has(semantic_id) else "ual1", clip])
+
+
+func _blend_duration(from_state: StringName, to_state: StringName) -> float:
+	if _animation_player == null or _animation_player.current_animation.is_empty():
+		return 0.0
+	if to_state.begins_with("death.") or to_state.begins_with("reaction.hit."):
+		return 0.055
+	if from_state.begins_with("locomotion.") and to_state.begins_with("attack."):
+		return 0.10
+	if from_state.begins_with("locomotion.") or to_state.begins_with("locomotion."):
+		return 0.14
+	return 0.14
+
+
+func active_animation_name() -> StringName:
+	return _animation_player.current_animation if _animation_player != null else &""
+
+
+func active_source_clip() -> StringName:
+	var value := str(active_animation_name())
+	return StringName(value.get_file())
+
+
+func sample_active_animation_at(time_s: float) -> void:
+	if _animation_player == null or _animation_player.current_animation.is_empty():
+		return
+	var animation_name := _animation_player.current_animation
+	# End any residual crossfade before evaluating the authored contact frame.
+	# This makes the sampled pose independent of render-frame cadence at 0.25x,
+	# 1x, or accelerated test playback.
+	_animation_player.play(animation_name, 0.0)
+	_apply_animation_speed()
+	_animation_player.seek(maxf(time_s, 0.0), true)
+	var skeleton := get_node_or_null("ModelRoot/Armature/Skeleton3D") as Skeleton3D
+	if skeleton != null:
+		skeleton.force_update_all_bone_transforms()
+		skeleton.force_update_transform()
+		for attachment in skeleton.get_children():
+			if attachment is Node3D:
+				(attachment as Node3D).force_update_transform()
+
+
+func last_transition_duration() -> float:
+	return _last_transition_duration_s
+
+
+func animation_mixer_count() -> int:
+	return 1 if _animation_player != null else 0
 
 
 func primary_attack_state() -> StringName:
@@ -301,6 +373,7 @@ func recover_after_capture() -> void:
 	var rest_position := _model_root.position
 	var rest_rotation := _model_root.rotation
 	_recovery_tween = create_tween()
+	_recovery_tween.set_speed_scale(_animation_speed_multiplier)
 	_recovery_tween.set_parallel(true)
 	_recovery_tween.tween_property(_model_root, "position:y", rest_position.y - 0.045, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_recovery_tween.tween_property(_model_root, "rotation:x", rest_rotation.x + 0.055, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -317,6 +390,7 @@ func _play_role_authored_action(semantic_id: StringName) -> void:
 	var rest_position := weapon.position
 	var rest_rotation := weapon.rotation
 	_role_action_tween = create_tween()
+	_role_action_tween.set_speed_scale(_animation_speed_multiplier)
 	if semantic_id == &"attack.bow.draw_release_01":
 		_create_nocked_arrow(weapon)
 		_role_action_tween.set_parallel(true)
@@ -346,6 +420,49 @@ func _play_role_authored_action(semantic_id: StringName) -> void:
 func _role_weapon_for_action(semantic_id: StringName) -> Node3D:
 	var weapon_name := "BishopGoldenBow" if semantic_id == &"attack.bow.draw_release_01" else "RookWarHammer"
 	return get_node_or_null("ModelRoot/Armature/Skeleton3D/%sAttachment/%s" % [weapon_name, weapon_name]) as Node3D
+
+
+func weapon_contact_distance_to(world_point: Vector3) -> float:
+	var skeleton := get_node_or_null("ModelRoot/Armature/Skeleton3D")
+	if skeleton == null:
+		return INF
+	var nearest := INF
+	for attachment in skeleton.get_children():
+		if not str(attachment.name).ends_with("Attachment"):
+			continue
+		if attachment is MeshInstance3D:
+			nearest = minf(nearest, _mesh_distance_to_world_point(attachment as MeshInstance3D, world_point))
+		for candidate in attachment.find_children("*", "MeshInstance3D", true, false):
+			nearest = minf(nearest, _mesh_distance_to_world_point(candidate as MeshInstance3D, world_point))
+	return nearest
+
+
+func set_equipped_weapons_visible(weapons_visible: bool) -> void:
+	for grip in WEAPON_GRIPS.get(archetype, []):
+		var weapon := find_child(String(grip[1]), true, false) as Node3D
+		if weapon != null:
+			weapon.visible = weapons_visible
+
+
+func equipped_weapons_visible() -> bool:
+	for grip in WEAPON_GRIPS.get(archetype, []):
+		var weapon := find_child(String(grip[1]), true, false) as Node3D
+		if weapon != null and weapon.visible:
+			return true
+	return false
+
+
+func _mesh_distance_to_world_point(mesh: MeshInstance3D, world_point: Vector3) -> float:
+	if mesh.mesh == null:
+		return INF
+	var bounds := mesh.get_aabb()
+	var local_point := mesh.to_local(world_point)
+	var closest := Vector3(
+		clampf(local_point.x, bounds.position.x, bounds.end.x),
+		clampf(local_point.y, bounds.position.y, bounds.end.y),
+		clampf(local_point.z, bounds.position.z, bounds.end.z)
+	)
+	return mesh.to_global(closest).distance_to(world_point)
 
 
 func _create_nocked_arrow(bow: Node3D) -> void:
@@ -385,9 +502,8 @@ func start_battle_stance() -> void:
 	_cancel_role_action(true)
 	_cancel_recovery()
 	_stance_seed = abs(int(round(global_position.x * 17.0 + global_position.z * 31.0))) + archetype * 13 + (7 if side < 0 else 0)
-	# The supplied looping clips visibly snap at their seams. Hold each actor in
-	# a clean neutral pose, then let BoardPresenter occasionally select one actor
-	# for a small, isolated ambient movement.
+	# The duplicated neutral clip uses ping-pong looping, avoiding its source
+	# end-to-start reset while preserving deterministic phase staggering.
 	_stance_loop_state = &"idle.neutral"
 	_restore_battle_pose()
 	_stance_gesture_time_s = 0.0
@@ -420,9 +536,8 @@ func battle_stance_state() -> StringName:
 
 
 func battle_stance_loops() -> bool:
-	var player := _player_for_state(_stance_loop_state)
-	var clip := _clip_for_state(_stance_loop_state)
-	var animation := player.get_animation(clip) if player != null else null
+	var animation_name := _animation_for_state(_stance_loop_state)
+	var animation := _animation_player.get_animation(animation_name) if _animation_player != null else null
 	return animation != null and animation.loop_mode != Animation.LOOP_NONE
 
 
@@ -448,7 +563,11 @@ func play_ambient_motion(style_index: int) -> void:
 	_ambient_motion_tween.chain().set_parallel(true)
 	_ambient_motion_tween.tween_property(_model_root, "rotation", baseline_rotation, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_ambient_motion_tween.tween_property(_model_root, "position", baseline_position, 1.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_ambient_motion_tween.finished.connect(func(): _ambient_motion_active = false)
+	_ambient_motion_tween.finished.connect(func():
+		_ambient_motion_active = false
+		_ambient_motion_tween = null
+	, CONNECT_ONE_SHOT)
+	_ambient_motion_tween.set_speed_scale(_animation_speed_multiplier)
 
 
 func _process(delta: float) -> void:
@@ -459,13 +578,12 @@ func _process(delta: float) -> void:
 
 
 func _seek_stance_offset() -> void:
-	var player := _player_for_state(_stance_loop_state)
-	var clip := _clip_for_state(_stance_loop_state)
-	if player == null:
+	var animation_name := _animation_for_state(_stance_loop_state)
+	if _animation_player == null:
 		return
-	var animation := player.get_animation(clip)
+	var animation := _animation_player.get_animation(animation_name)
 	if animation != null and animation.length > 0.05:
-		player.seek(fmod(float(_stance_seed) * 0.173, animation.length), true)
+		_animation_player.seek(fmod(float(_stance_seed) * 0.173, animation.length), true)
 
 
 func _restore_battle_pose() -> void:
@@ -477,9 +595,7 @@ func _restore_battle_pose() -> void:
 		_model_root.rotation = Vector3.ZERO
 	play_state(_stance_loop_state)
 	_seek_stance_offset()
-	# Pausing a clean sampled frame avoids the visible seam in the third-party
-	# idle loop. Brief ambient movements supply life without a constant reset.
-	set_animation_paused(true)
+	set_animation_paused(false)
 
 
 func state_duration(semantic_id: StringName) -> float:
@@ -489,23 +605,21 @@ func state_duration(semantic_id: StringName) -> float:
 		return 0.60
 	if semantic_id == &"recovery.capture_ready_01":
 		return 0.36
-	var player := _player_for_state(semantic_id)
-	var clip := _clip_for_state(semantic_id)
-	if player == null or clip.is_empty():
+	var animation_name := _animation_for_state(semantic_id)
+	if _animation_player == null or animation_name.is_empty():
 		return 0.0
-	var animation := player.get_animation(clip)
+	var animation := _animation_player.get_animation(animation_name)
 	return animation.length if animation != null else 0.0
 
 
 func animation_playback_position() -> float:
-	var player := _player_for_state(_last_played_state)
-	if player == null:
+	if _animation_player == null:
 		return 0.0
 	# Non-looping players clear current_animation when they complete. At that
 	# point the full known semantic duration is the useful completion position.
-	if player.current_animation.is_empty():
+	if _animation_player.current_animation.is_empty():
 		return state_duration(_last_played_state)
-	return player.current_animation_position
+	return _animation_player.current_animation_position
 
 
 func current_semantic_state() -> StringName:
@@ -514,10 +628,15 @@ func current_semantic_state() -> StringName:
 
 func set_animation_speed(multiplier: float) -> void:
 	_animation_speed_multiplier = maxf(multiplier, 0.1)
+	_apply_animation_speed()
+	for tween in [_role_action_tween, _recovery_tween, _ambient_motion_tween]:
+		if tween != null and tween.is_valid():
+			tween.set_speed_scale(_animation_speed_multiplier)
+
+
+func _apply_animation_speed() -> void:
 	if _animation_player != null:
-		_animation_player.speed_scale = _animation_speed_multiplier
-	if _animation_player_2 != null:
-		_animation_player_2.speed_scale = _animation_speed_multiplier
+		_animation_player.speed_scale = _animation_speed_multiplier * _locomotion_speed_multiplier
 
 
 func animation_speed_multiplier() -> float:
@@ -526,13 +645,18 @@ func animation_speed_multiplier() -> float:
 
 func set_animation_paused(paused: bool) -> void:
 	_animation_paused = paused
-	var active_player := _player_for_state(_last_played_state)
-	if active_player == null:
+	if _animation_player == null:
 		return
 	if paused:
-		active_player.pause()
-	elif not active_player.current_animation.is_empty():
-		active_player.play()
+		_animation_player.pause()
+	elif not _animation_player.current_animation.is_empty():
+		_animation_player.play()
+	for tween in [_movement_tween, _turn_tween, _role_action_tween, _recovery_tween, _ambient_motion_tween]:
+		if tween != null and tween.is_valid():
+			if paused:
+				tween.pause()
+			else:
+				tween.play()
 
 
 func is_animation_paused() -> bool:
@@ -540,12 +664,99 @@ func is_animation_paused() -> bool:
 
 
 func move_to_world_position(target: Vector3, duration_s: float) -> Tween:
-	var tween := create_tween()
-	tween.tween_property(self, "global_position", target, duration_s).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	return tween
+	_cancel_movement()
+	_cancel_ambient_motion()
+	_motion_generation += 1
+	var generation := _motion_generation
+	var start := global_position
+	last_travel_distance_m = start.distance_to(target)
+	last_travel_duration_s = maxf(duration_s, 0.001)
+	last_travel_stride_cycles = last_travel_distance_m / maxf(walk_stride_m, 0.01)
+	var walk_duration := maxf(state_duration(&"locomotion.walk.forward"), 0.01)
+	# The caller's playback speed may already be represented by the requested
+	# root duration. Divide it back out here so stride cadence follows actual
+	# distance over actual elapsed time exactly once.
+	_locomotion_speed_multiplier = maxf(
+		last_travel_stride_cycles * walk_duration / last_travel_duration_s / _animation_speed_multiplier,
+		0.1
+	)
+	play_state(&"locomotion.walk.forward")
+	_apply_animation_speed()
+	_moving = true
+	_movement_tween = create_tween()
+	var accel_s := minf(0.16, last_travel_duration_s * 0.22)
+	var decel_s := accel_s
+	var steady_s := maxf(last_travel_duration_s - accel_s - decel_s, 0.0)
+	var denom := maxf(steady_s + accel_s, 0.001)
+	var accel_fraction := (0.5 * accel_s) / denom
+	var decel_fraction := accel_fraction
+	var direction := (target - start)
+	_movement_tween.tween_property(self, "global_position", start + direction * accel_fraction, accel_s).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if steady_s > 0.0:
+		_movement_tween.tween_property(self, "global_position", start + direction * (1.0 - decel_fraction), steady_s).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	_movement_tween.tween_property(self, "global_position", target, decel_s).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_movement_tween.finished.connect(func():
+		if generation != _motion_generation:
+			return
+		global_position = target
+		_moving = false
+		_movement_tween = null
+		_locomotion_speed_multiplier = 1.0
+		_apply_animation_speed()
+	, CONNECT_ONE_SHOT)
+	if _animation_paused:
+		_movement_tween.pause()
+	return _movement_tween
+
+
+func travel_duration_for_distance(distance_m: float, speed_mps := 8.0) -> float:
+	return clampf(distance_m / maxf(speed_mps, 0.1) + 0.18, 0.50, 4.0)
+
+
+func is_presentation_moving() -> bool:
+	return _moving
+
+
+func turn_toward_world_position(target: Vector3, duration_s := -1.0) -> Tween:
+	_cancel_turn()
+	_cancel_ambient_motion()
+	var flat_direction := target - global_position
+	flat_direction.y = 0.0
+	_turn_tween = create_tween()
+	if flat_direction.length_squared() < 0.000001:
+		_turn_tween.tween_interval(0.001)
+		return _turn_tween
+	var desired_yaw := atan2(flat_direction.x, flat_direction.z)
+	var shortest_delta := wrapf(desired_yaw - rotation.y, -PI, PI)
+	var actual_duration := turn_duration_toward(target) if duration_s < 0.0 else maxf(duration_s, 0.001)
+	var generation := _motion_generation
+	_turn_tween.tween_property(self, "rotation:y", rotation.y + shortest_delta, actual_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_turn_tween.finished.connect(func():
+		if generation == _motion_generation:
+			rotation.y = wrapf(rotation.y, -PI, PI)
+			_turn_tween = null
+	, CONNECT_ONE_SHOT)
+	if _animation_paused:
+		_turn_tween.pause()
+	return _turn_tween
+
+
+func turn_duration_toward(target: Vector3) -> float:
+	var flat_direction := target - global_position
+	flat_direction.y = 0.0
+	if flat_direction.length_squared() < 0.000001:
+		return 0.001
+	var desired_yaw := atan2(flat_direction.x, flat_direction.z)
+	var shortest_delta := wrapf(desired_yaw - rotation.y, -PI, PI)
+	return clampf(absf(shortest_delta) / 7.5, 0.08, 0.32)
+
+
+func is_presentation_turning() -> bool:
+	return _turn_tween != null and _turn_tween.is_valid() and _turn_tween.is_running()
 
 
 func face_world_position(target: Vector3) -> void:
+	_cancel_turn()
 	var flat_target := target
 	flat_target.y = global_position.y
 	if not flat_target.is_equal_approx(global_position):
@@ -556,6 +767,7 @@ func restore_board_facing() -> void:
 	# Presentation may turn an actor toward a movement target or opponent. Once
 	# it settles on its authoritative square, restore the side's board-facing
 	# orientation so captures never leave the survivor turned around.
+	_cancel_turn()
 	rotation = Vector3.ZERO
 	rotation.y = PI if side == Types.BLACK else 0.0
 
@@ -588,16 +800,56 @@ func set_home_transform(value: Transform3D) -> void:
 
 
 func reset_actor() -> void:
-	_cancel_role_action(true)
-	_cancel_recovery()
+	cancel_presentation_motion()
 	global_transform = _home_transform
 	visible = true
 	if _animation_player != null:
 		_animation_player.stop()
-	if _animation_player_2 != null:
-		_animation_player_2.stop()
 	_animation_paused = false
 	start_battle_stance()
+
+
+func cancel_presentation_motion() -> void:
+	_motion_generation += 1
+	_cancel_movement()
+	_cancel_turn()
+	_cancel_role_action(true)
+	_cancel_recovery()
+	_cancel_ambient_motion()
+	_locomotion_speed_multiplier = 1.0
+	_apply_animation_speed()
+	if _model_root != null:
+		_model_root.position = Vector3.ZERO
+		_model_root.rotation = Vector3.ZERO
+
+
+func _cancel_movement() -> void:
+	if _movement_tween != null and _movement_tween.is_valid():
+		_movement_tween.kill()
+	_movement_tween = null
+	_moving = false
+	_locomotion_speed_multiplier = 1.0
+	_apply_animation_speed()
+
+
+func _cancel_turn() -> void:
+	if _turn_tween != null and _turn_tween.is_valid():
+		_turn_tween.kill()
+	_turn_tween = null
+
+
+func _cancel_ambient_motion() -> void:
+	if _ambient_motion_tween != null and _ambient_motion_tween.is_valid():
+		_ambient_motion_tween.kill()
+	_ambient_motion_tween = null
+	_ambient_motion_active = false
+	if _model_root != null:
+		_model_root.position = Vector3.ZERO
+		_model_root.rotation = Vector3.ZERO
+
+
+func _exit_tree() -> void:
+	cancel_presentation_motion()
 
 
 func _apply_team_material_variant(node: Node) -> void:
@@ -609,9 +861,15 @@ func _apply_team_material_variant(node: Node) -> void:
 				if source_material == null:
 					continue
 				var team_material := source_material.duplicate() as StandardMaterial3D
-				# Preserve the imported texture and add a restrained team tint, rather
-				# than replacing detailed outfit materials with a flat color.
-				team_material.albedo_color = source_material.albedo_color.lerp(side_color, 0.16)
+				# Keep side color on small garment cues. The ranger belt is a broad
+				# torso band, so a strong tint reads as a floating blue/red stripe.
+				var detail_name := String(mesh_node.name).to_lower()
+				var tint_weight := 0.08
+				if "hood" in detail_name or "pauldron" in detail_name:
+					tint_weight = 0.28
+				elif "belt" in detail_name:
+					tint_weight = 0.10
+				team_material.albedo_color = source_material.albedo_color.lerp(side_color, tint_weight)
 				mesh_node.set_surface_override_material(surface, team_material)
 	for child in node.get_children():
 		_apply_team_material_variant(child)
@@ -708,6 +966,107 @@ func _create_hair() -> void:
 		hair_root.free()
 
 
+func _configure_outfit_parts() -> void:
+	# Ranger hoods made knight/queen and rook/king read as duplicate pairs. Keep
+	# those heads open; the bishop receives the same-rig hood as its role cue.
+	for hood_name in ["Female_Ranger_Head_Hood", "Male_Ranger_Head_Hood"]:
+		var hood := _model_root.find_child(hood_name, true, false) as GeometryInstance3D
+		if hood != null:
+			hood.visible = false
+
+
+func _create_role_accessories() -> void:
+	var skeleton := _model_root.get_node_or_null("Armature/Skeleton3D") as Skeleton3D
+	if skeleton == null:
+		return
+	match archetype:
+		Types.KNIGHT:
+			var crest := PrismMesh.new()
+			crest.size = Vector3(0.055, 0.20, 0.14)
+			_add_bone_accessory(skeleton, &"Head", "KnightHelmCrest", crest, Vector3(0.0, 0.14, 0.01), Vector3.ZERO, _team_cloth_material())
+		Types.BISHOP:
+			_transfer_bishop_hood(skeleton)
+			var mantle := TorusMesh.new()
+			mantle.inner_radius = 0.105
+			mantle.outer_radius = 0.16
+			mantle.rings = 8
+			mantle.ring_segments = 18
+			_add_bone_accessory(skeleton, &"spine_03", "BishopMantleCollar", mantle, Vector3(0.0, 0.02, 0.0), Vector3.ZERO, _team_cloth_material())
+		Types.ROOK:
+			var shoulders := BeveledBoxMesh.create(Vector3(0.46, 0.075, 0.17), 0.025)
+			_add_bone_accessory(skeleton, &"spine_03", "RookShoulderPlate", shoulders, Vector3(0.0, -0.035, 0.0), Vector3.ZERO, _aged_bronze_material())
+			for side_x in [-1.0, 1.0]:
+				var guard := SphereMesh.new()
+				guard.radius = 0.085
+				guard.height = 0.105
+				_add_bone_accessory(skeleton, &"spine_03", "RookPauldron%s" % ("L" if side_x < 0 else "R"), guard, Vector3(side_x * 0.245, -0.025, 0.0), Vector3.ZERO, _aged_bronze_material())
+		Types.QUEEN:
+			_add_crown(skeleton, "QueenDiadem", 3, 0.115, 0.21)
+		Types.KING:
+			_add_crown(skeleton, "KingCrown", 5, 0.13, 0.13)
+
+
+func _transfer_bishop_hood(target_skeleton: Skeleton3D) -> void:
+	var source_root := FEMALE_RANGER_SCENE.instantiate() as Node3D
+	var source := source_root.get_node_or_null("Armature/Skeleton3D/Female_Ranger_Head_Hood") as MeshInstance3D
+	if source != null:
+		var hood := source.duplicate() as MeshInstance3D
+		hood.name = "BishopRangerHood"
+		hood.skeleton = NodePath("..")
+		target_skeleton.add_child(hood)
+		_apply_team_material_variant(hood)
+		role_accessory_ids.append(hood.name)
+	source_root.free()
+
+
+func _add_crown(skeleton: Skeleton3D, prefix: String, point_count: int, radius: float, height: float) -> void:
+	var band := CylinderMesh.new()
+	band.top_radius = radius
+	band.bottom_radius = radius * 1.05
+	band.height = 0.055
+	band.radial_segments = 16
+	_add_bone_accessory(skeleton, &"Head", "%sBand" % prefix, band, Vector3(0.0, height, 0.0), Vector3.ZERO, _aged_bronze_material())
+	for point_index in point_count:
+		var angle := TAU * float(point_index) / float(point_count)
+		var point := CylinderMesh.new()
+		point.top_radius = 0.0
+		point.bottom_radius = 0.030 if point_count == 3 else 0.036
+		point.height = 0.105 if point_count == 3 else 0.14
+		point.radial_segments = 6
+		var offset := Vector3(cos(angle) * radius * 0.72, height + (0.075 if point_count == 3 else 0.095), sin(angle) * radius * 0.72)
+		_add_bone_accessory(skeleton, &"Head", "%sPoint%02d" % [prefix, point_index], point, offset, Vector3.ZERO, _aged_bronze_material())
+
+
+func _add_bone_accessory(skeleton: Skeleton3D, bone_name: StringName, accessory_name: String, mesh: Mesh, local_position: Vector3, local_rotation: Vector3, material: StandardMaterial3D) -> void:
+	var attachment := BoneAttachment3D.new()
+	attachment.name = "%sAttachment" % accessory_name
+	attachment.bone_name = bone_name
+	skeleton.add_child(attachment)
+	var accessory := MeshInstance3D.new()
+	accessory.name = accessory_name
+	accessory.mesh = mesh
+	accessory.position = local_position
+	accessory.rotation = local_rotation
+	accessory.material_override = material
+	attachment.add_child(accessory)
+	role_accessory_ids.append(accessory_name)
+
+
+func _aged_bronze_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("8a6537")
+	material.metallic = 0.58
+	material.roughness = 0.46
+	return material
+
+
+func _team_cloth_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("4b4a47").lerp(side_color, 0.42)
+	material.roughness = 0.88
+	return material
+
+
 func _hair_scenes_for_archetype() -> Array[PackedScene]:
 	match archetype:
 		Types.PAWN:
@@ -719,7 +1078,9 @@ func _hair_scenes_for_archetype() -> Array[PackedScene]:
 		Types.ROOK:
 			return [HAIR_BEARD_SCENE]
 		Types.QUEEN:
-			return [HAIR_LONG_SCENE]
+			# Hair_Long's heavy front lock covers both eyes in several idle and
+			# ceremony poses. Buns keeps the face clear beneath the raised diadem.
+			return [HAIR_BUNS_SCENE]
 		Types.KING:
 			return [HAIR_SIMPLE_PARTED_SCENE, HAIR_BEARD_SCENE]
 	return []

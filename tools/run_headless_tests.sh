@@ -41,11 +41,15 @@ tests=(
   tests/presentation/test_procedural_impact_audio.gd
   tests/presentation/test_arena_audio_director.gd
   tests/presentation/test_weapon_presentation.gd
+  tests/presentation/test_role_readability.gd
   tests/presentation/test_spell_effect_lifecycle.gd
   tests/presentation/test_authored_role_actions.gd
   tests/presentation/test_battle_death_completion.gd
   tests/presentation/test_melee_polish.gd
+  tests/presentation/test_capture_timeline.gd
   tests/presentation/test_piece_actor_animation_routing.gd
+  tests/presentation/test_continuous_motion.gd
+  tests/presentation/test_visual_evidence_harness.gd
   tests/presentation/test_animation_browser.gd
   tests/presentation/test_board_presenter.gd
   tests/presentation/test_capture_projection.gd

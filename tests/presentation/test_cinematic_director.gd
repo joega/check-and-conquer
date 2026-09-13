@@ -24,6 +24,13 @@ func _run() -> void:
 	cinematic.overlay_path = NodePath("Overlay")
 	stage.add_child(cinematic)
 	await process_frame
+	var bubble := cinematic.get_node("Overlay/SpeechBubble") as PanelContainer
+	var bubble_style := bubble.get_theme_stylebox("panel") as StyleBoxFlat
+	assert(bubble_style != null and bubble_style.bg_color.a >= 0.94, "Dialogue needs an opaque reading surface over every panorama.")
+	cinematic._set_cue("THE GATEKEEPER", "Gatekeeper", "Test", "")
+	assert(not cinematic.get_node("Overlay/SpeechBubble/Content/Speaker").visible, "A character-name title must suppress the duplicate speaker row.")
+	cinematic._set_cue("OBJECTIVE", "Grandmaster", "Test", "")
+	assert(cinematic.get_node("Overlay/SpeechBubble/Content/Speaker").visible, "Objective cues must retain useful speaker identity.")
 	var original_transform := board_camera.global_transform
 	assert(board_camera.controls_enabled(), "The board camera must begin interactive.")
 	cinematic.playback_speed = 100.0

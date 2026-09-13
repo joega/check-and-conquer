@@ -86,6 +86,7 @@ func _initialize_game() -> void:
 	$UI/Undo.pressed.connect(_undo)
 	$BattleDirector.impact_landed.connect(_show_capture_impact)
 	$BattleDirector.weapon_impact.connect($ArenaAudioDirector.play_weapon_impact)
+	$BattleDirector.presentation_cancelled.connect($ArenaAudioDirector.stop_combat_sfx)
 	$BoardPresenter.piece_landed.connect($ArenaAudioDirector.play_piece_land)
 	for label in ["Beginner", "Adventurer", "Champion", "Master"]:
 		$UI/Difficulty.add_item(label)

@@ -20,7 +20,7 @@ func _run() -> void:
 	await process_frame
 	assert(pawn.supports_state(pawn.capture_attack_state(&"attack.sword.slash_01")), "Pawn captures must select a compatible enhanced sword motion.")
 	battle._spawn_weapon_swing(pawn)
-	assert(battle.get_node_or_null("WeaponSwingArc00") != null and battle.get_node_or_null("WeaponSwingArc01") != null, "Dual-wielding pawns must create two readable weapon afterimages.")
+	assert(battle.get_node_or_null("WeaponSwingArc00") == null and battle.get_node_or_null("WeaponSwingArc01") == null, "Pawn contact must leave the calibrated equipped daggers visible without proxy arcs.")
 	assert(battle._melee_sound_for(pawn) == &"dual_sword_impact")
 	for archetype in [Types.PAWN, Types.KNIGHT, Types.BISHOP, Types.ROOK, Types.QUEEN, Types.KING]:
 		pawn.archetype = archetype
@@ -40,5 +40,5 @@ func _run() -> void:
 	battle.queue_free()
 	pawn.queue_free()
 	await process_frame
-	print("PASS: weapon motion variants, afterimages, and family sounds are role-specific.")
+	print("PASS: equipped weapon motion, restrained effects, and family sounds are role-specific.")
 	quit(0)

@@ -2,10 +2,14 @@ extends SceneTree
 
 ## Render every Mountain intro cue from the real-actor Cinematic Lab. The lab
 ## has no Stockfish or campaign save, so this is safe repeatable visual evidence.
+const Evidence = preload("res://tools/visual_evidence_harness.gd")
 var output_dir := "/tmp/cac-cinematic-lab"
 var outcome := "intro"
 var arena := "mountain_fortress"
 var human_side := 1
+var revision := "working-tree"
+var expected_size := Vector2i(1280, 720)
+var evidence
 
 
 func _init() -> void:
@@ -17,13 +21,20 @@ func _init() -> void:
 		arena = OS.get_cmdline_user_args()[2]
 	if OS.get_cmdline_user_args().size() > 3:
 		human_side = -1 if OS.get_cmdline_user_args()[3] == "black" else 1
+	if OS.get_cmdline_user_args().size() > 4:
+		revision = OS.get_cmdline_user_args()[4]
+	if OS.get_cmdline_user_args().size() > 5:
+		var fields := OS.get_cmdline_user_args()[5].to_lower().split("x", false)
+		expected_size = Vector2i(int(fields[0]), int(fields[1]))
 	call_deferred("_run")
 
 
 func _run() -> void:
-	DirAccess.make_dir_recursive_absolute(output_dir)
+	evidence = Evidence.new(output_dir, revision, expected_size)
+	await evidence.configure_window(self)
+	evidence.viewport.msaa_3d = Viewport.MSAA_2X
 	var lab = preload("res://scenes/debug/DebugCinematicLab.tscn").instantiate()
-	root.add_child(lab)
+	evidence.viewport.add_child(lab)
 	await process_frame
 	lab._human_side = human_side
 	if arena != "mountain_fortress":
@@ -36,6 +47,7 @@ func _run() -> void:
 		lab.get_node("UI/Controls/Outcome").select(outcome_index)
 		lab._outcome = outcome
 	lab._play()
+	lab.get_node("UI").visible = false
 	var remaining := {
 		"I · THE FIRST GATE": "01-grandmaster",
 		"THE GATEKEEPER": "02-gatekeeper",
@@ -80,10 +92,9 @@ func _run() -> void:
 			var label: String = remaining[title.text]
 			remaining.erase(title.text)
 			await create_timer(0.35).timeout
-			await RenderingServer.frame_post_draw
-			assert(root.get_texture().get_image().save_png(output_dir.path_join(label + ".png")) == OK)
-			print("SCREENSHOT: ", output_dir.path_join(label + ".png"))
+			await evidence.capture(self, label, {"fixture": "campaign_cinematic", "arena": arena, "outcome": outcome, "human_side": "black" if human_side < 0 else "white", "cue_title": title.text, "speaker": lab.get_node("CampaignCinematic/Overlay/SpeechBubble/Content/Speaker").text})
 	assert(remaining.is_empty(), "Every real-lab intro cue must be captured.")
 	lab.get_node("CampaignCinematic").skip()
 	await process_frame
-	quit(0)
+	evidence.write_manifest("manifest.json", {"tool": "capture_cinematic_lab.gd", "arena": arena, "outcome": outcome, "human_side": human_side, "captured_cues": evidence.captures.size(), "ui_controls_hidden": true})
+	quit(evidence.exit_code())

@@ -8,6 +8,7 @@ const SAMPLE_RATE := 22050
 const MUSIC_DURATION_S := 12.0
 const SFX_STREAMS := {
 	&"piece_land": [preload("res://assets/audio/cc0_fantasy/wood-twigs-break-01.ogg")],
+	&"approach_step": [preload("res://assets/audio/cc0_fantasy/wood-twigs-break-01.ogg")],
 	&"sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg"), preload("res://assets/audio/cc0_fantasy/sword-clash-03.ogg")],
 	&"dual_sword_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-03.ogg"), preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg")],
 	&"royal_blade_impact": [preload("res://assets/audio/cc0_fantasy/sword-clash-01.ogg")],
@@ -61,12 +62,19 @@ func play_weapon_impact(kind: StringName) -> void:
 func stop_all() -> void:
 	if _music_player != null:
 		_music_player.stop()
+	stop_combat_sfx()
+
+
+func stop_combat_sfx() -> void:
 	for player in _sfx_players:
 		player.stop()
+		player.stream = null
 
 
 func _exit_tree() -> void:
 	stop_all()
+	if _music_player != null:
+		_music_player.stream = null
 
 
 func _play_sfx(kind: StringName) -> void:
@@ -81,7 +89,7 @@ func _play_sfx(kind: StringName) -> void:
 			break
 	# Footfalls should support the walk, never dominate it. Combat impact cues
 	# retain their punch while a square landing is deliberately subdued.
-	player.volume_db = -18.0 if kind == &"piece_land" else -8.0
+	player.volume_db = -18.0 if kind in [&"piece_land", &"approach_step"] else -8.0
 	player.stream = _sfx_stream_for(kind)
 	player.play()
 

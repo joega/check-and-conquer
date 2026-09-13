@@ -153,6 +153,31 @@ Prove the 3D character/rig/animation problem before investing in the rest of the
 
 ## M7 — V1 UX and polish
 
+**Presentation overhaul (unblocked scope complete 2026-09-12):** Follow
+[`PRESENTATION_OVERHAUL_PLAN.md`](PRESENTATION_OVERHAUL_PLAN.md) for the ordered
+P0–P6 implementation and visual acceptance gates: trustworthy rendered fixtures,
+continuous locomotion/blending, contact timing, a coherent arena reference,
+role silhouettes, true bow/hammer body animation, and integrated verification.
+P0 through P2 are complete: exact-size asserted baselines, continuous-motion
+evidence, measured dagger contact, a cancellable shared speed-scaled combat
+timeline, and audible-output checks live under `artifacts/presentation_overhaul/`
+with reproducible manifests and behavioral regression tests. P3 is also
+complete: Mountain Fortress now establishes the measured board material,
+lighting, foreground, shadow, and 2× MSAA reference. P4 is complete with six
+label-hidden silhouettes, both starting-rank views, five pose families, and
+bone/skin ownership checks. P5 is explicitly blocked on compatible skeletal
+content after reproducible installed-clip/tooling inspection; the safe fallback
+and exact 65-joint animator brief are retained. P6 is complete: the shared
+stage treatment now covers all five arenas, cinematic text uses opaque concise
+framing, matched final visual/motion manifests pass at both target resolutions,
+and the 1080p starting-board p95 is 9.246 ms on the available AMD GPU. The clean
+51-test gate passes, including perft, real Stockfish, 36 matchups, special
+moves, full death, cinematics, and 20-cycle reset. The overhaul remains partial
+only because the two P5 skeletal body clips are blocked on external content.
+A 2026-09-13 rendered follow-up seats the Grandmaster from the first cue, hides
+her ceremony sword, clears the queen's eyes with compatible buns and a raised
+diadem, removes the oversized king chest collar, and subdues broad belt tint.
+
 **Visual tranche (2026-09-11):** The Astra audit in `ASTRA_VISUAL_DIRECTION.md` prioritizes twelve concrete polish investments. Its first four restore neutral lighting/material contrast, replace saturated tile cues with distinct perimeters and retained last-move feedback, correct directional melee staging and authored contact timing, and give Match Settings an opaque reading surface with bounded engine diagnostics and menu-only camera telemetry. Terra's second pass adds alpha-faded restrained spell contacts, distance-sampled bounded projectile trails with lifecycle cleanup, shared gameplay/Combat Lab combat-audio routing, and explicit six-role weapon-grip/silhouette profiles. Terra's third pass adds project-authored Bishop draw/release and Rook overhead-hammer timelines, root-stable winner recovery, checkmate-side acknowledgements, and a campaign current-objective hierarchy; `tools/capture_authored_combat.gd` isolates the new combat inspection. Terra's fourth pass adds direct recovery/victory inspection controls to both debug scenes and a distinct final-campaign-conquered map state; `tools/capture_visual_audit.gd` injects and records that completion state. A CC0 KayKit bow/heavy-attack candidate was rejected after import because its six-bone rig cannot credibly retarget onto the project's 65-joint actors; the current compatible bridge timelines remain in place pending a skeletal source that passes the full intake gate. Existing debug scenes remain available; `tools/capture_visual_audit.gd` reproduces the broader rendered route and records every role's idle, walk, contact, and opposite-side view.
 
 **Progress:** Implemented for the current Linux target. The playable screen keeps a board-first view with a compact, non-overlapping Match Settings panel for optional manual UCI entry, restart, undo, pause/resume, surrender and return, player-versus-Stockfish and spectator controls, side, Beginner/Adventurer/Champion/Master campaign difficulty, promotion piece, capture speed, fullscreen, master volume, camera shake, and bounded Stockfish diagnostics. Surrender plays each surviving character's full capture-fall animation before the game returns to the campaign map. Each conquered arena raises the selected difficulty profile slightly. A balanced direct player-side turn view frames every board corner with a readable foreground team and remains behind the human player while Stockfish moves from the far side. Manual board framing persists across moves; a compact Reset View button restores the tuned default on demand. Beginner Coach can be toggled from Match Settings; its Hint action asks the existing Stockfish process for a legal suggestion without taking a turn, while high-contrast raised green destination rings, gold coach hints, and brief amber last-move trails keep board changes obvious. A live corner readout exposes the editable camera tilt, spin, zoom, and pan values for view tuning. The arena is a physical bronze-railed stone altar framed by a narrow ring of local weathered terrace slabs, themed corner markers, and location-specific landmarks, while original high-detail panoramas supply the distant location. Each arena has its own looping original procedural music bed; board landings and weapon families emit distinct recorded effects. Actors select varied battle stances, appearances, gestures, and capture-win celebrations so ranks do not read as clones; a randomized single-piece ambient weight shift makes the formation feel alert without a synchronized loop. Prominent board callouts distinguish check, checkmate victory, checkmate defeat, stalemate, and campaign conquest, while the game-over panel keeps PGN copy and deterministic review controls available. The setting is isolated from chess state so it can be freely rebuilt. These player settings, including fullscreen and campaign route state, persist in `user://check_and_conquer_settings.cfg`. The Linux export stages Stockfish externally, includes the required notices/source, and has been smoke-launched headlessly as `check-and-conquer.x86_64`.

@@ -239,3 +239,107 @@ creating alternate match flows or inferring domain results in presentation code.
 **Consequences:** Unknown arena/outcome data completes asynchronously through the
 existing fallback path. New sequences must use catalog identity and the finite
 action vocabulary before parallel content work begins.
+
+## ADR-025 — One animation mixer owns actor motion lifecycle
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Duplicate the compatible Quaternius UAL1 and UAL2 libraries into
+`ual1` and `ual2` namespaces on one PieceActor AnimationPlayer. Use native
+crossfade times behind semantic animation IDs. PieceActor owns calibrated gait
+cadence, root travel, shortest-yaw turns, and cancellation; BoardPresenter and
+BattleDirector choose targets and durations while domain state owns settlement.
+Use a ping-pong runtime copy of the neutral idle and deterministic phase offsets.
+**Reason:** Two independent players hard-switched library changes, one stretched
+walk cycle covered every move length, and untracked tweens could survive reset or
+actor replacement. Rendered fixed-frame evidence showed visible skating, facing
+snaps, and a resetting idle seam.
+**Consequences:** Source-clip identity remains queryable through namespaced
+animation names and all callers retain semantic IDs. Quiet and capture travel
+share the 2.2 m stride contract and cancellable velocity profile. Setup/rebuild
+can still orient actors synchronously. An AnimationTree remains an option only
+if future layered animation needs exceed native crossfades; it is not required
+for the currently proven cross-library lifecycle.
+
+## ADR-026 — Capture speed is one latched presentation timeline
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Latch capture speed when `BattleDirector` begins a capture and use
+that scale for every presentation stage: turns, approach, plant, skeletal and
+prop actions, projectile travel, contact sound/effects, reaction, death,
+settlement, and recovery. Apply a mid-capture setting change to the next
+capture. Emit cancellation once and stop actor motion, effects, and combat audio.
+**Reason:** Independent clocks let contact sounds and reactions precede visible
+weapon/projectile arrival, and live speed changes could split one capture across
+multiple time scales. The latched contract makes 0.25× inspection deterministic
+and keeps Skip safe at every stage.
+**Consequences:** Choreography contact markers are seconds from clip start and
+remain data-owned. `PieceActor` exposes equipped-weapon proximity for measured
+contact evidence. The generic melee path samples and holds the exact authored
+contact pose for one process frame before querying bone-attached weapon bounds,
+which removes renderer-cadence variance at accelerated speeds. Settlement still
+snaps to authoritative chess roots after the complete victim death, and a future
+live speed-change feature would need an explicit synchronized-clock design
+rather than mutating this contract.
+
+## ADR-027 — Mountain Fortress defines the shared stage treatment
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Use exact-AABB procedural chamfers, warm limestone/dark slate,
+aged bronze, explicit neutral color ambient light, a neutral two-split key
+shadow, and 2× MSAA as the finished Mountain Fortress stage reference. Reuse
+owned CC0 banner and torch props for nearby landmarks and keep arena color in
+the panorama and restrained accents.
+**Reason:** The former box edges, saturated emissive caps, sky-sourced ambient
+light, and cylinder/cone towers flattened the board and competed with the
+panorama. Matched renders show stronger edge planes and grounded figures without
+changing the board camera or clipping pale-square detail. Measured 2× MSAA
+improves diagonals within the 60 FPS frame budget on the available GPU.
+**Consequences:** Board mapping, hit extents, y=0 square tops, overlays, and actor
+roots remain unchanged. Highlightable tile materials stay instance-local. P6
+may propagate these shared rules to the other four arenas while preserving
+their own stone, landmark, and panorama identity.
+
+## ADR-028 — Role identity is a bone-bound silhouette profile
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Keep the current compatible outfit/rig set and distinguish roles
+with a finite visual profile: outfit visibility, face-clear compatible hair,
+compatible skinned hood where needed, bone-bound project-authored head/shoulder
+accessories, and an explicit weapon rest pose. Apply restrained side tint only
+to small garment details and cloth accessories. Preserve canonical scale,
+roots, weapon ownership, and combat anchors.
+**Reason:** The former label-hidden board collapsed into pawn/bishop,
+knight/queen, and rook/king pairs because the same ranger hoods and silhouettes
+dominated at gameplay distance. Small role-owned cues resolve the pairs without
+introducing six unproven model/rig dependencies.
+**Consequences:** Role accessories are visual projections below the outfit
+skeleton and cannot enter chess or choreography data. Every new cue must pass
+both-side, five-pose, bone/skin, root-drift, face-clearance, and label-hidden
+checks. Broad torso belts and collars cannot carry saturated team color. The
+Grandmaster uses the queen profile but starts in the calibrated seated idle and
+hides her hand weapon during the ceremony. A future full-model replacement still
+requires the existing single-rig and 20-cycle intake gate.
+
+## ADR-029 — Arena identity lives outside the shared readable stage
+
+**Status:** Accepted
+**Date:** 2026-09-12
+**Decision:** Apply the Mountain reference's exact chamfers, neutral ambient and
+shadow treatment, restrained local emission, and board-first composition to all
+five arenas. Keep each location distinct through its panorama, palette, and a
+small set of licensed or project-authored landmarks. Campaign dialogue uses an
+opaque bounded surface and omits a speaker row when the cue title already
+identifies that speaker.
+**Reason:** Per-arena primitive/glow experiments and translucent dialogue
+surfaces produced inconsistent depth, competed with the pieces, and reduced
+text readability. Matched five-arena and cinematic renders show that one stage
+grammar preserves location identity while keeping chess state and actors clear.
+**Consequences:** Arena changes remain rebuildable presentation projections and
+cannot alter board mapping, actor roots, chess state, camera ownership, or Skip
+lifecycle. New arenas must pass both-side board views and cinematic framing at
+720p/1080p. GPU acceptance uses warmed 1080p median/p95 evidence against the P3
+2× MSAA reference; generated evidence stays outside Godot's import database.

@@ -8,11 +8,12 @@ const ACTOR_SCENE = preload("res://scenes/actors/PieceActor.tscn")
 signal piece_landed
 
 var actors: Dictionary = {}
-const WALK_SPEED_MPS := 7.0
+const WALK_SPEED_MPS := 9.0
 var _ambient_rng := RandomNumberGenerator.new()
 var _ambient_motion_timer_s := 0.9
 var _ambient_motion_index := 0
 var _last_ambient_actor: Node
+var _presentation_generation := 0
 
 
 func _ready() -> void:
@@ -44,7 +45,10 @@ func _play_next_ambient_motion() -> void:
 	_last_ambient_actor = actor
 
 func rebuild_from_state(state) -> void:
-	for actor in actors.values(): actor.queue_free()
+	_presentation_generation += 1
+	for actor in actors.values():
+		actor.cancel_presentation_motion()
+		actor.queue_free()
 	actors.clear()
 	for square in Types.BOARD_SIZE:
 		if state.get_piece(square) == Types.EMPTY: continue
@@ -59,6 +63,7 @@ func rebuild_from_state(state) -> void:
 	_face_actors_toward_opposing_kings()
 
 func present_quiet_move(result) -> void:
+	var generation := _presentation_generation
 	if result.is_capture:
 		var victim_square: int = result.en_passant_capture_square if result.is_en_passant else result.to_square
 		var victim = actors.get(victim_square)
@@ -69,7 +74,9 @@ func present_quiet_move(result) -> void:
 	if actor == null: return
 	actors.erase(result.from_square)
 	actors[result.to_square] = actor
-	await _walk_actor_to(actor, Mapper.square_to_world(result.to_square))
+	await _walk_actor_to(actor, Mapper.square_to_world(result.to_square), generation)
+	if generation != _presentation_generation or not is_instance_valid(actor):
+		return
 	if result.is_castle:
 		var rook_from: int = result.rook_from
 		var rook_to: int = result.rook_to
@@ -77,7 +84,9 @@ func present_quiet_move(result) -> void:
 		if rook != null:
 			actors.erase(rook_from)
 			actors[rook_to] = rook
-			await _walk_actor_to(rook, Mapper.square_to_world(rook_to))
+			await _walk_actor_to(rook, Mapper.square_to_world(rook_to), generation)
+			if generation != _presentation_generation or not is_instance_valid(rook):
+				return
 	_apply_promotion(result)
 	actor.start_battle_stance()
 	_face_actors_toward_opposing_kings()
@@ -159,7 +168,6 @@ func settle_capture(result) -> void:
 	actors[result.to_square] = attacker
 	attacker.global_position = Mapper.square_to_world(result.to_square)
 	_apply_promotion(result)
-	attacker.recover_after_capture()
 	_celebrate_capture(attacker)
 	_face_actors_toward_opposing_kings()
 	piece_landed.emit()
@@ -208,22 +216,38 @@ func _face_actors_toward_opposing_kings() -> void:
 			actor.face_world_position(opposing_king_position)
 
 
-func _walk_actor_to(actor, target: Vector3) -> void:
-	actor.face_world_position(target)
+func _walk_actor_to(actor, target: Vector3, generation := -1) -> void:
+	var active_generation := _presentation_generation if generation < 0 else generation
+	actor.turn_toward_world_position(target)
+	while is_instance_valid(actor) and actor.is_presentation_turning() and active_generation == _presentation_generation:
+		await get_tree().process_frame
+	if not is_instance_valid(actor) or active_generation != _presentation_generation:
+		return
 	var distance: float = actor.global_position.distance_to(target)
-	var duration: float = clampf(distance / WALK_SPEED_MPS, 0.32, 1.25)
-	# Root movement stays authoritative and code-controlled, while the imported
-	# in-place gait is retimed to complete one visible stride over the same
-	# interval. Without this, a four-metre pawn step ends halfway through a slow
-	# source clip and reads as a slide.
-	var walk_duration := maxf(actor.state_duration(&"locomotion.walk.forward"), 0.01)
-	actor.set_animation_speed(walk_duration / duration)
-	actor.play_state(&"locomotion.walk.forward")
-	await actor.move_to_world_position(target, duration).finished
-	actor.set_animation_speed(1.0)
-	actor.restore_board_facing()
+	var duration: float = actor.travel_duration_for_distance(distance, WALK_SPEED_MPS)
+	actor.move_to_world_position(target, duration)
+	while is_instance_valid(actor) and actor.is_presentation_moving() and active_generation == _presentation_generation:
+		await get_tree().process_frame
+	if not is_instance_valid(actor) or active_generation != _presentation_generation:
+		return
+	var opposing_king_position: Variant = _opposing_king_position(actor.side)
+	if opposing_king_position is Vector3:
+		actor.turn_toward_world_position(opposing_king_position)
+		while is_instance_valid(actor) and actor.is_presentation_turning() and active_generation == _presentation_generation:
+			await get_tree().process_frame
+	else:
+		actor.restore_board_facing()
+	if not is_instance_valid(actor) or active_generation != _presentation_generation:
+		return
 	actor.start_battle_stance()
 	piece_landed.emit()
+
+
+func _opposing_king_position(side: int) -> Variant:
+	for candidate in actors.values():
+		if candidate != null and is_instance_valid(candidate) and candidate.side == -side and candidate.archetype == Types.KING:
+			return candidate.global_position
+	return null
 
 
 func _apply_promotion(result) -> void:

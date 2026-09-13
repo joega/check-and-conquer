@@ -1,6 +1,24 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/cinematic_director.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="CinematicBubble"]
+bg_color = Color(0.025, 0.03, 0.035, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.36, 0.20, 0.92)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_left = 9
+corner_radius_bottom_right = 9
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 15.0
+shadow_color = Color(0, 0, 0, 0.42)
+shadow_size = 8
 
 [node name="CampaignCinematic" type="Node" ]
 script = ExtResource("1")
@@ -26,10 +44,11 @@ color = Color(0.01, 0.018, 0.035, 0.26)
 mouse_filter = 2
 
 [node name="SpeechBubble" type="PanelContainer" parent="Overlay"]
-custom_minimum_size = Vector2(440, 0)
+custom_minimum_size = Vector2(420, 0)
 layout_mode = 0
 offset_right = 440.0
 offset_bottom = 142.0
+theme_override_styles/panel = SubResource("CinematicBubble")
 
 [node name="Content" type="VBoxContainer" parent="Overlay/SpeechBubble"]
 layout_mode = 2
@@ -38,19 +57,19 @@ theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="Overlay/SpeechBubble/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.76, 0.34, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 17
 horizontal_alignment = 1
 
 [node name="Speaker" type="Label" parent="Overlay/SpeechBubble/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.86, 1, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 
 [node name="Body" type="Label" parent="Overlay/SpeechBubble/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.97, 1, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 autowrap_mode = 2
 horizontal_alignment = 1
 

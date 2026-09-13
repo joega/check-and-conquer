@@ -51,7 +51,7 @@ Record every imported model, animation, texture, audio file, and VFX pack here b
 - Date acquired: 2026-09-10
 - Original archive/file: `Universal Animation Library 2[Standard].zip` (SHA-256 `4008ea208a604773a2b2177d965f0f5d3195498b5bf838c3f5785d68e95f2a68`)
 - Files used in project: `assets/animations/quaternius/UAL2_Standard.glb`.
-- Modifications: Extracted the Godot-ready non-root-motion GLB and retained its README/license. The second `AnimationPlayer` is attached to the same compatible outfit skeleton at runtime.
+- Modifications: Extracted the Godot-ready non-root-motion GLB and retained its README/license. Its library is duplicated into the `ual2` namespace of the actor's single runtime `AnimationPlayer`, which drives the same compatible outfit skeleton.
 - Attribution required: no
 - Redistribution notes: CC0 public-domain dedication; source archive is retained locally in ignored `assets/source-archives/` and is not committed.
 - Verification notes: Imported with Godot 4.7.2. `Hit_Knockback`, `Melee_Hook`, and sword attack variants are exposed and used through normalized semantic IDs.

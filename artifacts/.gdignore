@@ -1,0 +1,2 @@
+# Rendered evidence is read through FileAccess and must not enter Godot's asset
+# import database. A single P6 motion run can contain hundreds of PNGs.

@@ -15,7 +15,7 @@ func _run() -> void:
 	var battle_stances := {}
 	for actor in presenter.actors.values():
 		assert(not actor.battle_stance_state().is_empty(), "Every actor must choose a readable battle stance.")
-		assert(actor.is_animation_paused(), "Board pieces must hold a clean neutral pose instead of visibly snapping through a loop seam.")
+		assert(not actor.is_animation_paused() and actor.battle_stance_loops(), "Board pieces must run the continuous seam-safe idle loop.")
 		battle_stances[actor.battle_stance_state()] = true
 	assert(battle_stances.size() == 1, "The opening formation must share a clean neutral rest pose before isolated ambient movement begins.")
 	presenter._play_next_ambient_motion()

@@ -170,7 +170,13 @@ func _set_cue(title: String, speaker: String, body: String, speaker_id: String) 
 			_ceremony.set_dialogue_speaker(_speaker_actor)
 	var bubble: Control = _overlay.get_node("SpeechBubble")
 	bubble.get_node("Content/Title").text = title
-	bubble.get_node("Content/Speaker").text = speaker
+	var speaker_label := bubble.get_node("Content/Speaker") as Label
+	speaker_label.text = speaker
+	# Character-name cue titles already identify the speaker. Suppress the
+	# duplicate line but retain speaker metadata for tests and accessibility.
+	var normalized_title := title.to_upper()
+	var normalized_speaker := speaker.to_upper()
+	speaker_label.visible = not speaker.is_empty() and speaker != "Narration" and not normalized_title.contains(normalized_speaker)
 	bubble.get_node("Content/Body").text = body
 	bubble.visible = true
 

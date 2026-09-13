@@ -20,9 +20,15 @@ func _run() -> void:
 	audio.play_piece_land()
 	assert((audio.get_node("ArenaSFX00").stream as AudioStreamOggVorbis).resource_path.begins_with("res://assets/audio/cc0_fantasy/"), "Movement must use a recorded CC0 cue instead of a synthesized beep.")
 	assert(is_equal_approx(audio.get_node("ArenaSFX00").volume_db, -18.0), "Square-landing clicks must be quieter than combat impacts.")
+	audio.play_weapon_impact(&"approach_step")
+	assert((audio.get_node("ArenaSFX01").stream as AudioStreamOggVorbis).resource_path.ends_with("wood-twigs-break-01.ogg"), "Capture approach must use the restrained recorded footfall cue.")
 	audio.play_weapon_impact(&"arcane_cast")
-	var arcane_stream := audio.get_node("ArenaSFX01").stream as AudioStreamOggVorbis
-	assert(arcane_stream != null and arcane_stream.resource_path.ends_with("fireball-01.ogg"), "Arcane captures must use the dedicated CC0 fireball sample rather than the lightning-like discharge.")
+	var arcane_stream_found := false
+	for player in audio._sfx_players:
+		var stream := player.stream as AudioStreamOggVorbis
+		if stream != null and stream.resource_path.ends_with("fireball-01.ogg"):
+			arcane_stream_found = true
+	assert(audio.last_sfx_kind == &"arcane_cast" and arcane_stream_found, "Arcane captures must use the dedicated CC0 fireball sample rather than the lightning-like discharge.")
 	for kind in [&"dual_sword_impact", &"spear_impact", &"arrow_release", &"arrow_impact", &"arcane_impact", &"wall_slam", &"hammer_impact"]:
 		audio.play_weapon_impact(kind)
 	assert(audio.played_sfx_kinds.has(&"piece_land") and audio.played_sfx_kinds.has(&"arcane_impact"), "Board movement and each weapon family must have independently triggered sounds.")

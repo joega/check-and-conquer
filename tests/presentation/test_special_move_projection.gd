@@ -27,10 +27,10 @@ func _run() -> void:
 	await process_frame
 	await create_timer(0.08).timeout
 	assert(walking_pawn.current_semantic_state() == &"locomotion.walk.forward", "Quiet root movement must visibly play the normalized walk clip rather than slide in idle.")
-	assert(walking_pawn.animation_speed_multiplier() > 1.0, "A four-metre quiet move must retime the in-place gait to finish with its authoritative root movement.")
+	assert(walking_pawn.last_travel_stride_cycles > 1.0, "A four-metre quiet move must advance more than one calibrated gait cycle.")
 	await create_timer(0.7).timeout
 	assert(walking_pawn.current_semantic_state() == walking_pawn.battle_stance_state(), "Quiet movement must return to that character's battle stance once it reaches the authoritative destination.")
-	assert(is_equal_approx(walking_pawn.animation_speed_multiplier(), 1.0), "Walk retiming must not leak into the actor's idle or combat animation speed.")
+	assert(is_equal_approx(walking_pawn.animation_speed_multiplier(), 1.0), "Locomotion cadence must not leak into the actor's idle or combat animation speed.")
 	# Rebuild the position immediately before the committed en-passant result.
 	var before_ep = ChessGame.new()
 	for uci in ["e2e4", "a7a6", "e4e5", "d7d5"]:

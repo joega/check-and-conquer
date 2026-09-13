@@ -35,6 +35,7 @@ func _ready() -> void:
 	$BattleDirector.choreography = ChoreographyResolver.resolve(Types.PAWN)
 	$BattleDirector.impact_landed.connect(_show_impact)
 	$BattleDirector.weapon_impact.connect($ArenaAudioDirector.play_weapon_impact)
+	$BattleDirector.presentation_cancelled.connect($ArenaAudioDirector.stop_combat_sfx)
 	$BattleDirector.presentation_finished.connect(_finish_capture)
 	_play_button.pressed.connect(_play_capture)
 	_reset_button.pressed.connect(_reset_lab)

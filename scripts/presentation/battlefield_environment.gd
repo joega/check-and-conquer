@@ -2,16 +2,19 @@ class_name BattlefieldEnvironment
 extends Node3D
 
 const ArenaCatalog = preload("res://scripts/presentation/arena_catalog.gd")
+const BeveledBoxMesh = preload("res://scripts/presentation/beveled_box_mesh.gd")
+const BANNER_SCENE = preload("res://assets/environment/quaternius_props/Banner_1.gltf")
+const TORCH_SCENE = preload("res://assets/environment/quaternius_props/Torch_Metal.gltf")
 
 ## Arena art establishes the setting, but the board is the gameplay stage.
 ## Keep the stage neutral so character materials and square colors remain
 ## readable in every panorama, including the cold and fire-lit arenas.
 const BOARD_AMBIENT_COLOR := Color(0.82, 0.82, 0.82)
-const BOARD_AMBIENT_ENERGY := 0.48
+const BOARD_AMBIENT_ENERGY := 0.40
 const BOARD_KEY_COLOR := Color(1.0, 1.0, 1.0)
-const BOARD_KEY_ENERGY := 0.85
+const BOARD_KEY_ENERGY := 0.92
 const BOARD_FILL_COLOR := Color(0.90, 0.90, 0.90)
-const BOARD_FILL_ENERGY := 0.32
+const BOARD_FILL_ENERGY := 0.26
 
 ## Lightweight procedural setting around the authoritative chessboard. It has no
 ## gameplay collision or chess-state responsibilities and can be rebuilt freely.
@@ -37,11 +40,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_storm_time += delta
 	for index in _beacon_lights.size():
-		_beacon_lights[index].light_energy = 2.0 + sin(_storm_time * 2.8 + index * 1.7) * 0.45
+		_beacon_lights[index].light_energy = 0.72 + sin(_storm_time * 2.8 + index * 1.7) * 0.10
 	var cycle := fmod(_storm_time, storm_cycle_s)
 	# A gentle deterministic atmosphere pulse keeps an arena alive without
 	# affecting board visibility or coupling environment state to chess.
-	_flash.light_energy = 1.7 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
+	_flash.light_energy = 1.1 * exp(-pow((cycle - 2.0) * 4.5, 2.0))
 
 
 func apply_arena(requested_arena_id: String) -> void:
@@ -49,6 +52,7 @@ func apply_arena(requested_arena_id: String) -> void:
 	var arena := ArenaCatalog.definition(arena_id)
 	_apply_sky_and_lighting(arena)
 	if _architecture != null:
+		remove_child(_architecture)
 		_architecture.queue_free()
 	_architecture = Node3D.new()
 	_architecture.name = "ArenaArchitecture"
@@ -67,16 +71,24 @@ func _apply_sky_and_lighting(arena: Dictionary) -> void:
 	if world_environment != null and world_environment.environment != null:
 		var sky_material := PanoramaSkyMaterial.new()
 		sky_material.panorama = load(arena.backdrop_path) as Texture2D
-		sky_material.energy_multiplier = 0.78
+		sky_material.energy_multiplier = 0.73
 		var sky := Sky.new()
 		sky.sky_material = sky_material
+		world_environment.environment.background_mode = Environment.BG_SKY
 		world_environment.environment.sky = sky
+		world_environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 		world_environment.environment.ambient_light_color = BOARD_AMBIENT_COLOR
 		world_environment.environment.ambient_light_energy = BOARD_AMBIENT_ENERGY
 	var key_light := get_parent().get_node_or_null("Light") as DirectionalLight3D
 	if key_light != null:
 		key_light.light_color = BOARD_KEY_COLOR
 		key_light.light_energy = BOARD_KEY_ENERGY
+		key_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+		key_light.directional_shadow_max_distance = 52.0
+		key_light.directional_shadow_blend_splits = true
+		key_light.shadow_blur = 1.35
+		key_light.shadow_bias = 0.055
+		key_light.shadow_normal_bias = 0.85
 	var fill_light := get_parent().get_node_or_null("FillLight") as DirectionalLight3D
 	if fill_light != null:
 		fill_light.light_color = BOARD_FILL_COLOR
@@ -88,11 +100,11 @@ func _create_grand_terrace(arena: Dictionary) -> void:
 	# Unlike the earlier full terrain mesh, it terminates near the altar and can
 	# never create a flat or jagged false horizon over the panoramic artwork.
 	var slab_materials: Array[StandardMaterial3D] = []
-	for brightness in [0.82, 1.0, 1.16]:
+	for brightness in [0.86, 1.0, 1.10]:
 		var material := StandardMaterial3D.new()
 		material.albedo_color = arena.stone * brightness
-		material.roughness = 0.86
-		material.metallic = 0.08
+		material.roughness = 0.88
+		material.metallic = 0.025
 		slab_materials.append(material)
 	for x in range(-22, 23, 4):
 		for z in [-20, 20]:
@@ -105,8 +117,7 @@ func _create_grand_terrace(arena: Dictionary) -> void:
 func _add_terrace_slab(position: Vector3, material: StandardMaterial3D) -> void:
 	var slab := MeshInstance3D.new()
 	slab.name = "TerraceSlab"
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(3.82, 0.22, 3.82)
+	var mesh := BeveledBoxMesh.create(Vector3(3.82, 0.22, 3.82), 0.065)
 	slab.mesh = mesh
 	slab.position = position
 	slab.material_override = material
@@ -120,12 +131,11 @@ func _create_arena_markers(arena: Dictionary) -> void:
 		marker.name = "ArenaMarker%02d" % index
 		marker.position = position
 		_architecture.add_child(marker)
+		if arena_id == "mountain_fortress":
+			_create_mountain_torch_marker(marker, arena)
+			continue
 		var pedestal := MeshInstance3D.new()
-		var pedestal_mesh := CylinderMesh.new()
-		pedestal_mesh.top_radius = 0.50
-		pedestal_mesh.bottom_radius = 0.90
-		pedestal_mesh.height = 2.1
-		pedestal_mesh.radial_segments = 8
+		var pedestal_mesh := BeveledBoxMesh.create(Vector3(1.55, 2.1, 1.55), 0.16)
 		pedestal.mesh = pedestal_mesh
 		pedestal.position.y = 1.05
 		var stone := StandardMaterial3D.new()
@@ -141,10 +151,16 @@ func _create_arena_markers(arena: Dictionary) -> void:
 			prism.size = Vector3(1.05, 2.2, 1.05)
 			crown.mesh = prism
 			crown.position.y = 3.0
+		elif arena.marker == "crystal":
+			var crystal := PrismMesh.new()
+			crystal.size = Vector3(0.78, 1.55, 0.78)
+			crown.mesh = crystal
+			crown.rotation_degrees.y = 45.0
+			crown.position.y = 2.55
 		else:
 			var gem := SphereMesh.new()
-			gem.radius = 0.43 if arena.marker == "crystal" else 0.56
-			gem.height = 1.35 if arena.marker == "crystal" else 0.8
+			gem.radius = 0.50
+			gem.height = 0.72
 			gem.radial_segments = 10
 			crown.mesh = gem
 			crown.position.y = 2.45
@@ -152,7 +168,7 @@ func _create_arena_markers(arena: Dictionary) -> void:
 		accent.albedo_color = arena.accent
 		accent.emission_enabled = true
 		accent.emission = arena.accent
-		accent.emission_energy_multiplier = 3.2
+		accent.emission_energy_multiplier = 0.82
 		crown.material_override = accent
 		marker.add_child(crown)
 		var light := OmniLight3D.new()
@@ -161,11 +177,35 @@ func _create_arena_markers(arena: Dictionary) -> void:
 		# The glowing marker remains arena-colored through its emissive material;
 		# its local illumination must not tint nearby board pieces.
 		light.light_color = Color.WHITE
-		light.light_energy = 1.4
+		light.light_energy = 0.72
 		light.omni_range = 8.0
 		light.shadow_enabled = false
 		marker.add_child(light)
 		_beacon_lights.append(light)
+
+
+func _create_mountain_torch_marker(marker: Node3D, arena: Dictionary) -> void:
+	var stone := _dressing_material(arena.stone * 0.82)
+	var plinth := MeshInstance3D.new()
+	plinth.name = "FortressTorchPlinth"
+	plinth.mesh = BeveledBoxMesh.create(Vector3(1.55, 0.72, 1.55), 0.12)
+	plinth.position.y = 0.14
+	plinth.material_override = stone
+	marker.add_child(plinth)
+	var torch := TORCH_SCENE.instantiate() as Node3D
+	torch.name = "FortressTorch"
+	torch.position.y = 0.50
+	torch.scale = Vector3.ONE * 2.65
+	marker.add_child(torch)
+	var light := OmniLight3D.new()
+	light.name = "ArenaMarkerLight"
+	light.position.y = 2.35
+	light.light_color = Color(1.0, 0.78, 0.56)
+	light.light_energy = 0.72
+	light.omni_range = 6.5
+	light.shadow_enabled = false
+	marker.add_child(light)
+	_beacon_lights.append(light)
 
 
 func _create_signature_set_dressing(arena: Dictionary) -> void:
@@ -193,7 +233,7 @@ func _dressing_material(color: Color, emission_strength := 0.0) -> StandardMater
 	return material
 
 
-func _add_dressing_mesh(parent: Node3D, node_name: String, mesh: PrimitiveMesh, position: Vector3, material: StandardMaterial3D) -> MeshInstance3D:
+func _add_dressing_mesh(parent: Node3D, node_name: String, mesh: Mesh, position: Vector3, material: StandardMaterial3D) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
 	instance.name = node_name
 	instance.mesh = mesh
@@ -204,29 +244,49 @@ func _add_dressing_mesh(parent: Node3D, node_name: String, mesh: PrimitiveMesh, 
 
 
 func _create_watchtowers(parent: Node3D, arena: Dictionary) -> void:
-	var stone := _dressing_material(arena.stone * 0.72)
-	var roof := _dressing_material(Color(0.18, 0.10, 0.07))
+	# A pair of low banner standards reinforces the playable terrace without
+	# competing with the detailed fortress towers already painted in the sky.
+	var stone := _dressing_material(arena.stone * 0.90)
+	var bronze := _dressing_material(Color("6f5131"))
 	for index in 2:
-		var x := -26.0 if index == 0 else 26.0
-		var tower := CylinderMesh.new()
-		tower.top_radius = 1.45
-		tower.bottom_radius = 1.8
-		tower.height = 5.0
-		_add_dressing_mesh(parent, "FortressWatchtower%02d" % index, tower, Vector3(x, 1.7, -22.5), stone)
-		var roof_mesh := CylinderMesh.new()
-		roof_mesh.top_radius = 0.0
-		roof_mesh.bottom_radius = 2.1
-		roof_mesh.height = 2.4
-		_add_dressing_mesh(parent, "FortressTowerRoof%02d" % index, roof_mesh, Vector3(x, 5.4, -22.5), roof)
+		var x := -24.0 if index == 0 else 24.0
+		var standard := Node3D.new()
+		standard.name = "FortressBannerStandard%02d" % index
+		standard.position = Vector3(x, -0.62, -21.4)
+		parent.add_child(standard)
+		standard.look_at(Vector3.ZERO, Vector3.UP)
+		for course in 2:
+			var block := MeshInstance3D.new()
+			block.name = "DressedStoneCourse%02d" % course
+			block.mesh = BeveledBoxMesh.create(Vector3(3.2 - course * 0.45, 0.55, 2.25 - course * 0.30), 0.10)
+			block.position.y = 0.28 + course * 0.51
+			block.material_override = stone
+			standard.add_child(block)
+		var banner := BANNER_SCENE.instantiate() as Node3D
+		banner.name = "FortressBanner"
+		banner.position = Vector3(0.0, 0.95, 0.0)
+		banner.scale = Vector3.ONE * 1.35
+		standard.add_child(banner)
+		for side in [-1.0, 1.0]:
+			var torch := TORCH_SCENE.instantiate() as Node3D
+			torch.name = "FortressStandardTorch"
+			torch.position = Vector3(side * 1.15, 0.98, 0.15)
+			torch.scale = Vector3.ONE * 2.1
+			standard.add_child(torch)
+			var cap := MeshInstance3D.new()
+			cap.name = "AgedBronzeCap"
+			cap.mesh = BeveledBoxMesh.create(Vector3(0.34, 0.18, 0.34), 0.045)
+			cap.position = Vector3(side * 1.15, 0.89, 0.15)
+			cap.material_override = bronze
+			standard.add_child(cap)
 
 
 func _create_arcane_obelisks(parent: Node3D, arena: Dictionary) -> void:
 	var stone := _dressing_material(arena.stone * 0.95)
-	var glow := _dressing_material(arena.accent, 3.6)
+	var glow := _dressing_material(arena.accent, 0.72)
 	for index in 3:
 		var x := -18.0 + float(index) * 18.0
-		var base := BoxMesh.new()
-		base.size = Vector3(2.2, 0.85, 2.2)
+		var base := BeveledBoxMesh.create(Vector3(2.2, 0.85, 2.2), 0.12)
 		_add_dressing_mesh(parent, "CitadelRuneBase%02d" % index, base, Vector3(x, -0.15, -24.0), stone)
 		var obelisk := PrismMesh.new()
 		obelisk.size = Vector3(1.25, 5.2, 1.25)
@@ -234,7 +294,7 @@ func _create_arcane_obelisks(parent: Node3D, arena: Dictionary) -> void:
 
 
 func _create_ice_spires(parent: Node3D, arena: Dictionary) -> void:
-	var ice := _dressing_material(arena.accent.lerp(Color.WHITE, 0.35), 1.5)
+	var ice := _dressing_material(arena.accent.lerp(Color.WHITE, 0.25), 0.38)
 	for index in 5:
 		var spike := CylinderMesh.new()
 		spike.top_radius = 0.0
@@ -246,19 +306,15 @@ func _create_ice_spires(parent: Node3D, arena: Dictionary) -> void:
 
 func _create_forge_braziers(parent: Node3D, arena: Dictionary) -> void:
 	var iron := _dressing_material(Color(0.10, 0.075, 0.065))
-	var fire := _dressing_material(arena.accent, 5.0)
 	for index in 3:
 		var x := -18.0 + float(index) * 18.0
-		var bowl := TorusMesh.new()
-		bowl.inner_radius = 0.72
-		bowl.outer_radius = 1.05
-		bowl.rings = 8
-		bowl.ring_segments = 16
-		_add_dressing_mesh(parent, "ForgeBrazier%02d" % index, bowl, Vector3(x, 1.0, -23.0), iron)
-		var flame := SphereMesh.new()
-		flame.radius = 0.46
-		flame.height = 1.35
-		_add_dressing_mesh(parent, "ForgeFlame%02d" % index, flame, Vector3(x, 1.55, -23.0), fire)
+		var plinth := BeveledBoxMesh.create(Vector3(2.0, 0.65, 2.0), 0.12)
+		_add_dressing_mesh(parent, "ForgeTorchPlinth%02d" % index, plinth, Vector3(x, -0.28, -23.0), iron)
+		var torch := TORCH_SCENE.instantiate() as Node3D
+		torch.name = "ForgeTorch%02d" % index
+		torch.position = Vector3(x, 0.02, -23.0)
+		torch.scale = Vector3.ONE * 3.2
+		parent.add_child(torch)
 
 
 func _create_ruined_arches(parent: Node3D, arena: Dictionary) -> void:
@@ -266,9 +322,7 @@ func _create_ruined_arches(parent: Node3D, arena: Dictionary) -> void:
 	for index in 2:
 		var x := -16.0 if index == 0 else 16.0
 		for side in [-1.0, 1.0]:
-			var pillar := BoxMesh.new()
-			pillar.size = Vector3(0.85, 4.4, 0.85)
+			var pillar := BeveledBoxMesh.create(Vector3(0.85, 4.4, 0.85), 0.10)
 			_add_dressing_mesh(parent, "GroveArchPillar%02d_%d" % [index, int(side)], pillar, Vector3(x + side * 2.0, 1.4, -23.0), stone)
-		var lintel := BoxMesh.new()
-		lintel.size = Vector3(4.85, 0.72, 0.85)
+		var lintel := BeveledBoxMesh.create(Vector3(4.85, 0.72, 0.85), 0.10)
 		_add_dressing_mesh(parent, "GroveArchLintel%02d" % index, lintel, Vector3(x, 3.75, -23.0), stone)

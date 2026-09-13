@@ -53,6 +53,10 @@ func is_ready_for_requests() -> bool:
 	return is_running() and not _awaiting_uciok and not _awaiting_readyok
 
 
+func has_pending_request() -> bool:
+	return _thinking or _draining_cancelled_search or _awaiting_uciok or _awaiting_readyok
+
+
 ## Development runs use a platform copy. Exports place the executable beside
 ## the game because a file inside a PCK cannot be launched as a process.
 func resolved_executable_path() -> String:

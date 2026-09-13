@@ -9,7 +9,7 @@ const ARENAS := {
 		"title": "Mountain Fortress Terrace", "chapter": "I · The First Gate",
 		"opponent": "The Gatekeeper", "intro": "Claim the first gate and begin the Warpath.",
 		"backdrop_path": "res://assets/environment/generated/mountain_fortress_panorama_v1.png",
-		"accent": Color(1.0, 0.43, 0.10), "stone": Color(0.22, 0.25, 0.29),
+		"accent": Color(0.74, 0.48, 0.22), "stone": Color(0.43, 0.37, 0.30),
 		"ambient": Color(0.72, 0.65, 0.53), "marker": "brazier",
 	},
 	"arcane_sky_citadel": {
